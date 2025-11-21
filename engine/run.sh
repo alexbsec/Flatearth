@@ -2,6 +2,15 @@
 
 set -e  # Exit on any error
 
+type="Debug"
+
+# Accept user argument: debug/release
+if [[ "$1" =~ ^([Dd]ebug)$ ]]; then
+    type="Debug"
+elif [[ "$1" =~ ^([Rr]elease)$ ]]; then
+    type="Release"
+fi
+
 buildDir="./build"
 linkPath=$(pwd)
 enginePath=$(pwd)
@@ -38,7 +47,11 @@ if [ -f compile_commands.json ]; then
 fi
 
 echo -e "${GREEN}Creating compile_commands.json...${RESET}"
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -S . -B "$buildDir"
+cmake -DCMAKE_BUILD_TYPE=$type \
+      -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+      -S . \
+      -B "$buildDir"
+
 ln -sf "${linkPath}/build/compile_commands.json" compile_commands.json 
 
 echo -e "${CYAN}Running CMake build...${RESET}"

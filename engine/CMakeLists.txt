@@ -33,6 +33,11 @@ include_directories("${LIBRARY_BASE_PATH}")
 # Add the shared library target
 add_library(${BINARY_NAME} SHARED ${SOURCE_FILES})
 
+target_compile_definitions(${BINARY_NAME}
+    PRIVATE
+        $<$<CONFIG:Release>:FE_RELEASE>
+)
+
 ############################################################################
 #   PLATFORM-SPECIFIC SETTINGS
 

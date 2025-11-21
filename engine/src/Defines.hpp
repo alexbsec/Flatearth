@@ -1,6 +1,7 @@
 #ifndef _FLATEARTH_ENGINE_DEFINITIONS_HPP
 #define _FLATEARTH_ENGINE_DEFINITIONS_HPP
 
+#include <atomic>
 #include <cstdint>
 #include <sstream>
 #include <string>
@@ -25,6 +26,8 @@ using int64 = int64_t;
 // Floating point types
 using float32 = float;
 using float64 = double;
+
+using atomic_bool = std::atomic<bool>;
 
 #if defined(_MSVC_LANG)
 #define STATIC_ASSERT static_assert

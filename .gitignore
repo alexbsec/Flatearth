@@ -4,10 +4,10 @@ engine/build/*
 engine/.cache
 engine/compile_commands.json
 testbed/build/*
-testbed/.cache
+testbed/.cache/*
 testbed/compile_commands.json
 tests/build/*
-tests/.cache
+tests/.cache/*
 tests/compile_commands.json
 .vs/*
 .vscode/*
