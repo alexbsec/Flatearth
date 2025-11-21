@@ -3,9 +3,9 @@ bin/
 engine/build/*
 engine/.cache
 engine/compile_commands.json
-testsuite/build/*
-testsuite/.cache
-testsuite/compile_commands.json
+testbed/build/*
+testbed/.cache
+testbed/compile_commands.json
 tests/build/*
 tests/.cache
 tests/compile_commands.json
