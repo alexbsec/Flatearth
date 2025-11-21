@@ -1,3 +1,0 @@
-/home/alexbsec/Projects/FlatearthEngine/testbed/build/CMakeFiles/flatearth_testbed.dir
-/home/alexbsec/Projects/FlatearthEngine/testbed/build/CMakeFiles/edit_cache.dir
-/home/alexbsec/Projects/FlatearthEngine/testbed/build/CMakeFiles/rebuild_cache.dir
