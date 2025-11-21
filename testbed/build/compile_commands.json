@@ -1,0 +1,14 @@
+[
+{
+  "directory": "/home/alexbsec/Projects/FlatearthEngine/testbed/build",
+  "command": "/usr/bin/c++  -I/home/alexbsec/Projects/FlatearthEngine/testbed/../engine/src -std=gnu++23 -o CMakeFiles/flatearth_testbed.dir/src/Game.cc.o -c /home/alexbsec/Projects/FlatearthEngine/testbed/src/Game.cc",
+  "file": "/home/alexbsec/Projects/FlatearthEngine/testbed/src/Game.cc",
+  "output": "CMakeFiles/flatearth_testbed.dir/src/Game.cc.o"
+},
+{
+  "directory": "/home/alexbsec/Projects/FlatearthEngine/testbed/build",
+  "command": "/usr/bin/c++  -I/home/alexbsec/Projects/FlatearthEngine/testbed/../engine/src -std=gnu++23 -o CMakeFiles/flatearth_testbed.dir/src/Entrypoint.cc.o -c /home/alexbsec/Projects/FlatearthEngine/testbed/src/Entrypoint.cc",
+  "file": "/home/alexbsec/Projects/FlatearthEngine/testbed/src/Entrypoint.cc",
+  "output": "CMakeFiles/flatearth_testbed.dir/src/Entrypoint.cc.o"
+}
+]
