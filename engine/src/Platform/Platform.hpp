@@ -20,7 +20,7 @@ public:
   ~Platform();
 
   FeExpect<void, Error> Initialize();
-  bool PollEvents();
+  FeExpect<bool, Error> PollEvents();
   PlatformState *State();
 
 private:

@@ -6,12 +6,20 @@
 
 namespace flatearth {
 
+enum class ErrorType { Unknown,
+  EventNotFound,
+  EventAlreadyRegistered,
+};
+
 struct Error {
+  ErrorType type{ErrorType::Unknown};
   string message{"unknown error"};
   std::source_location where = std::source_location::current();
 
   inline Error() {}
   inline Error(const string &message) : message(message) {}
+  inline Error(const string &message, ErrorType type)
+      : type(type), message(message) {}
 };
 
 } // namespace flatearth

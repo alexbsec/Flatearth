@@ -55,7 +55,8 @@ Platform::Platform(const string &applicationName, int32 x, int32 y, int32 width,
                    int32 height, memory::MemoryManager &memManager)
     : _xPos(x), _yPos(y), _width(width), _height(height),
       _applicationName(applicationName), _memoryManager(memManager) {
-  _platState.internalState = _memoryManager.Allocate<InternalState>(memory::Tag::Platform);
+  _platState.internalState =
+      _memoryManager.Allocate<InternalState>(memory::Tag::Platform);
 }
 
 Platform::~Platform() {}
@@ -101,16 +102,15 @@ FeExpect<void, Error> Platform::Initialize() {
 
   // create window
   xcb_void_cookie_t cookie = xcb_create_window(
-      pInternalState->connection, XCB_COPY_FROM_PARENT,
-      pInternalState->window, pInternalState->screen->root, _xPos, _yPos,
-      _width, _height, 0, XCB_WINDOW_CLASS_INPUT_OUTPUT,
-      pInternalState->screen->root_visual, eventMask, valueList);
+      pInternalState->connection, XCB_COPY_FROM_PARENT, pInternalState->window,
+      pInternalState->screen->root, _xPos, _yPos, _width, _height, 0,
+      XCB_WINDOW_CLASS_INPUT_OUTPUT, pInternalState->screen->root_visual,
+      eventMask, valueList);
 
   // change title
   xcb_change_property(pInternalState->connection, XCB_PROP_MODE_REPLACE,
-                      pInternalState->window, XCB_ATOM_WM_NAME,
-                      XCB_ATOM_STRING, 8, _applicationName.length(),
-                      _applicationName.c_str());
+                      pInternalState->window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING,
+                      8, _applicationName.length(), _applicationName.c_str());
 
   // tell the server to notify when the window manager attempts to destroy the
   // window
@@ -121,8 +121,8 @@ FeExpect<void, Error> Platform::Initialize() {
       pInternalState->connection, 0, cDeleteStr.length(), cDeleteStr.c_str());
 
   xcb_intern_atom_cookie_t wmProtocolsCookie =
-      xcb_intern_atom(pInternalState->connection, 0,
-                      cProtocolsString.length(), cProtocolsString.c_str());
+      xcb_intern_atom(pInternalState->connection, 0, cProtocolsString.length(),
+                      cProtocolsString.c_str());
 
   xcb_intern_atom_reply_t *wmDeleteReply = xcb_intern_atom_reply(
       pInternalState->connection, wmDeleteCookie, nullptr);
@@ -134,8 +134,8 @@ FeExpect<void, Error> Platform::Initialize() {
   pInternalState->wmProtocols = wmProtocolsReply->atom;
 
   xcb_change_property(pInternalState->connection, XCB_PROP_MODE_REPLACE,
-                      pInternalState->window, pInternalState->wmProtocols,
-                      4, 32, 1, &pInternalState->wmDeleteWin);
+                      pInternalState->window, pInternalState->wmProtocols, 4,
+                      32, 1, &pInternalState->wmDeleteWin);
 
   xcb_map_window(pInternalState->connection, pInternalState->window);
 
@@ -149,10 +149,10 @@ FeExpect<void, Error> Platform::Initialize() {
   return {};
 }
 
-bool Platform::PollEvents() {
+FeExpect<bool, Error> Platform::PollEvents() {
   if (_platState.internalState == nullptr) {
     LOG_ERROR(cNullInternalStateError);
-    return FeFalse;
+    return FeErr<Error>(cNullInternalStateError);
   }
 
   auto &pInternalState = _platState.internalState;
@@ -160,8 +160,7 @@ bool Platform::PollEvents() {
   xcb_client_message_event_t *cm;
 
   bool quitFlag = FeFalse;
-  while ((event = xcb_poll_for_event(pInternalState->connection)) !=
-         nullptr) {
+  while ((event = xcb_poll_for_event(pInternalState->connection)) != nullptr) {
     if (event == nullptr) {
       break;
     }
@@ -173,8 +172,8 @@ bool Platform::PollEvents() {
       bool pressed = event->response_type == XCB_KEY_PRESS;
       xcb_keycode_t code = keyEvent->detail;
       int32 level = (keyEvent->state & XCB_MOD_MASK_SHIFT) ? 1 : 0;
-      KeySym keySymbol = XkbKeycodeToKeysym(pInternalState->display,
-                                            (KeyCode)code, 0, level);
+      KeySym keySymbol =
+          XkbKeycodeToKeysym(pInternalState->display, (KeyCode)code, 0, level);
       input::Keys key = TranslateKeySymbol((uint32)keySymbol);
       // input manager porcess key
     } break;
@@ -183,13 +182,13 @@ bool Platform::PollEvents() {
 
     } break;
     case XCB_MOTION_NOTIFY: {
-      
+
     } break;
     case XCB_CONFIGURE_NOTIFY: {
-      
+
     } break;
-    case XCB_CLIENT_MESSAGE : {
-      
+    case XCB_CLIENT_MESSAGE: {
+
     } break;
     default:
       break;
@@ -201,9 +200,7 @@ bool Platform::PollEvents() {
   return !quitFlag;
 }
 
-PlatformState *Platform::State() {
-  return &_platState;
-}
+PlatformState *Platform::State() { return &_platState; }
 
 input::Keys TranslateKeySymbol(uint32 keySymbol) {
   switch (keySymbol) {
