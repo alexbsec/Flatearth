@@ -3,6 +3,9 @@
 
 #include <atomic>
 #include <cstdint>
+#include <expected>
+#include <functional>
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -124,5 +127,15 @@ constexpr static float64 FE_SEC_TO_MS_MUL = 1000.0f;
 
 constexpr static float64 FE_F64MAX = 1e30f;
 constexpr static float64 FE_F64EPS = 1.192092896e-7f;
+
+
+template <typename T>
+using FePtr = std::unique_ptr<T, std::function<void(T*)>>;
+
+template <typename Ret, typename Err>
+using FeExpect = std::expected<Ret, Err>;
+
+template <typename Err>
+using FeErr = std::unexpected<Err>;
 
 #endif // _FLATEARTH_ENGINE_DEFINITIONS_HP

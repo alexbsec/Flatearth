@@ -3,6 +3,7 @@
 
 #include "Defines.hpp"
 #include "GameTypes.hpp"
+#include "Platform/Platform.hpp"
 
 namespace flatearth {
 
@@ -21,6 +22,8 @@ struct ApplicationState {
   int16 width;
   int16 height;
   float64 lastTime;
+  platform::PlatformState *platformState;
+  ApplicationConfig appConfig;
 
   ApplicationState(Game &game) : gameInstance(game) {}
 };
