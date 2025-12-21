@@ -17,17 +17,15 @@ int main(void) {
   }
 
   flatearth::Engine engine(gameInstance); 
-  if (!engine.Initialize()) {
+  if (auto res = engine.Initialize(); !res.has_value()) {
     LOG_ERROR("engine failed to initialize");
     return EXIT_FAILURE;
   }
 
-  if (!engine.Start()) {
+  if (auto res = engine.Start(); !res.has_value()) {
     LOG_ERROR("engine failed to start");
     return EXIT_FAILURE;
   }
-
-  LOG_INFO("engine started");
  
   return EXIT_SUCCESS;
 }

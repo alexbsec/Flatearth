@@ -2,7 +2,7 @@
 #define _FLATEARTH_ENGINE_CORE_EVENT_HPP
 
 #include "Containers/DArray.hpp"
-#include "Core/FeMemroy.hpp"
+#include "Core/FeMemory.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
 #include <cstddef>

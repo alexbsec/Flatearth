@@ -1,7 +1,7 @@
 #ifndef _FLATEARTH_ENGINE_CORE_DARRAY_HPP
 #define _FLATEARTH_ENGINE_CORE_DARRAY_HPP
 
-#include "Core/FeMemroy.hpp"
+#include "Core/FeMemory.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
 #include <cstddef>

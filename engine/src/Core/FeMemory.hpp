@@ -4,7 +4,6 @@
 #include "Defines.hpp"
 #include <array>
 #include <functional>
-#include <memory>
 
 namespace flatearth::memory {
 
@@ -78,6 +77,8 @@ public:
 
     return FePtr<Base>(FeCast<Base>(concrete.release()), std::move(baseDeleter));
   }
+
+  void MemoryUsage();
 
 private:
   SystemState _memoryState{};

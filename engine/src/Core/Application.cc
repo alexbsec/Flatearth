@@ -1,6 +1,6 @@
 #include "Application.hpp"
 #include "Core/Event.hpp"
-#include "Core/FeMemroy.hpp"
+#include "Core/FeMemory.hpp"
 #include "Core/Input.hpp"
 #include "Core/Logger.hpp"
 #include "Defines.hpp"
@@ -96,7 +96,7 @@ EngineListener::OnResize(const event::EventDispatchContext &ctx,
   _appState.width = width;
   _appState.height = height;
 
-  FLOG_DEBUG("window resizing: %ix%i", width, height);
+  FLOG_DEBUG("window resizing: {}x{}", width, height);
 
   if (width == 0 || height == 0) {
     FLOG_INFO("window minimized, suspending application");

@@ -1,7 +1,7 @@
 #ifndef _FLATEARTH_ENGINE_PLATFORM_HPP
 #define _FLATEARTH_ENGINE_PLATFORM_HPP
 
-#include "Core/FeMemroy.hpp"
+#include "Core/FeMemory.hpp"
 #include "Core/Input.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
