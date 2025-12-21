@@ -10,7 +10,7 @@
 
 namespace flatearth {
 
-class EngineListener final : public event::IEventListener {
+class EngineListener final : public event::ListenerAdapter {
 public:
   explicit EngineListener(event::EventManager &eventManager,
                           ApplicationState &appState);

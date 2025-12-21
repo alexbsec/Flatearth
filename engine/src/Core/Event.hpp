@@ -90,6 +90,38 @@ protected:
   virtual ~IEventListener() = default;
 };
 
+class ListenerAdapter : public IEventListener {
+public:
+  FeExpect<void, Error> Initialize() override {
+    return {};
+  }
+
+  FeExpect<bool, Error> OnResize(const EventDispatchContext &ctx,
+                                 const EventContext &eventCtx) override {
+    return FeFalse; 
+  }
+
+  FeExpect<bool, Error> OnKey(const EventDispatchContext &ctx,
+                              const EventContext &eventCtx) override {
+    return FeFalse;
+  }
+
+  FeExpect<bool, Error> OnEvent(const EventDispatchContext &ctx,
+                                const EventContext &eventCtx) override {
+    return FeFalse;
+  }
+
+  FeExpect<bool, Error> OnButton(const EventDispatchContext &ctx,
+                                 const EventContext &eventCtx) override {
+    return FeFalse;
+  }
+
+  FeExpect<bool, Error> OnMouseMove(const EventDispatchContext &ctx,
+                                    const EventContext &eventCtx) override {
+    return FeFalse;
+  }
+};
+
 struct RegisteredEvent {
   uint64 id;
   IEventListener *listener;

@@ -38,16 +38,13 @@ struct InternalState {
   xcb_atom_t wmDeleteWin;
 
   ~InternalState() {
-    if (connection != nullptr) {
-      xcb_disconnect(connection);
-      connection = nullptr;
-    }
-
     if (display != nullptr) {
       XAutoRepeatOn(display);
       XCloseDisplay(display);
       display = nullptr;
     }
+
+    connection = nullptr;
   }
 };
 
@@ -71,9 +68,13 @@ FeExpect<void, Error> Platform::Initialize() {
   auto &pInternalState = _platState.internalState;
 
   pInternalState->display = XOpenDisplay(nullptr);
+  if (!pInternalState->display) {
+    return FeErr<Error>("XOpenDisplay failed");
+  }
   XAutoRepeatOff(pInternalState->display);
 
   pInternalState->connection = XGetXCBConnection(pInternalState->display);
+  XSetEventQueueOwner(pInternalState->display, XCBOwnsEventQueue);
 
   if (xcb_connection_has_error(pInternalState->connection)) {
     FLOG_ERROR("failed to connect to X server via XCB");
@@ -181,7 +182,7 @@ FeExpect<bool, Error> Platform::PollEvents() {
       if (!processRes.has_value()) {
         FLOG_ERROR("input manager failed to process key {} event",
                    (uint32)keySymbol);
-          break;
+        break;
       }
 
       if (!processRes.value()) {
@@ -192,51 +193,55 @@ FeExpect<bool, Error> Platform::PollEvents() {
     case XCB_BUTTON_PRESS:
     case XCB_BUTTON_RELEASE: {
       xcb_button_press_event_t *buttonEvent = (xcb_button_press_event_t *)event;
-        bool pressed = event->response_type == XCB_BUTTON_PRESS;
-        input::Button button = input::Button::MaxButtons;
-        switch (buttonEvent->detail) {
-        case XCB_BUTTON_INDEX_1:
-          button = input::Button::Left;
-          break;
-        case XCB_BUTTON_INDEX_2:
-          button = input::Button::Middle;
-          break;
-        case XCB_BUTTON_INDEX_3:
-          button = input::Button::Right;
-          break;
-        }
+      bool pressed = event->response_type == XCB_BUTTON_PRESS;
+      input::Button button = input::Button::MaxButtons;
+      switch (buttonEvent->detail) {
+      case XCB_BUTTON_INDEX_1:
+        button = input::Button::Left;
+        break;
+      case XCB_BUTTON_INDEX_2:
+        button = input::Button::Middle;
+        break;
+      case XCB_BUTTON_INDEX_3:
+        button = input::Button::Right;
+        break;
+      }
 
-        if (button == input::Button::MaxButtons) {
-          break;
-        } 
+      if (button == input::Button::MaxButtons) {
+        break;
+      }
 
-        auto buttonRes = _inputManager.ProcessButton(button, pressed);
-        if (!buttonRes.has_value()) {
-          FLOG_ERROR("input manager failed to process mouse click");
-          break;
-        }
+      auto buttonRes = _inputManager.ProcessButton(button, pressed);
+      if (!buttonRes.has_value()) {
+        FLOG_ERROR("input manager failed to process mouse click");
+        break;
+      }
 
-        if (!buttonRes.value()) {
-          FLOG_WARN("button event was not fired for some reason");
-        }
+      if (!buttonRes.value()) {
+        FLOG_WARN("button event was not fired for some reason");
+      }
     } break;
     case XCB_MOTION_NOTIFY: {
       xcb_motion_notify_event_t *moveEvent = (xcb_motion_notify_event_t *)event;
-        auto moveRes = _inputManager.ProcessMouseMove(moveEvent->event_x, moveEvent->event_y);
-        if (!moveRes.has_value()) {
-          FLOG_ERROR("input manager failed to process mouse move");
-          break;
-        }
+      auto moveRes = _inputManager.ProcessMouseMove(moveEvent->event_x,
+                                                    moveEvent->event_y);
+      if (!moveRes.has_value()) {
+        FLOG_ERROR("input manager failed to process mouse move");
+        break;
+      }
 
-        if (!moveRes.value()) {
-          FLOG_WARN("mouse move event was not fired for some reason");
-        }
+      if (!moveRes.value()) {
+        FLOG_WARN("mouse move event was not fired for some reason");
+      }
     } break;
     case XCB_CONFIGURE_NOTIFY: {
 
     } break;
     case XCB_CLIENT_MESSAGE: {
-
+      auto *cm = (xcb_client_message_event_t *)event;
+      if (cm->data.data32[0] == pInternalState->wmDeleteWin) {
+        quitFlag = FeTrue;
+      }
     } break;
     default:
       break;
