@@ -52,9 +52,11 @@ struct InternalState {
 };
 
 Platform::Platform(const string &applicationName, int32 x, int32 y, int32 width,
-                   int32 height, memory::MemoryManager &memManager)
+                   int32 height, memory::MemoryManager &memManager,
+                   input::InputManager &inputManager)
     : _xPos(x), _yPos(y), _width(width), _height(height),
-      _applicationName(applicationName), _memoryManager(memManager) {
+      _applicationName(applicationName), _memoryManager(memManager),
+      _inputManager(inputManager) {
   _platState.internalState =
       _memoryManager.Allocate<InternalState>(memory::Tag::Platform);
 }
@@ -74,7 +76,7 @@ FeExpect<void, Error> Platform::Initialize() {
   pInternalState->connection = XGetXCBConnection(pInternalState->display);
 
   if (xcb_connection_has_error(pInternalState->connection)) {
-    LOG_ERROR("failed to connect to X server via XCB");
+    FLOG_ERROR("failed to connect to X server via XCB");
     return FeErr<Error>(cXCBConnectionError);
   }
 
@@ -141,11 +143,11 @@ FeExpect<void, Error> Platform::Initialize() {
 
   int32 streamResult = xcb_flush(pInternalState->connection);
   if (streamResult <= 0) {
-    LOG_FATAL("an error occurred when flushing the stream: %d", streamResult);
+    FLOG_FATAL("an error occurred when flushing the stream: %d", streamResult);
     return FeErr<Error>(cXCBFlushError);
   }
 
-  LOG_INFO("platform initialized successfully");
+  FLOG_INFO("platform initialized successfully");
   return {};
 }
 
@@ -175,14 +177,60 @@ FeExpect<bool, Error> Platform::PollEvents() {
       KeySym keySymbol =
           XkbKeycodeToKeysym(pInternalState->display, (KeyCode)code, 0, level);
       input::Keys key = TranslateKeySymbol((uint32)keySymbol);
-      // input manager porcess key
+      auto processRes = _inputManager.ProcessKey(key, pressed);
+      if (!processRes.has_value()) {
+        FLOG_ERROR("input manager failed to process key {} event",
+                   (uint32)keySymbol);
+          break;
+      }
+
+      if (!processRes.value()) {
+        FLOG_WARN("event for key {} was not fired for some reason",
+                  (uint32)keySymbol);
+      }
     } break;
     case XCB_BUTTON_PRESS:
     case XCB_BUTTON_RELEASE: {
+      xcb_button_press_event_t *buttonEvent = (xcb_button_press_event_t *)event;
+        bool pressed = event->response_type == XCB_BUTTON_PRESS;
+        input::Button button = input::Button::MaxButtons;
+        switch (buttonEvent->detail) {
+        case XCB_BUTTON_INDEX_1:
+          button = input::Button::Left;
+          break;
+        case XCB_BUTTON_INDEX_2:
+          button = input::Button::Middle;
+          break;
+        case XCB_BUTTON_INDEX_3:
+          button = input::Button::Right;
+          break;
+        }
 
+        if (button == input::Button::MaxButtons) {
+          break;
+        } 
+
+        auto buttonRes = _inputManager.ProcessButton(button, pressed);
+        if (!buttonRes.has_value()) {
+          FLOG_ERROR("input manager failed to process mouse click");
+          break;
+        }
+
+        if (!buttonRes.value()) {
+          FLOG_WARN("button event was not fired for some reason");
+        }
     } break;
     case XCB_MOTION_NOTIFY: {
+      xcb_motion_notify_event_t *moveEvent = (xcb_motion_notify_event_t *)event;
+        auto moveRes = _inputManager.ProcessMouseMove(moveEvent->event_x, moveEvent->event_y);
+        if (!moveRes.has_value()) {
+          FLOG_ERROR("input manager failed to process mouse move");
+          break;
+        }
 
+        if (!moveRes.value()) {
+          FLOG_WARN("mouse move event was not fired for some reason");
+        }
     } break;
     case XCB_CONFIGURE_NOTIFY: {
 

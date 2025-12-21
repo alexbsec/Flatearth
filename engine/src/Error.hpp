@@ -9,6 +9,8 @@ namespace flatearth {
 enum class ErrorType { Unknown,
   EventNotFound,
   EventAlreadyRegistered,
+  GameResizeError,
+  NullptrException,
 };
 
 struct Error {

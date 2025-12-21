@@ -260,6 +260,8 @@ private:
 #define FLATEARTH_LOGGING_ENABLED 0 // Release: strip low-level logs
 #endif
 
+#define FILE_LOGGING(enable) febundle::core::Logger::Self().FileLogging(enable)
+
 // ========== DEBUG BUILD: all logs active ==========
 
 #if FLATEARTH_LOGGING_ENABLED

@@ -1,6 +1,7 @@
 #ifndef _FLATEARTH_ENGINE_CORE_INPUT_HPP
 #define _FLATEARTH_ENGINE_CORE_INPUT_HPP
 
+#include "Core/Event.hpp"
 #include "Defines.hpp"
 
 namespace flatearth::input {
@@ -12,8 +13,8 @@ enum class Button {
   MaxButtons,
 };
 
-constexpr std::size_t cButtonCount =
-    static_cast<std::size_t>(Button::MaxButtons);
+constexpr uint64 cButtonCount =
+    static_cast<uint64>(Button::MaxButtons);
 
 #define DEFINE_KEY(name, code) KEY_##name = code
 
@@ -152,12 +153,42 @@ struct KeyboardState {
 
 struct MouseState {
   uint16 x, y;
-  std::array<uint8, cButtonCount> buttons;
+  std::array<bool, cButtonCount> buttons;
 };
 
 struct InputState {
   KeyboardState keyboardCurrent{}, keyboardPrevious{};
   MouseState mouseCurrent{}, mousePrevious{};
+};
+
+class InputManager {
+public:
+  FEAPI explicit InputManager(event::EventManager &eventManager);
+
+  FEAPI void Update(float64 deltaTime);
+  FeExpect<bool, Error> ProcessKey(Keys key, bool pressed);
+  FeExpect<bool, Error> ProcessButton(Button button, bool pressed);
+  FeExpect<bool, Error> ProcessMouseMove(int16 x, int16 y);
+  void ProcessMouseWheel(int8 zDelta);
+
+  FEAPI bool IsKeyDown(Keys key);
+  FEAPI bool IsKeyUp(Keys key);
+  FEAPI bool WasKeyDown(Keys key);
+  FEAPI bool WasKeyUp(Keys key);
+
+  FEAPI bool IsButtonDown(Button button);
+  FEAPI bool IsButtonUp(Button button);
+  FEAPI bool WasButtonDown(Button button);
+  FEAPI bool WasButtonUp(Button button);
+  FEAPI void GetMousePosition(int32 &x, int32 &y);
+  FEAPI void GetPreviousMousePosition(int32 &x, int32 &y);
+
+  InputState &State() noexcept;
+  const InputState &State() const noexcept;
+
+private:
+  InputState _state;
+  event::EventManager &_eventManager;
 };
 
 }

@@ -132,10 +132,29 @@ constexpr static float64 FE_F64EPS = 1.192092896e-7f;
 template <typename T>
 using FePtr = std::unique_ptr<T, std::function<void(T*)>>;
 
+template <typename T, typename D>
+using FeCustomDeleterPtr = std::unique_ptr<T, D>;
+
 template <typename Ret, typename Err>
 using FeExpect = std::expected<Ret, Err>;
 
 template <typename Err>
 using FeErr = std::unexpected<Err>;
+
+template <typename T>
+inline T *FeCast(void *ptr) {
+#ifdef FE_DEBUG
+  assert(ptr != nullptr);
+#endif
+  return static_cast<T *>(ptr);
+}
+
+template <typename T>
+inline T *FeCastPermissive(void *ptr) {
+#ifdef FE_DEBUG
+  assert(ptr != nullptr);
+#endif
+  return reinterpret_cast<T *>(ptr);
+}
 
 #endif // _FLATEARTH_ENGINE_DEFINITIONS_HP

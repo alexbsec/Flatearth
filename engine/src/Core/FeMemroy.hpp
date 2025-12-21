@@ -13,8 +13,10 @@ enum class Tag : uint64 {
   Array,
   DArray,
   Dictionary,
+  Queue,
   RingQueue,
   BST,
+  HashSet,
   Application,
   Job,
   Texture,
@@ -45,30 +47,36 @@ class MemoryManager {
 public:
   MemoryManager();
 
-  void *RawAlloc(uint64 size, Tag tag);
+  void *RawAlloc(uint64 size, uint64 alignment, Tag tag);
   void RawFree(void *block, uint64 size, Tag tag);
 
-  // template API
-public:
   template <typename T, typename... Args>
   inline FePtr<T> Allocate(Tag tag, Args &&...args) {
-    void *raw = RawAlloc(sizeof(T), tag);
+    void *raw = RawAlloc(sizeof(T), alignof(T), tag);
 
     if (raw == nullptr) {
-      return std::move(FePtr<T>(nullptr, nullptr));
+      return FePtr<T>(nullptr, nullptr);
     }
 
     T *object = new (raw) T(std::forward<Args>(args)...);
+
     auto deleter = std::function<void(T *)>([this, tag](T *ptr) {
-      if (ptr == nullptr) {
-        // nothing to de-allocated
-        return;
-      }
+      if (!ptr) return;
       ptr->~T();
       RawFree(ptr, sizeof(T), tag);
     });
 
-    return std::move(FePtr<T>(object, deleter));
+    return FePtr<T>(object, deleter);
+  }
+
+  template <typename Base, typename Derived, typename... Args>
+  inline FePtr<Base> Allocate(Tag tag, Args &&...args) {
+    FePtr<Derived> concrete = Allocate<Derived>(tag, args...);
+    auto baseDeleter = [deleter = concrete.get_deleter()](Base *ptr) {
+      deleter(FeCast<Derived>(ptr));
+    };
+
+    return FePtr<Base>(FeCast<Base>(concrete.release()), std::move(baseDeleter));
   }
 
 private:
