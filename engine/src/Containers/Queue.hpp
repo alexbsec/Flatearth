@@ -2,7 +2,7 @@
 #define _FLATEARTH_ENGINE_CORE_QUEUE_HPP
 
 #include "Containers/LinkedList.hpp"
-#include "Core/FeMemroy.hpp"
+#include "Core/FeMemory.hpp"
 #include "Error.hpp"
 
 namespace flatearth::containers {
