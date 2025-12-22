@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "flatearth.dir\\Debug\\Entrypoint.obj",
+            "outputs": [
+                "flatearth.dir\\Debug\\Entrypoint.hpp_B3932A094079E3E4.ifc.dt.module.json",
+                "flatearth.dir\\Debug\\Entrypoint.hpp_B3932A094079E3E4.ifc.dt.d.json",
+                "flatearth.dir\\Debug\\Entrypoint.hpp.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "C:\\Users\\jcbus\\source\\repos\\Flatearth\\engine\\src\\Entrypoint.hpp",
+                    "source-path": "c:\\users\\jcbus\\source\\repos\\flatearth\\engine\\src\\entrypoint.hpp",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

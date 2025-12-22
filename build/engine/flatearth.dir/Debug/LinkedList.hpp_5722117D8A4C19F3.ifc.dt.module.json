@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "flatearth.dir\\Debug\\LinkedList.obj",
+            "outputs": [
+                "flatearth.dir\\Debug\\LinkedList.hpp_5722117D8A4C19F3.ifc.dt.module.json",
+                "flatearth.dir\\Debug\\LinkedList.hpp_5722117D8A4C19F3.ifc.dt.d.json",
+                "flatearth.dir\\Debug\\LinkedList.hpp.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "C:\\Users\\jcbus\\source\\repos\\Flatearth\\engine\\src\\Containers\\LinkedList.hpp",
+                    "source-path": "c:\\users\\jcbus\\source\\repos\\flatearth\\engine\\src\\containers\\linkedlist.hpp",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

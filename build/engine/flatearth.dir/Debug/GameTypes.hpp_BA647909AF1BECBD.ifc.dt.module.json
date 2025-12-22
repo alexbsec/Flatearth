@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "flatearth.dir\\Debug\\GameTypes.obj",
+            "outputs": [
+                "flatearth.dir\\Debug\\GameTypes.hpp_BA647909AF1BECBD.ifc.dt.module.json",
+                "flatearth.dir\\Debug\\GameTypes.hpp_BA647909AF1BECBD.ifc.dt.d.json",
+                "flatearth.dir\\Debug\\GameTypes.hpp.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "C:\\Users\\jcbus\\source\\repos\\Flatearth\\engine\\src\\GameTypes.hpp",
+                    "source-path": "c:\\users\\jcbus\\source\\repos\\flatearth\\engine\\src\\gametypes.hpp",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

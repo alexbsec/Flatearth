@@ -325,7 +325,7 @@ FeExpect<void, Error> Engine::Initialize() {
       memory::Tag::Platform, _appState.gameInstance.gameName,
       _appState.appConfig.windowStartPosX, _appState.appConfig.windowStartPosY,
       _appState.appConfig.windowStartWidth,
-      _appState.appConfig.windowStartHeight, _memoryManager, _inputManager);
+      _appState.appConfig.windowStartHeight, _memoryManager, _inputManager, _eventManager);
 
   auto platInitRes = _pPlatform->Initialize();
   if (!platInitRes.has_value()) {

@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "flatearth.dir\\Debug\\ApplicationConfig.obj",
+            "outputs": [
+                "flatearth.dir\\Debug\\ApplicationConfig.hpp_68A9328BBB9A78CD.ifc.dt.module.json",
+                "flatearth.dir\\Debug\\ApplicationConfig.hpp_68A9328BBB9A78CD.ifc.dt.d.json",
+                "flatearth.dir\\Debug\\ApplicationConfig.hpp.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "C:\\Users\\jcbus\\source\\repos\\Flatearth\\engine\\src\\Core\\ApplicationConfig.hpp",
+                    "source-path": "c:\\users\\jcbus\\source\\repos\\flatearth\\engine\\src\\core\\applicationconfig.hpp",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

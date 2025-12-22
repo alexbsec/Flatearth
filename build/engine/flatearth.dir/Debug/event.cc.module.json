@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "flatearth.dir\\Debug\\Event.obj",
+            "outputs": [
+                "C:\\Users\\jcbus\\source\\repos\\Flatearth\\build\\engine\\flatearth.dir\\Debug\\vc143.pdb",
+                "flatearth.dir\\Debug\\"
+            ],
+            "requires": []
+        }
+    ]
+}

@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "flatearth.dir\\Debug\\Error.obj",
+            "outputs": [
+                "flatearth.dir\\Debug\\Error.hpp_3BBEDEB2A71DF218.ifc.dt.module.json",
+                "flatearth.dir\\Debug\\Error.hpp_3BBEDEB2A71DF218.ifc.dt.d.json",
+                "flatearth.dir\\Debug\\Error.hpp.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "C:\\Users\\jcbus\\source\\repos\\Flatearth\\engine\\src\\Error.hpp",
+                    "source-path": "c:\\users\\jcbus\\source\\repos\\flatearth\\engine\\src\\error.hpp",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

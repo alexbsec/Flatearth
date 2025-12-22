@@ -32,7 +32,7 @@ public:
 
 public:
   string gameName;
-  int16 windowStartPosX, windowStartPosY, windowStartWidth, windowStartHeight;
+  int32 windowStartPosX, windowStartPosY, windowStartWidth, windowStartHeight;
 };
 
 } // namespace flatearth

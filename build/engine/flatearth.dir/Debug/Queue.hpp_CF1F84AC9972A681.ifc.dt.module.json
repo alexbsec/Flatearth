@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "flatearth.dir\\Debug\\Queue.obj",
+            "outputs": [
+                "flatearth.dir\\Debug\\Queue.hpp_CF1F84AC9972A681.ifc.dt.module.json",
+                "flatearth.dir\\Debug\\Queue.hpp_CF1F84AC9972A681.ifc.dt.d.json",
+                "flatearth.dir\\Debug\\Queue.hpp.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "C:\\Users\\jcbus\\source\\repos\\Flatearth\\engine\\src\\Containers\\Queue.hpp",
+                    "source-path": "c:\\users\\jcbus\\source\\repos\\flatearth\\engine\\src\\containers\\queue.hpp",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

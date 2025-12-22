@@ -31,11 +31,15 @@ file(GLOB_RECURSE HEADER_FILES "${LIBRARY_BASE_PATH}/*.hpp")
 include_directories("${LIBRARY_BASE_PATH}")
 
 # Add the shared library target
-add_library(${BINARY_NAME} SHARED ${SOURCE_FILES})
+add_library(${BINARY_NAME} SHARED
+    ${SOURCE_FILES}
+    ${HEADER_FILES}
+)
 
-target_compile_definitions(${BINARY_NAME}
-    PRIVATE
-        $<$<CONFIG:Release>:FE_RELEASE>
+
+target_include_directories(${BINARY_NAME}
+    PUBLIC
+        ${LIBRARY_BASE_PATH}
 )
 
 ############################################################################

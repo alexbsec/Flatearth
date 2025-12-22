@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "flatearth.dir\\Debug\\FeMemory.obj",
+            "outputs": [
+                "flatearth.dir\\Debug\\FeMemory.cc.ifc.dt.module.json",
+                "flatearth.dir\\Debug\\FeMemory.cc.ifc.dt.d.json"
+            ],
+            "requires": []
+        }
+    ]
+}

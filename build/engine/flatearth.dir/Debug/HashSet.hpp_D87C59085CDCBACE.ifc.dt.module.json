@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "flatearth.dir\\Debug\\HashSet.obj",
+            "outputs": [
+                "flatearth.dir\\Debug\\HashSet.hpp_D87C59085CDCBACE.ifc.dt.module.json",
+                "flatearth.dir\\Debug\\HashSet.hpp_D87C59085CDCBACE.ifc.dt.d.json",
+                "flatearth.dir\\Debug\\HashSet.hpp.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "C:\\Users\\jcbus\\source\\repos\\Flatearth\\engine\\src\\Containers\\HashSet.hpp",
+                    "source-path": "c:\\users\\jcbus\\source\\repos\\flatearth\\engine\\src\\containers\\hashset.hpp",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

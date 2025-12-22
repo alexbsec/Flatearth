@@ -1,0 +1,10 @@
+^C:\USERS\JCBUS\SOURCE\REPOS\FLATEARTH\BUILD\CMAKEFILES\0186186CEFFCF0E1E2306562AE3B83DE\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SC:/Users/jcbus/source/repos/Flatearth -BC:/Users/jcbus/source/repos/Flatearth/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/jcbus/source/repos/Flatearth/build/FlatearthSolution.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

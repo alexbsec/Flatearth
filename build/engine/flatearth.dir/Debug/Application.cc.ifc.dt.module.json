@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "flatearth.dir\\Debug\\Application.obj",
+            "outputs": [
+                "flatearth.dir\\Debug\\Application.cc.ifc.dt.module.json",
+                "flatearth.dir\\Debug\\Application.cc.ifc.dt.d.json"
+            ],
+            "requires": []
+        }
+    ]
+}

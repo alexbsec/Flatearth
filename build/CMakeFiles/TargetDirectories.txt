@@ -1,0 +1,9 @@
+C:/Users/jcbus/source/repos/Flatearth/build/CMakeFiles/INSTALL.dir
+C:/Users/jcbus/source/repos/Flatearth/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/jcbus/source/repos/Flatearth/build/CMakeFiles/ZERO_CHECK.dir
+C:/Users/jcbus/source/repos/Flatearth/build/engine/CMakeFiles/flatearth.dir
+C:/Users/jcbus/source/repos/Flatearth/build/engine/CMakeFiles/INSTALL.dir
+C:/Users/jcbus/source/repos/Flatearth/build/engine/CMakeFiles/ALL_BUILD.dir
+C:/Users/jcbus/source/repos/Flatearth/build/testbed/CMakeFiles/flatearth_testbed.dir
+C:/Users/jcbus/source/repos/Flatearth/build/testbed/CMakeFiles/INSTALL.dir
+C:/Users/jcbus/source/repos/Flatearth/build/testbed/CMakeFiles/ALL_BUILD.dir
