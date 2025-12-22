@@ -5,6 +5,7 @@
 #include "Core/Input.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
+#include "Renderer/Vulkan/VulkanTypes.hpp"
 
 #if FEPLATFORM_WINDOWS
 #include <cstring>
@@ -20,6 +21,11 @@ struct InternalState;
 struct PlatformState {
   FePtr<InternalState> internalState;
 };
+
+void GetRequiredExtNames(containers::DArray<const char *> *namesDArray);
+
+FeExpect<void, Error> CreateVulkanSurface(PlatformState *platState,
+                                          renderer::vulkan::Context &ctx);
 
 class Platform {
 public:

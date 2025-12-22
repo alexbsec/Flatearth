@@ -160,7 +160,6 @@ EngineListener::OnMouseMove(const event::EventDispatchContext &ctx,
   }
 
   event::Int16x8 mousePos = eventCtx.Get<event::Int16x8>();
-  FLOG_DEBUG("mouse is at {}x{}", mousePos[0], mousePos[1]);
   return FeTrue;
 }
 

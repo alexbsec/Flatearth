@@ -1,9 +1,9 @@
 #include "Application.hpp"
 #include "Core/Clock.hpp"
+#include "Core/EngineListener.hpp"
 #include "Core/Event.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Input.hpp"
-#include "Core/EngineListener.hpp"
 #include "Core/Logger.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
@@ -12,8 +12,8 @@ namespace flatearth {
 
 Engine::Engine(Game &game)
     : _appState(game), _eventManager(_memoryManager),
-      _inputManager(_eventManager) {
-
+      _inputManager(_eventManager),
+      _frontendRenderer(&_appState, _memoryManager) {
   _engineListener =
       _memoryManager.Allocate<event::IEventListener, EngineListener>(
           memory::Tag::Application, _eventManager, _appState);
@@ -52,11 +52,20 @@ FeExpect<void, Error> Engine::Initialize() {
     FLOG_ERROR("engine failed to initialize platform");
     return FeErr{platInitRes.error()};
   }
+  _appState.platformState = _pPlatform->State();
 
   FeExpect<void, Error> listenerInitRes = _engineListener->Initialize();
   if (!listenerInitRes.has_value()) {
     FLOG_ERROR("engine listener failed to initialize");
     return FeErr{listenerInitRes.error()};
+  }
+
+  FeExpect<bool, Error> frontendInitRes =
+      _frontendRenderer.Initialize();
+  if (!frontendInitRes.has_value()) {
+    FLOG_ERROR("frontend renderer failed to initialize: {}",
+               frontendInitRes.error().message);
+    return FeErr{frontendInitRes.error()};
   }
 
   _appState.isRunning = FeTrue;
@@ -129,6 +138,5 @@ FeExpect<void, Error> Engine::CheckGamePrerequisites() {
 
   return {};
 }
-
 
 } // namespace flatearth

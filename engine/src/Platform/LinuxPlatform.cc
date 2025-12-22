@@ -13,6 +13,8 @@
 #include <X11/Xlib-xcb.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
+#include <vulkan/vulkan_core.h>
+#include <vulkan/vulkan_xcb.h>
 #include <xcb/xcb.h>
 #include <xcb/xproto.h>
 
@@ -24,12 +26,6 @@
 
 namespace flatearth::platform {
 
-input::Keys TranslateKeySymbol(uint32 keySym);
-
-const string cNullInternalStateError = "platform internal state is nullptr";
-const string cXCBConnectionError = "XCB failed to connect";
-const string cXCBFlushError = "XCB failed to flush";
-
 struct InternalState {
   Display *display;
   xcb_connection_t *connection;
@@ -37,6 +33,7 @@ struct InternalState {
   xcb_screen_t *screen;
   xcb_atom_t wmProtocols;
   xcb_atom_t wmDeleteWin;
+  VkSurfaceKHR surface;
 
   ~InternalState() {
     if (display != nullptr) {
@@ -48,6 +45,42 @@ struct InternalState {
     connection = nullptr;
   }
 };
+
+void GetRequiredExtNames(containers::DArray<const char *> *namesDArray) {
+  namesDArray->Push("VK_KHR_xcb_surface");
+}
+
+FeExpect<void, Error> CreateVulkanSurface(PlatformState *platState,
+                                          renderer::vulkan::Context &ctx) {
+  if (platState == nullptr) {
+    FLOG_ERROR("platState is nullptr, aborting");
+    return FeErr{Error("cannot create Vulkan surface on nullptr platformState",
+                       ErrorType::NullptrException)};
+  }
+
+  auto &pInternalState = platState->internalState;
+  VkXcbSurfaceCreateInfoKHR createInfo = {
+      VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR};
+  createInfo.connection = pInternalState->connection;
+  createInfo.window = pInternalState->window;
+
+  VkResult res = vkCreateXcbSurfaceKHR(
+      ctx.instance, &createInfo, ctx.pAllocator, &pInternalState->surface);
+  if (res != VK_SUCCESS) {
+    FLOG_FATAL("Vulkan surface failed to create");
+    return FeErr{Error("vkCreateXcbSurfaceKHR did not succeeded",
+                       ErrorType::PlatformCreateSurface)};
+  }
+
+  ctx.surface = pInternalState->surface;
+  return {};
+}
+
+input::Keys TranslateKeySymbol(uint32 keySym);
+
+const string cNullInternalStateError = "platform internal state is nullptr";
+const string cXCBConnectionError = "XCB failed to connect";
+const string cXCBFlushError = "XCB failed to flush";
 
 Platform::Platform(const string &applicationName, int32 x, int32 y, int32 width,
                    int32 height, memory::MemoryManager &memManager,

@@ -3,6 +3,19 @@
 
 namespace flatearth::memory {
 
+static inline uint64 NormalizeAlignment(uint64 alignment) {
+  const uint64 minAlign = static_cast<uint64>(sizeof(void*)); // 8 on x64
+  if (alignment < minAlign) alignment = minAlign;
+
+  // ensure power of two
+  if ((alignment & (alignment - 1)) != 0) {
+    uint64 p = 1;
+    while (p < alignment) p <<= 1;
+    alignment = p;
+  }
+  return alignment;
+}
+
 static const char *TagToString(flatearth::memory::Tag tag);
 
 struct MemFmt {
@@ -27,24 +40,32 @@ MemoryManager::MemoryManager() {
 
 void *MemoryManager::RawAlloc(uint64 size, uint64 alignment, Tag tag) {
   void *block = nullptr;
+
 #if defined(_MSC_VER)
   block = _aligned_malloc(size, alignment);
 #else
-  if (posix_memalign(&block, alignment, size) != 0) {
+  alignment = NormalizeAlignment(alignment);
+  const int rc = posix_memalign(&block,
+                               static_cast<size_t>(alignment),
+                               static_cast<size_t>(size));
+  if (rc != 0) {
     block = nullptr;
+    FLOG_ERROR("posix_memalign failed: rc={} ({}) size={} align={} tag={}",
+               rc, std::strerror(rc), size, alignment, static_cast<uint64>(tag));
   }
 #endif
 
   if (!block) {
+#if defined(_MSC_VER)
     FLOG_ERROR("failed to allocate aligned size {} (align {}) for tag {}",
                size, alignment, static_cast<uint64>(tag));
+#endif
     return nullptr;
   }
 
   _memoryState.memoryBlock.totalAllocated += size;
   _memoryState.memoryBlock.taggedAllocations[static_cast<uint64>(tag)] += size;
   _memoryState.allocCount++;
-
   return block;
 }
 

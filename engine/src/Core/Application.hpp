@@ -5,6 +5,7 @@
 #include "Core/Event.hpp"
 #include "Core/Input.hpp"
 #include "Platform/Platform.hpp"
+#include "Renderer/RendererFrontend.hpp"
 
 namespace flatearth {
 
@@ -23,6 +24,7 @@ private:
   memory::MemoryManager _memoryManager;
   event::EventManager _eventManager;
   input::InputManager _inputManager;
+  renderer::FrontendRenderer _frontendRenderer;
   FePtr<event::IEventListener> _engineListener;
 };
 
