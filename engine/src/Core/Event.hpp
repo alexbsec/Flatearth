@@ -88,6 +88,7 @@ public:
 
 protected:
   virtual ~IEventListener() = default;
+  bool _allInitialized{FeFalse};
 };
 
 class ListenerAdapter : public IEventListener {

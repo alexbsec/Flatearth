@@ -1,7 +1,6 @@
 #include "Game.hpp"
 
-namespace flatearth {
-namespace testsuite {
+namespace flatearth::testbed {
 
 bool GameTest::GameInitialize(flatearth::Game *gameInstance) {
   // FDEBUG("GameTest::GameInitialize() called");
@@ -21,8 +20,9 @@ bool GameTest::GameRender(flatearth::Game *gameInstance, float32 deltaTime) {
   return FeTrue;
 }
 
-void GameTest::GameOnResize(flatearth::Game *gameInstance, uint32 width,
-                            uint32 height) {}
+bool GameTest::GameOnResize(flatearth::Game *gameInstance, uint32 width,
+                            uint32 height) {
+  return FeTrue;
+}
 
 } // namespace testsuite
-} // namespace flatearth

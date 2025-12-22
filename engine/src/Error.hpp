@@ -10,6 +10,10 @@ enum class ErrorType { Unknown,
   EventNotFound,
   EventAlreadyRegistered,
   GameResizeError,
+  GameInitializeError,
+  GameInitializeUndefined,
+  GameUpdateUndefined,
+  GameResizeUndefined,
   NullptrException,
 };
 

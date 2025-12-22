@@ -1,6 +1,7 @@
 #ifndef _FLATEARTH_ENGINE_CORE_APPLICATION_CONFIG_HPP
 #define _FLATEARTH_ENGINE_CORE_APPLICATION_CONFIG_HPP
 
+#include "Core/Clock.hpp"
 #include "Defines.hpp"
 #include "GameTypes.hpp"
 #include "Platform/Platform.hpp"
@@ -24,6 +25,7 @@ struct ApplicationState {
   float64 lastTime;
   platform::PlatformState *platformState;
   ApplicationConfig appConfig;
+  clock::Clock clock;
 
   ApplicationState(Game &game) : gameInstance(game) {}
 };

@@ -1,3 +1,4 @@
+#include "Game.hpp"
 #include "GameTypes.hpp"
 #include <Entrypoint.hpp>
 #include <Core/Logger.hpp>
@@ -5,6 +6,10 @@
 #include <cstdlib>
 
 bool CreateGame(flatearth::Game *outGame) {
+  using namespace flatearth::testbed;
+  outGame->Update = GameTest::GameUpdate;
+  outGame->Initialize = GameTest::GameInitialize;
+  outGame->OnResize = GameTest::GameOnResize;
   return true;
 }
 
