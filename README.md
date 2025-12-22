@@ -114,7 +114,7 @@ sudo pacman -Syu xorg-server xorg-xrandr libx11 libxcb xcb-util xcb-util-wm xcb-
 
 To build on Windows, make sure you have the latest version of MSVC installed if you are not
 compiling the program with clang or GNU. Make sure to also install the C++ Desktop Developer's
-kit for Visual Studio.
+kit for Visual Studio. You must also install Vulkan SDK from https://vulkan.lunarg.com/sdk/home.
 
 ## Building
 
@@ -127,6 +127,11 @@ binaries are going to be placed inside the newly created `./bin` directory.
 
 ### Windows
 
-To build in a Windows machine, just run the batch script `.\build-all.bat` inside
-the developers terminal in Visual Studio. The binaries are going to be placed inside
-the newly created `.\bin` directory.
+To build in a Windows machine, open up Visual Studio and run the command on the root directory
+
+```bat
+ cmake -S . -B build -G "Visual Studio 17 2022" 
+```
+
+This will create the project solution for you. After that, just open up the solution. The 
+compiled binaries and DLLs will be iniside the build directory.
