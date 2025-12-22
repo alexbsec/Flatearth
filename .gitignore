@@ -17,3 +17,13 @@ tests/compile_commands.json
 .nvim.lua
 .github/*
 log.txt
+build/
+
+# Visual Studio
+.vs/
+*.VC.db
+*.VC.VC.opendb
+*.suo
+*.user
+*.userosscache
+*.sln.docstates

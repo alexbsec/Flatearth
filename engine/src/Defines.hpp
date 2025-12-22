@@ -70,7 +70,7 @@ STATIC_ASSERT(sizeof(float64) == 8, "Expected float64 to be 8 bytes");
 #endif
 #elif defined(__unix__)
 #define FEPLATFORM_UNIX 1
-#elif define(_POSIX_VERSION)
+#elif defined(_POSIX_VERSION)
 #define FEPLATFORM_POSIX 1
 #else
 #error "Unknown platform"

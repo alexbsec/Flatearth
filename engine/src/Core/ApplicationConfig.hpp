@@ -9,7 +9,7 @@ namespace flatearth {
 
 struct ApplicationConfig {
   // Window specs
-  int16 windowStartPosX, windowStartPosY, windowStartWidth, windowStartHeight;
+  int32 windowStartPosX, windowStartPosY, windowStartWidth, windowStartHeight;
 
   // Application name
   string name;
@@ -19,8 +19,8 @@ struct ApplicationState {
   Game &gameInstance; 
   bool isRunning;
   bool isSuspended;
-  int16 width;
-  int16 height;
+  int32 width;
+  int32 height;
   float64 lastTime;
   platform::PlatformState *platformState;
   ApplicationConfig appConfig;

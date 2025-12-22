@@ -1,68 +1,125 @@
-############################################################################
-#   SELECTING CMAKE & C++ MINIMUM VERSION
-cmake_minimum_required(VERSION 3.29)
-
-set(CMAKE_CXX_STANDARD 23)
+cmake_minimum_required(VERSION 3.20)
 
 ############################################################################
-#   PROJECT SETUP
-project("Flatearth Testing" LANGUAGES CXX)
+#   PROJECT
+project(FlatearthTestbed LANGUAGES CXX)
 
-# We'll define a variable for our executable name
-set(BINARY_NAME "flatearth_testbed")
-
-############################################################################
-#   INCLUDE DIRECTORIES AND LIBRARIES
-
-# Path to the Flatearth Engine headers
-include_directories("${CMAKE_SOURCE_DIR}/../engine/src")
-
-# Path to the Flatearth shared library
-link_directories("${CMAKE_SOURCE_DIR}/../bin")
+set(BINARY_NAME flatearth_testbed)
 
 ############################################################################
-#   SOURCE FILES
-
-# Add your test source files here
-set(SOURCE_FILES
-    "${CMAKE_SOURCE_DIR}/src/Game.cc"
-    "${CMAKE_SOURCE_DIR}/src/Entrypoint.cc"
+#   SOURCES
+add_executable(${BINARY_NAME}
+    src/Game.cc
+    src/Entrypoint.cc
 )
 
 ############################################################################
-#   EXECUTABLE AND LINKING
+#   LANGUAGE / STANDARD
+# Keep it consistent across compilers.
+set_target_properties(${BINARY_NAME} PROPERTIES
+    CXX_STANDARD 23
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)
 
-# Define the testing executable
-add_executable(${BINARY_NAME} ${SOURCE_FILES})
-
+############################################################################
+#   DEPENDENCIES
 find_package(Vulkan REQUIRED)
 
-# On Unix (excluding MSVC), link X11/XCB
-if(UNIX AND NOT MSVC)
+# ----------------------------------------------------------------------------
+# Flatearth (prebuilt engine lib) for Linux builds where engine is built separately
+# ----------------------------------------------------------------------------
+if(UNIX AND NOT APPLE AND NOT TARGET flatearth)
+    set(FLATEARTH_ENGINE_BUILD_DIR
+        "${CMAKE_CURRENT_LIST_DIR}/../engine/build"
+        CACHE PATH "Path to engine build dir containing libflatearth.so"
+    )
+
+    # Try common output layouts
+    find_library(FLATEARTH_LIB
+        NAMES flatearth libflatearth
+        PATHS
+            "${FLATEARTH_ENGINE_BUILD_DIR}"
+            "${FLATEARTH_ENGINE_BUILD_DIR}/lib"
+            "${CMAKE_CURRENT_LIST_DIR}/../bin"
+        NO_DEFAULT_PATH
+    )
+
+    if(NOT FLATEARTH_LIB)
+        message(FATAL_ERROR
+            "Could not find libflatearth.so in:\n"
+            "  ${FLATEARTH_ENGINE_BUILD_DIR}\n"
+            "  ${FLATEARTH_ENGINE_BUILD_DIR}/lib\n"
+            "Set FLATEARTH_ENGINE_BUILD_DIR accordingly."
+        )
+    endif()
+
+    add_library(flatearth SHARED IMPORTED GLOBAL)
+    set_target_properties(flatearth PROPERTIES
+        IMPORTED_LOCATION "${FLATEARTH_LIB}"
+    )
+
+    # Optional: if you include engine headers from testbed
+    target_include_directories(flatearth INTERFACE
+        "${CMAKE_CURRENT_LIST_DIR}/../engine/src"
+    )
+endif()
+
+target_link_libraries(${BINARY_NAME}
+    PRIVATE
+        flatearth
+        Vulkan::Vulkan
+)
+
+############################################################################
+#   PLATFORM-SPECIFIC (Linux/X11)
+if(UNIX AND NOT APPLE)
+    find_package(X11 REQUIRED)
+
     target_link_libraries(${BINARY_NAME}
         PRIVATE
-            X11
-            xcb
-            X11-xcb
-            xcb-keysyms
-            Vulkan::Vulkan
-            flatearth
+            X11::X11
     )
-elseif(WIN32)
-    if(MSVC)
-        # Add target name to target_compile_options
-        target_compile_options(${BINARY_NAME} PRIVATE /W4 /permissive- /std:c++latest)
-        target_link_libraries(${BINARY_NAME} Vulkan::Vulkan flatearth)
+
+    # xcb bits: prefer pkg-config, fallback to raw link names.
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(XCB REQUIRED IMPORTED_TARGET xcb xcb-keysyms x11-xcb)
+        target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::XCB)
+    else()
+        target_link_libraries(${BINARY_NAME}
+            PRIVATE
+                xcb
+                X11-xcb
+                xcb-keysyms
+        )
     endif()
 endif()
 
-# Place the final executable in the local 'build' directory:
-set_target_properties(${BINARY_NAME} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build"
-)
+############################################################################
+#   WARNINGS / COMPILER OPTIONS
+if(MSVC)
+    target_compile_options(${BINARY_NAME}
+        PRIVATE
+            /W4
+            /permissive-
+            /std:c++latest
+            /Zc:__cplusplus
+    )
+    target_compile_definitions(${BINARY_NAME} PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
+else()
+    target_compile_options(${BINARY_NAME}
+        PRIVATE
+            -Wall
+            -Wextra
+            -Wpedantic
+    )
+endif()
 
-# On Unix-like systems, set the RPATH so it can find flatearth in ../bin
-# (Windows does not typically use RPATH, but it won't hurt to leave it set).
-set_target_properties(${BINARY_NAME} PROPERTIES
-    INSTALL_RPATH "${CMAKE_SOURCE_DIR}/../bin"
+############################################################################
+#   COPY ENGINE LIB NEXT TO TESTBED (post-build)
+add_custom_command(TARGET ${BINARY_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:flatearth>
+        $<TARGET_FILE_DIR:${BINARY_NAME}>
 )

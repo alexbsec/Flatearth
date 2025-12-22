@@ -1,3 +1,4 @@
+#include "Core/Event.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Input.hpp"
 #include "Core/Logger.hpp"
@@ -50,10 +51,11 @@ struct InternalState {
 
 Platform::Platform(const string &applicationName, int32 x, int32 y, int32 width,
                    int32 height, memory::MemoryManager &memManager,
-                   input::InputManager &inputManager)
+                   input::InputManager &inputManager,
+                   event::EventManager &eventManager)
     : _xPos(x), _yPos(y), _width(width), _height(height),
       _applicationName(applicationName), _memoryManager(memManager),
-      _inputManager(inputManager) {
+      _inputManager(inputManager), _eventManager(eventManager) {
   _platState.internalState =
       _memoryManager.Allocate<InternalState>(memory::Tag::Platform);
 }
