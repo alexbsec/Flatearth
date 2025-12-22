@@ -17,6 +17,7 @@ tests/compile_commands.json
 .nvim.lua
 .github/*
 log.txt
+build/*
 
 # Visual Studio
 .vs/
