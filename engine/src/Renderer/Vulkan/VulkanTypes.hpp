@@ -154,7 +154,7 @@ struct Context {
     return -1;
   }
 
-#if defined(FE_DEBUG)
+#if defined(_DEBUG)
   VkDebugUtilsMessengerEXT debugMessenger;
 #endif
 };

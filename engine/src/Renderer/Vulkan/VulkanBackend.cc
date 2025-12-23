@@ -6,6 +6,10 @@
 
 namespace flatearth::renderer::vulkan {
 
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, uint32 messageTypes,
+    const VkDebugUtilsMessengerCallbackDataEXT *callbackData, void *userData);
+
 VulkanBackend::VulkanBackend(memory::MemoryManager &memManager)
     : _memoryManager(memManager), _deviceManager(memManager), _ctx(memManager) {
 }
@@ -48,7 +52,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   requiredExtensions.Push(VK_KHR_SURFACE_EXTENSION_NAME);
   platform::GetRequiredExtNames(&requiredExtensions);
 
-#if defined(FE_DEBUG)
+#if defined(_DEBUG)
   requiredExtensions.Push(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   FLOG_DEBUG("Required extensions:");
   uint32 len = requiredExtensions.Length();
@@ -63,6 +67,51 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   containers::DArray<const char *> requiredValidationLayerNames(_memoryManager);
   uint32 requiredValidationLayerCount = 0;
 
+#if defined(_DEBUG)
+  FLOG_INFO("validation layers enabled. Enumarating...");
+
+  requiredValidationLayerNames.Push("VK_LAYER_KHRONOS_validation");
+  requiredValidationLayerCount = requiredValidationLayerNames.Length();
+
+  // Obtain list of available layers
+  uint32 availableLayerCount = 0;
+  if (auto res = VkCheck(vkEnumerateInstanceLayerProperties(&availableLayerCount, nullptr)); !res.has_value()) {
+    FLOG_ERROR("failed to enumerate instance layer porperty count");
+    return FeErr{res.error()};
+  }
+
+  containers::DArray<VkLayerProperties> availableLayers(_memoryManager);
+  availableLayers.Reserve(availableLayerCount);
+  if (auto res = VkCheck(vkEnumerateInstanceLayerProperties(&availableLayerCount,
+                                              availableLayers.Data())); !res.has_value()) {
+    FLOG_ERROR("failed to enumerate instance layer properties");
+    return FeErr{res.error()};
+  }
+
+  // Verify if all layers are available
+  for (uint32 i = 0; i < requiredValidationLayerCount; i++) {
+    FLOG_INFO("Searching for layer: {}...", requiredValidationLayerNames[i]);
+    bool found = FeFalse;
+    for (uint32 j = 0; j < availableLayerCount; j++) {
+      string reqValLayerStr(requiredValidationLayerNames[i]);
+      string availableLayerStr(availableLayers[j].layerName);
+      if (reqValLayerStr == availableLayerStr) {
+        found = FeTrue;
+        FLOG_INFO("Found!");
+        break;
+      }
+    }
+
+    if (!found) {
+      FLOG_FATAL("Required validation layer is missing: {}",
+             requiredValidationLayerNames[i]);
+      return FeFalse;
+    }
+  }
+
+  FLOG_INFO("All required validation layers were found");
+#endif
+
   createInfo.enabledLayerCount = requiredValidationLayerCount;
   createInfo.ppEnabledLayerNames = requiredValidationLayerNames.Data();
 
@@ -72,6 +121,34 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
     FLOG_ERROR("failed to create Vulkan instance");
     return FeErr{res.error()};
   }
+
+#if defined(_DEBUG)
+  FLOG_DEBUG("Creating Vulkan debugger...");
+  uint32 logSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
+                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+
+  VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {
+      VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
+
+  debugCreateInfo.messageSeverity = logSeverity;
+  debugCreateInfo.messageType =
+      VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+      VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
+      VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+  debugCreateInfo.pfnUserCallback = DebugCallback;
+
+  PFN_vkCreateDebugUtilsMessengerEXT func =
+      (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+          _ctx.instance, "vkCreateDebugUtilsMessengerEXT");
+  if (auto res = VkCheck(func(_ctx.instance, &debugCreateInfo, _ctx.pAllocator,
+                &_ctx.debugMessenger)); !res.has_value()) {
+    FLOG_ERROR("failed to get instance proc address");
+    return FeErr{res.error()};
+  }
+  FLOG_DEBUG("Vulkan debugger created");
+#endif
 
   FLOG_DEBUG("creating Vulkan surface");
   if (auto res = platform::CreateVulkanSurface(appState->platformState, _ctx);
@@ -100,6 +177,30 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
 
 FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
   return FeTrue;
+}
+
+
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, uint32 messageTypes,
+    const VkDebugUtilsMessengerCallbackDataEXT *callbackData, void *userData) {
+  switch (messageSeverity) {
+  default:
+  case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+    FLOG_ERROR(callbackData->pMessage);
+    break;
+  case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+    FLOG_WARN(callbackData->pMessage);
+    break;
+  case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+    FLOG_INFO(callbackData->pMessage);
+    break;
+  case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+    FLOG_TRACE(callbackData->pMessage);
+    break;
+  }
+
+  // This is a must
+  return VK_FALSE;
 }
 
 } // namespace flatearth::renderer::vulkan
