@@ -13,7 +13,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
 VulkanBackend::VulkanBackend(memory::MemoryManager &memManager)
     : _memoryManager(memManager), _deviceManager(memManager),
       _swapchainManager(memManager, _imageManager),
-      _renderpassManager(memManager), _ctx(memManager) {}
+      _renderpassManager(memManager), _cmdBufferManager(memManager),
+      _ctx(memManager) {}
 
 VulkanBackend::~VulkanBackend() {
   auto destroyRes =
