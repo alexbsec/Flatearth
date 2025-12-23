@@ -11,8 +11,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
     const VkDebugUtilsMessengerCallbackDataEXT *callbackData, void *userData);
 
 VulkanBackend::VulkanBackend(memory::MemoryManager &memManager)
-    : _memoryManager(memManager), _deviceManager(memManager), _ctx(memManager) {
-}
+    : _memoryManager(memManager), _deviceManager(memManager),
+      _swapchainManager(memManager), _ctx(memManager) {}
 
 VulkanBackend::~VulkanBackend() {
   auto destroyRes = _deviceManager.DestroyDevice(_ctx);
@@ -75,15 +75,18 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
 
   // Obtain list of available layers
   uint32 availableLayerCount = 0;
-  if (auto res = VkCheck(vkEnumerateInstanceLayerProperties(&availableLayerCount, nullptr)); !res.has_value()) {
+  if (auto res = VkCheck(
+          vkEnumerateInstanceLayerProperties(&availableLayerCount, nullptr));
+      !res.has_value()) {
     FLOG_ERROR("failed to enumerate instance layer porperty count");
     return FeErr{res.error()};
   }
 
   containers::DArray<VkLayerProperties> availableLayers(_memoryManager);
   availableLayers.Reserve(availableLayerCount);
-  if (auto res = VkCheck(vkEnumerateInstanceLayerProperties(&availableLayerCount,
-                                              availableLayers.Data())); !res.has_value()) {
+  if (auto res = VkCheck(vkEnumerateInstanceLayerProperties(
+          &availableLayerCount, availableLayers.Data()));
+      !res.has_value()) {
     FLOG_ERROR("failed to enumerate instance layer properties");
     return FeErr{res.error()};
   }
@@ -104,7 +107,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
 
     if (!found) {
       FLOG_FATAL("Required validation layer is missing: {}",
-             requiredValidationLayerNames[i]);
+                 requiredValidationLayerNames[i]);
       return FeFalse;
     }
   }
@@ -143,7 +146,8 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
       (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
           _ctx.instance, "vkCreateDebugUtilsMessengerEXT");
   if (auto res = VkCheck(func(_ctx.instance, &debugCreateInfo, _ctx.pAllocator,
-                &_ctx.debugMessenger)); !res.has_value()) {
+                              &_ctx.debugMessenger));
+      !res.has_value()) {
     FLOG_ERROR("failed to get instance proc address");
     return FeErr{res.error()};
   }
@@ -178,7 +182,6 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
 FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
   return FeTrue;
 }
-
 
 VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, uint32 messageTypes,

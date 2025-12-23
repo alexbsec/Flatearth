@@ -10,7 +10,7 @@ namespace flatearth::renderer {
 FrontendRenderer::FrontendRenderer(ApplicationState *appState,
                                    memory::MemoryManager &memManager)
     : _applicationName(appState->appConfig.name), _memoryManager(memManager),
-      _appState(appState) {}
+      _pAppState(appState) {}
 
 FeExpect<bool, Error>
 FrontendRenderer::Initialize() {
@@ -29,7 +29,7 @@ FrontendRenderer::Initialize() {
   }
 
   _pActiveBackend = _pBackends[vulkanIndex].get();
-  auto backendInitRes = _pActiveBackend->Initialize(_appState);
+  auto backendInitRes = _pActiveBackend->Initialize(_pAppState);
   if (!backendInitRes.has_value()) {
     FLOG_ERROR("failed to initialize backend renderer");
     return FeErr{backendInitRes.error()};

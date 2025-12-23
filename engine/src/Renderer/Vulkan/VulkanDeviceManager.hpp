@@ -27,11 +27,6 @@ struct PhysicalDeviceQueueFamilyInfo {
   uint32 transferFamilyIndex;
 };
 
-FeExpect<void, Error> QuerySwapchainSupport(VkPhysicalDevice device,
-                                            VkSurfaceKHR surface,
-                                            SwapchainSupportInfo &outInfo,
-                                            memory::MemoryManager &memManager);
-
 class DeviceManager {
 public:
   explicit DeviceManager(memory::MemoryManager &memManager);

@@ -28,7 +28,7 @@ private:
   IRendererBackend *_pActiveBackend;
 
   memory::MemoryManager &_memoryManager;
-  ApplicationState *_appState;
+  ApplicationState *_pAppState;
   string _applicationName;
 };
 

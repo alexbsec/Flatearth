@@ -5,6 +5,7 @@
 #include "Core/FeMemory.hpp"
 #include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/VulkanDeviceManager.hpp"
+#include "Renderer/Vulkan/VulkanSwapchainManager.hpp"
 
 namespace flatearth::renderer::vulkan {
 
@@ -18,13 +19,13 @@ public:
   FeExpect<bool, Error> BeginFrame(float32 deltaTime) override;
   FeExpect<bool, Error> EndFrame(float32 deltaTime) override;
 
-
 private:
   memory::MemoryManager &_memoryManager;
   DeviceManager _deviceManager;
+  SwapchainManager _swapchainManager;
   Context _ctx;
 
-  uint32 _cachedFrameBufferWidth, _cachedFrameBufferHeight;
+  uint32 _cachedFrameBufferWidth{0}, _cachedFrameBufferHeight{0};
 };
 
 }
