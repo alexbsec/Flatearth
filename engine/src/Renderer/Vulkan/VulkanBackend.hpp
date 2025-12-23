@@ -7,6 +7,7 @@
 #include "Renderer/Vulkan/VulkanDeviceManager.hpp"
 #include "Renderer/Vulkan/VulkanImager.hpp"
 #include "Renderer/Vulkan/VulkanSwapchainManager.hpp"
+#include "Renderer/Vulkan/VulkanRenderpassManager.hpp"
 
 namespace flatearth::renderer::vulkan {
 
@@ -25,6 +26,7 @@ private:
   DeviceManager _deviceManager;
   SwapchainManager _swapchainManager;
   ImageManager _imageManager;
+  RenderpassManager _renderpassManager;
   Context _ctx;
 
   uint32 _cachedFrameBufferWidth{0}, _cachedFrameBufferHeight{0};

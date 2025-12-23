@@ -12,10 +12,19 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
 
 VulkanBackend::VulkanBackend(memory::MemoryManager &memManager)
     : _memoryManager(memManager), _deviceManager(memManager),
-      _swapchainManager(memManager, _imageManager), _ctx(memManager) {}
+      _swapchainManager(memManager, _imageManager),
+      _renderpassManager(memManager), _ctx(memManager) {}
 
 VulkanBackend::~VulkanBackend() {
-  auto destroyRes = _swapchainManager.DestroySwapchain(_ctx, &_ctx.swapchain);
+  auto destroyRes =
+      _renderpassManager.DestroyRenderpass(_ctx, &_ctx.mainRenderpass);
+  if (!destroyRes.has_value()) {
+    FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}",
+               destroyRes.error().message);
+    return;
+  }
+
+  destroyRes = _swapchainManager.DestroySwapchain(_ctx, &_ctx.swapchain);
   if (!destroyRes.has_value()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}",
                destroyRes.error().message);
@@ -132,7 +141,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
     return FeErr{res.error()};
   }
 
-#if defined(FE_DEBUG)
+#if defined(_DEBUG)
   FLOG_DEBUG("Creating Vulkan debugger...");
   uint32 logSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
                        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
@@ -176,13 +185,23 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   }
 
   FLOG_DEBUG("creating swapchain");
-  auto res = _swapchainManager.CreateSwapchain(
+  auto swapRes = _swapchainManager.CreateSwapchain(
       _ctx, &_ctx.swapchain, _ctx.framebufferWidth, _ctx.framebufferHeight);
-  if (!res.has_value()) {
+  if (!swapRes.has_value()) {
     FLOG_ERROR("failed to create swapchain");
-    return FeErr{res.error()};
+    return FeErr{swapRes.error()};
   }
   FLOG_INFO("swapchain created successfully");
+
+  FLOG_DEBUG("creating renderpass");
+  auto rpassRes = _renderpassManager.CreateRenderpass(
+      _ctx, &_ctx.mainRenderpass, 0, 0, _ctx.framebufferWidth,
+      _ctx.framebufferHeight, 1.0f, 1.0f, 0.3f, 1.0f, 1.0f, 0);
+  if (!rpassRes.has_value()) {
+    FLOG_ERROR("failed to create renderpass");
+    return FeErr{rpassRes.error()};
+  }
+  FLOG_INFO("renderpass created successfully");
 
   return FeTrue;
 }
