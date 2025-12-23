@@ -1,7 +1,7 @@
 #include "VulkanDeviceManager.hpp"
-#include "VulkanSwapchainManager.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
+#include "VulkanSwapchainManager.hpp"
 #include "VulkanTypes.hpp"
 #include <vulkan/vulkan_core.h>
 
@@ -9,6 +9,30 @@ namespace flatearth::renderer::vulkan {
 
 static constexpr uint32 scMaxQueueTypes = 4;
 
+FeExpect<void, Error> DetectDeviceDepthFormat(Device &device) {
+  const uint64 candidateCount = 3;
+  VkFormat candidates[candidateCount] = {VK_FORMAT_D32_SFLOAT,
+                                         VK_FORMAT_D32_SFLOAT_S8_UINT,
+                                         VK_FORMAT_D24_UNORM_S8_UINT};
+
+  uint32 flags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+  for (uint64 i = 0; i < candidateCount; i++) {
+    VkFormatProperties props;
+    vkGetPhysicalDeviceFormatProperties(device.physicalDevice, candidates[i],
+                                        &props);
+
+    if ((props.linearTilingFeatures & flags) == flags) {
+      device.depthFormat = candidates[i];
+      return {};
+    } else if ((props.optimalTilingFeatures & flags) == flags) {
+      device.depthFormat = candidates[i];
+      return {};
+    }
+  }
+
+  return FeErr{Error("no candidate was selected for the device depth format",
+                     ErrorType::RendererVulkanError)};
+}
 
 DeviceManager::DeviceManager(memory::MemoryManager &memManager)
     : _memoryManager(memManager) {}
@@ -369,7 +393,7 @@ bool DeviceManager::PhysicalDeviceMeetsRequirements(
 
   // --- Device extensions -----------------------------------------------------
   if (requirements->deviceExtNames.Empty()) {
-    return FeTrue; 
+    return FeTrue;
   }
 
   uint32 extCount = 0;

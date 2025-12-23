@@ -81,6 +81,7 @@ struct Swapchain {
   VkImage *pImages;
   VkImageView *pViews;
   Image depthAttachment;
+  uint32 imageCount;
   containers::DArray<FrameBuffer> framebuffers;
 
   explicit Swapchain(memory::MemoryManager &memManager)
@@ -158,6 +159,8 @@ struct Context {
   VkDebugUtilsMessengerEXT debugMessenger;
 #endif
 };
+
+FeExpect<void, Error> DetectDeviceDepthFormat(Device &device);
 
 } // namespace flatearth::renderer::vulkan
 

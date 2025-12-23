@@ -14,11 +14,11 @@ class SwapchainManager {
 public:
   explicit SwapchainManager(memory::MemoryManager &memManager);
 
-  FeExpect<void, Error> CreateSwapchain(Context &ctx, uint32 width,
-                                        uint32 height);
-  FeExpect<void, Error> RecreateSwapchain(Context &ctx, uint32 width,
-                                          uint32 height);
-  FeExpect<void, Error> DestroySwapchain(Context &ctx);
+  FeExpect<void, Error> CreateSwapchain(Context &ctx, Swapchain *pSwapchain,
+                                        uint32 width, uint32 height);
+  FeExpect<void, Error> RecreateSwapchain(Context &ctx, Swapchain *pSwapchain,
+                                          uint32 width, uint32 height);
+  FeExpect<void, Error> DestroySwapchain(Context &ctx, Swapchain *pSwapchain);
 
   FeExpect<void, Error> AcquireNextImage(Context &ctx, uint64 timeoutNs,
                                          VkSemaphore imageAvailableSemaphore,
@@ -28,6 +28,11 @@ public:
                                          VkQueue presentQueue,
                                          VkSemaphore renderCompleteSemaphore,
                                          uint32 presentImageIndex);
+
+private:
+  FeExpect<void, Error> CreateLogic(Context &ctx, Swapchain *pSwapchain,
+                                    uint32 width, uint32 height);
+  FeExpect<void, Error> DestroyLogic(Context &ctx, Swapchain *pSwapchain);
 
 private:
   memory::MemoryManager &_memoryManager;

@@ -27,6 +27,7 @@ struct PhysicalDeviceQueueFamilyInfo {
   uint32 transferFamilyIndex;
 };
 
+
 class DeviceManager {
 public:
   explicit DeviceManager(memory::MemoryManager &memManager);

@@ -157,4 +157,7 @@ inline T *FeCastPermissive(void *ptr) {
   return reinterpret_cast<T *>(ptr);
 }
 
+#define FECLAMP(value, min, max)                                                \
+  (value <= min) ? min : (value >= max) ? max : value;
+
 #endif // _FLATEARTH_ENGINE_DEFINITIONS_HP
