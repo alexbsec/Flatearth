@@ -116,6 +116,15 @@ else()
     )
 endif()
 
+target_compile_options(flatearth_testbed PRIVATE
+    -fsanitize=address,undefined
+    -fno-omit-frame-pointer
+)
+
+target_link_options(flatearth_testbed PRIVATE
+    -fsanitize=address,undefined
+)
+
 ############################################################################
 #   COPY ENGINE LIB NEXT TO TESTBED (post-build)
 add_custom_command(TARGET ${BINARY_NAME} POST_BUILD

@@ -2,7 +2,9 @@
 #define _FLATEARTH_ENGINE_RENDERER_VULKAN_SWAPCHAIN_MANAGER_HPP
 
 #include "Core/FeMemory.hpp"
+#include "Renderer/Vulkan/VulkanImager.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
+
 namespace flatearth::renderer::vulkan {
 
 FeExpect<void, Error> QuerySwapchainSupport(VkPhysicalDevice device,
@@ -12,12 +14,13 @@ FeExpect<void, Error> QuerySwapchainSupport(VkPhysicalDevice device,
 
 class SwapchainManager {
 public:
-  explicit SwapchainManager(memory::MemoryManager &memManager);
+  explicit SwapchainManager(memory::MemoryManager &memManager,
+                            ImageManager &imgManager);
 
   FeExpect<void, Error> CreateSwapchain(Context &ctx, Swapchain *pSwapchain,
                                         uint32 width, uint32 height);
-  FeExpect<void, Error> RecreateSwapchain(Context &ctx, Swapchain *pSwapchain,
-                                          uint32 width, uint32 height);
+  FeExpect<bool, Error> RecreateSwapchain(Context &ctx, uint32 &width,
+                                          uint32 &height);
   FeExpect<void, Error> DestroySwapchain(Context &ctx, Swapchain *pSwapchain);
 
   FeExpect<void, Error> AcquireNextImage(Context &ctx, uint64 timeoutNs,
@@ -33,9 +36,12 @@ private:
   FeExpect<void, Error> CreateLogic(Context &ctx, Swapchain *pSwapchain,
                                     uint32 width, uint32 height);
   FeExpect<void, Error> DestroyLogic(Context &ctx, Swapchain *pSwapchain);
+  FeExpect<void, Error> RecreateLogic(Context &ctx, Swapchain *pSwapchain,
+                                      uint32 width, uint32 height);
 
 private:
   memory::MemoryManager &_memoryManager;
+  ImageManager &_imageManager;
 };
 
 } // namespace flatearth::renderer::vulkan

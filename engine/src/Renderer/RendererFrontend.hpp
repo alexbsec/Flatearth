@@ -12,7 +12,7 @@ class FrontendRenderer {
 public:
   explicit FrontendRenderer(ApplicationState *appState,
                             memory::MemoryManager &memManager);
-  ~FrontendRenderer() = default;
+  ~FrontendRenderer();
 
   FeExpect<bool, Error> Initialize();
   FeExpect<bool, Error> BeginFrame(float32 deltaTime);

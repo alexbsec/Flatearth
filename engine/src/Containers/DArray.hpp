@@ -22,28 +22,24 @@ struct DArrayRawDeleter {
   }
 };
 
-template <typename T>
-class DArray {
+template <typename T> class DArray {
+  static_assert(std::is_trivially_copyable_v<T>,
+                "DArray<T> is byte-wise; T must be trivially copyable");
+
 public:
   static constexpr uint64 scDArrayDefaultSize = 1;
-  static constexpr uint8  scDArrayResizeFactor = 2;
+  static constexpr uint8 scDArrayResizeFactor = 2;
 
 public:
   explicit DArray(memory::MemoryManager &memManager, uint64 stride = sizeof(T))
-      : _capacity(scDArrayDefaultSize),
-        _length(0),
-        _stride(stride),
-        _bufferSize(0),
-        _memoryManager(memManager) {
+      : _capacity(scDArrayDefaultSize), _length(0), _stride(stride),
+        _bufferSize(0), _memoryManager(memManager) {
     InitDArray();
   }
 
   explicit DArray(memory::MemoryManager &memManager, uint64 capacity,
                   uint64 stride = sizeof(T))
-      : _capacity(capacity),
-        _length(0),
-        _stride(stride),
-        _bufferSize(0),
+      : _capacity(capacity), _length(0), _stride(stride), _bufferSize(0),
         _memoryManager(memManager) {
     InitDArray();
   }
@@ -52,16 +48,16 @@ public:
 
   uint64 Capacity() const { return _capacity; }
   uint64 Length() const { return _length; }
-  uint64 Stride()  const { return _stride; }
+  uint64 Stride() const { return _stride; }
 
   void Reserve(uint64 size) {
-    if (size <= _capacity || size < _length) { 
+    if (size <= _capacity || size < _length) {
       return;
     }
 
     uint64 newBufferSize = size * _stride;
-    std::byte *newMem = static_cast<std::byte *>(
-        _memoryManager.RawAlloc(newBufferSize, alignof(T), memory::Tag::DArray));
+    std::byte *newMem = static_cast<std::byte *>(_memoryManager.RawAlloc(
+        newBufferSize, alignof(T), memory::Tag::DArray));
 
     // copy existing bytes (POD semantics)
     if (_array) {
@@ -82,12 +78,13 @@ public:
       Reserve(_capacity * scDArrayResizeFactor);
     }
 
-    std::memcpy(AddressOf(_length), &element, _stride); 
+    std::memcpy(AddressOf(_length), &element, _stride);
     ++_length;
   }
 
   void Pop() {
-    if (_length == 0) return;
+    if (_length == 0)
+      return;
     --_length;
   }
 
@@ -100,10 +97,8 @@ public:
       Reserve(_capacity * scDArrayResizeFactor);
     }
 
-    std::memmove(
-        AddressOf(index + 1),
-        AddressOf(index),
-        (_length - index) * _stride);
+    std::memmove(AddressOf(index + 1), AddressOf(index),
+                 (_length - index) * _stride);
 
     std::memcpy(AddressOf(index), &element, _stride);
     ++_length;
@@ -115,10 +110,8 @@ public:
       return FeErr{Error("PopAt: index out of bounds")};
     }
 
-    std::memmove(
-        AddressOf(index),
-        AddressOf(index + 1),
-        (_length - index - 1) * _stride);
+    std::memmove(AddressOf(index), AddressOf(index + 1),
+                 (_length - index - 1) * _stride);
 
     --_length;
     return {};
@@ -127,7 +120,9 @@ public:
   void Clear() { _length = 0; }
 
   T *Data() noexcept { return reinterpret_cast<T *>(_array.get()); }
-  const T *Data() const noexcept { return reinterpret_cast<const T *>(_array.get()); }
+  const T *Data() const noexcept {
+    return reinterpret_cast<const T *>(_array.get());
+  }
 
   T &operator[](uint64 index) { return *AddressOf(index); }
   const T &operator[](uint64 index) const { return *AddressOf(index); }
@@ -142,9 +137,8 @@ private:
     std::byte *mem = static_cast<std::byte *>(
         _memoryManager.RawAlloc(_bufferSize, alignof(T), memory::Tag::DArray));
 
-    _array = RawPtr(
-        mem,
-        DArrayRawDeleter{&_memoryManager, _bufferSize, memory::Tag::DArray});
+    _array = RawPtr(mem, DArrayRawDeleter{&_memoryManager, _bufferSize,
+                                          memory::Tag::DArray});
   }
 
   T *AddressOf(uint64 index) noexcept {

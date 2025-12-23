@@ -45,6 +45,7 @@ struct SystemState {
 class MemoryManager {
 public:
   MemoryManager();
+  ~MemoryManager();
 
   void *RawAlloc(uint64 size, uint64 alignment, Tag tag);
   void RawFree(void *block, uint64 size, Tag tag);

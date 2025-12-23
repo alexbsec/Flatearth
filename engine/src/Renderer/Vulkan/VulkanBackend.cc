@@ -12,17 +12,24 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
 
 VulkanBackend::VulkanBackend(memory::MemoryManager &memManager)
     : _memoryManager(memManager), _deviceManager(memManager),
-      _swapchainManager(memManager), _ctx(memManager) {}
+      _swapchainManager(memManager, _imageManager), _ctx(memManager) {}
 
 VulkanBackend::~VulkanBackend() {
-  auto destroyRes = _deviceManager.DestroyDevice(_ctx);
+  auto destroyRes = _swapchainManager.DestroySwapchain(_ctx, &_ctx.swapchain);
   if (!destroyRes.has_value()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}",
                destroyRes.error().message);
     return;
   }
 
-  FLOG_INFO("Vulkan backend exitted gracefully");
+  destroyRes = _deviceManager.DestroyDevice(_ctx);
+  if (!destroyRes.has_value()) {
+    FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}",
+               destroyRes.error().message);
+    return;
+  }
+
+  FLOG_INFO("Vulkan backend exited gracefully");
 }
 
 FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
@@ -125,7 +132,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
     return FeErr{res.error()};
   }
 
-#if defined(_DEBUG)
+#if defined(FE_DEBUG)
   FLOG_DEBUG("Creating Vulkan debugger...");
   uint32 logSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
                        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
@@ -167,6 +174,15 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
     FLOG_ERROR("failed to create device");
     return FeErr{deviceRes.error()};
   }
+
+  FLOG_DEBUG("creating swapchain");
+  auto res = _swapchainManager.CreateSwapchain(
+      _ctx, &_ctx.swapchain, _ctx.framebufferWidth, _ctx.framebufferHeight);
+  if (!res.has_value()) {
+    FLOG_ERROR("failed to create swapchain");
+    return FeErr{res.error()};
+  }
+  FLOG_INFO("swapchain created successfully");
 
   return FeTrue;
 }

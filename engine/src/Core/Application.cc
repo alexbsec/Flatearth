@@ -19,6 +19,10 @@ Engine::Engine(Game &game)
           memory::Tag::Application, _eventManager, _appState);
 }
 
+Engine::~Engine() {
+  FLOG_INFO("engine shutdown gracefully");
+}
+
 FeExpect<void, Error> Engine::Initialize() {
   FILE_LOGGING(FeTrue);
   if (auto checkRes = CheckGamePrerequisites(); !checkRes.has_value()) {

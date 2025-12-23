@@ -4,11 +4,18 @@ set -e  # Exit on any error
 
 type="Debug"
 
+
+SAN_FLAGS=""
+
 # Accept user argument: debug/release
 if [[ "$1" =~ ^([Dd]ebug)$ ]]; then
     type="Debug"
 elif [[ "$1" =~ ^([Rr]elease)$ ]]; then
     type="Release"
+fi
+
+if [[ "$type" == "Debug" ]]; then
+    SAN_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g"
 fi
 
 buildDir="./build"
@@ -49,6 +56,8 @@ fi
 echo -e "${GREEN}Creating compile_commands.json...${RESET}"
 cmake -DCMAKE_BUILD_TYPE=$type \
       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+      -DCMAKE_CXX_FLAGS_DEBUG="$SAN_FLAGS" \
+      -DCMAKE_CXX_FLAGS_DEBUG="$SAN_FLAGS" \
       -S . \
       -B "$buildDir"
 

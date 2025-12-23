@@ -12,6 +12,10 @@ FrontendRenderer::FrontendRenderer(ApplicationState *appState,
     : _applicationName(appState->appConfig.name), _memoryManager(memManager),
       _pAppState(appState) {}
 
+FrontendRenderer::~FrontendRenderer() {
+  FLOG_INFO("frontend renderer exited gracefully");
+}
+
 FeExpect<bool, Error>
 FrontendRenderer::Initialize() {
   auto backendsRes = MakeBackends();

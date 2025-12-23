@@ -38,6 +38,10 @@ MemoryManager::MemoryManager() {
   _memoryState.memoryBlock.taggedAllocations.fill(0);
 }
 
+MemoryManager::~MemoryManager() {
+  FLOG_INFO("memory manager exited gracefully");
+}
+
 void *MemoryManager::RawAlloc(uint64 size, uint64 alignment, Tag tag) {
   void *block = nullptr;
 

@@ -20,11 +20,14 @@ inline FeExpect<void, Error> VkCheck(VkResult result) {
 }
 
 struct SwapchainSupportInfo {
-  VkSurfaceCapabilitiesKHR capabilities;
-  uint32 formatCount;
-  VkSurfaceFormatKHR *pFormats;
-  uint32 presentModeCount;
-  VkPresentModeKHR *pPresentMode;
+  VkSurfaceCapabilitiesKHR capabilities{};
+  uint32 formatCount{0};
+  VkSurfaceFormatKHR* pFormats{nullptr};
+  uint32 formatsCapacity{0};
+
+  uint32 presentModeCount{0};
+  VkPresentModeKHR* pPresentMode{nullptr};
+  uint32 presentModesCapacity{0};
 };
 
 struct Device {
@@ -78,10 +81,12 @@ struct Swapchain {
   VkSwapchainKHR handle;
   VkSurfaceFormatKHR imageFormat;
   uint8 maxFrames;
-  VkImage *pImages;
-  VkImageView *pViews;
+  VkImage *pImages{nullptr};
+  VkImageView *pViews{nullptr};
   Image depthAttachment;
   uint32 imageCount;
+  uint32 viewsCapacity;
+  uint32 imagesCapacity;
   containers::DArray<FrameBuffer> framebuffers;
 
   explicit Swapchain(memory::MemoryManager &memManager)

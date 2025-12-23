@@ -72,6 +72,8 @@ FeExpect<void, Error> DeviceManager::CreateDevice(Context &ctx) {
   AddUniqueQueueIndex(ctx.device.transferQueueIndex);
 
   VkDeviceQueueCreateInfo queueCreateInfo[indexCount];
+  float32 queuePrio1[1] = {1.0f};
+  float32 queuePrio2[2] = {1.0f, 1.0f};
   for (uint32 i = 0; i < indexCount; i++) {
     queueCreateInfo[i].sType = {VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
     queueCreateInfo[i].queueFamilyIndex = indices[i];
@@ -83,7 +85,8 @@ FeExpect<void, Error> DeviceManager::CreateDevice(Context &ctx) {
     queueCreateInfo[i].flags = 0;
     queueCreateInfo[i].pNext = nullptr;
     float32 queuePriority = 1.0f;
-    queueCreateInfo[i].pQueuePriorities = &queuePriority;
+    queueCreateInfo[i].pQueuePriorities =
+        (queueCreateInfo[i].queueCount == 2) ? queuePrio2 : queuePrio1;
   }
 
   // TODO: make this not hardcoded
@@ -109,6 +112,7 @@ FeExpect<void, Error> DeviceManager::CreateDevice(Context &ctx) {
   }
 
   FLOG_INFO("logical device created");
+  FLOG_INFO("creating graphics command pool");
 
   VkCommandPoolCreateInfo poolCreateInfo = {
       VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
@@ -287,17 +291,17 @@ bool DeviceManager::SelectPhysicalDevice(Context &ctx) {
 
 bool DeviceManager::PhysicalDeviceMeetsRequirements(
     VkPhysicalDevice device, VkSurfaceKHR surface,
-    const VkPhysicalDeviceProperties *properties,
-    const VkPhysicalDeviceFeatures *features,
-    const PhysicalDeviceRequirements *requirements,
-    PhysicalDeviceQueueFamilyInfo *outQueueInfo,
-    SwapchainSupportInfo *outSwapchainInfo) {
+    const VkPhysicalDeviceProperties* properties,
+    const VkPhysicalDeviceFeatures* features,
+    const PhysicalDeviceRequirements* requirements,
+    PhysicalDeviceQueueFamilyInfo* outQueueInfo,
+    SwapchainSupportInfo* outSwapchainInfo) {
 
   // Reset outputs
-  outQueueInfo->graphicsFamilyIndex = -1;
-  outQueueInfo->computeFamilyIndex = -1;
-  outQueueInfo->presentFamilyIndex = -1;
-  outQueueInfo->transferFamilyIndex = -1;
+  outQueueInfo->graphicsFamilyIndex  = -1;
+  outQueueInfo->computeFamilyIndex   = -1;
+  outQueueInfo->presentFamilyIndex   = -1;
+  outQueueInfo->transferFamilyIndex  = -1;
 
   // --- GPU type requirement --------------------------------------------------
   if (requirements->discreteGPU &&
@@ -309,61 +313,111 @@ bool DeviceManager::PhysicalDeviceMeetsRequirements(
   // --- Queue family discovery ------------------------------------------------
   uint32 queueFamilyCount = 0;
   vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+  if (queueFamilyCount == 0) {
+    FLOG_INFO("device exposes 0 queue families, skipping.");
+    return FeFalse;
+  }
 
-  VkQueueFamilyProperties queueFamilies[queueFamilyCount];
-  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
-                                           queueFamilies);
+  VkQueueFamilyProperties* queueFamilies =
+      FeCast<VkQueueFamilyProperties>(_memoryManager.RawAlloc(
+          sizeof(VkQueueFamilyProperties) * queueFamilyCount,
+          alignof(VkQueueFamilyProperties),
+          memory::Tag::Renderer));
 
-  FLOG_INFO("Graphics | Present | Compute | Transfer | Name");
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies);
 
-  uint8 minTransferScore = 255;
+  int32 graphicsFirst = -1;
+  int32 presentFirst  = -1;
+
+  int32 graphicsPresent = -1;
+
+  int32 computeAny = -1;
+  int32 computeNoGraphics = -1;
+
+  int32 transferAny = -1;
+  int32 transferDedicated = -1; // transfer && !graphics && !compute
 
   for (uint32 i = 0; i < queueFamilyCount; ++i) {
-    uint8 score = 0;
+    const VkQueueFlags flags = queueFamilies[i].queueFlags;
 
-    if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-      outQueueInfo->graphicsFamilyIndex = i;
-      ++score;
-    }
-
-    if (queueFamilies[i].queueFlags & VK_QUEUE_COMPUTE_BIT) {
-      outQueueInfo->computeFamilyIndex = i;
-      ++score;
-    }
-
-    if (queueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT &&
-        score <= minTransferScore) {
-      minTransferScore = score;
-      outQueueInfo->transferFamilyIndex = i;
-    }
+    const bool hasGraphics = (flags & VK_QUEUE_GRAPHICS_BIT) != 0;
+    const bool hasCompute  = (flags & VK_QUEUE_COMPUTE_BIT)  != 0;
+    const bool hasTransfer = (flags & VK_QUEUE_TRANSFER_BIT) != 0;
 
     VkBool32 supportsPresent = VK_FALSE;
-    auto res = VkCheck(vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface,
-                                                            &supportsPresent));
-
-    if (!res.has_value()) {
+    auto presRes = VkCheck(vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &supportsPresent));
+    if (!presRes.has_value()) {
       FLOG_FATAL("failed to get physical device surface support: {}",
-                 res.error().message);
+                 presRes.error().message);
+      _memoryManager.RawFree(FeCast<std::byte>(queueFamilies),
+                             sizeof(VkQueueFamilyProperties) * queueFamilyCount,
+                             memory::Tag::Renderer);
       return FeFalse;
     }
 
-    if (supportsPresent) {
-      outQueueInfo->presentFamilyIndex = i;
+    // Prefer a single family that supports both graphics + present
+    if (hasGraphics && supportsPresent && graphicsPresent == -1) {
+      graphicsPresent = (int32)i;
+    }
+
+    if (hasGraphics && graphicsFirst == -1) {
+      graphicsFirst = (int32)i;
+    }
+
+    if (supportsPresent && presentFirst == -1) {
+      presentFirst = (int32)i;
+    }
+
+    // Compute: prefer compute-only (no graphics)
+    if (hasCompute) {
+      if (computeAny == -1) computeAny = (int32)i;
+      if (!hasGraphics && computeNoGraphics == -1) computeNoGraphics = (int32)i;
+    }
+
+    // Transfer: prefer transfer-only (no graphics/compute)
+    if (hasTransfer) {
+      if (transferAny == -1) transferAny = (int32)i;
+      if (!hasGraphics && !hasCompute && transferDedicated == -1) {
+        transferDedicated = (int32)i;
+      }
     }
   }
 
+  // Final picks
+  if (graphicsPresent != -1) {
+    outQueueInfo->graphicsFamilyIndex = graphicsPresent;
+    outQueueInfo->presentFamilyIndex  = graphicsPresent;
+  } else {
+    outQueueInfo->graphicsFamilyIndex = graphicsFirst;
+    outQueueInfo->presentFamilyIndex  = presentFirst;
+  }
+
+  outQueueInfo->computeFamilyIndex  = (computeNoGraphics != -1) ? computeNoGraphics : computeAny;
+
+  // Transfer: prefer dedicated; else any transfer; else leave -1 (requirement check will fail if needed)
+  outQueueInfo->transferFamilyIndex =
+      (transferDedicated != -1) ? transferDedicated : transferAny;
+
+  FLOG_INFO("Graphics | Present | Compute | Transfer | Name");
   FLOG_INFO("       {} |       {} |       {} |        {} | {}",
-            outQueueInfo->graphicsFamilyIndex, outQueueInfo->presentFamilyIndex,
-            outQueueInfo->computeFamilyIndex, outQueueInfo->transferFamilyIndex,
+            outQueueInfo->graphicsFamilyIndex,
+            outQueueInfo->presentFamilyIndex,
+            outQueueInfo->computeFamilyIndex,
+            outQueueInfo->transferFamilyIndex,
             properties->deviceName);
+
+  // Done with queueFamilies buffer
+  _memoryManager.RawFree(FeCast<std::byte>(queueFamilies),
+                         sizeof(VkQueueFamilyProperties) * queueFamilyCount,
+                         memory::Tag::Renderer);
 
   // --- Queue requirements ----------------------------------------------------
   auto require = [](bool needed, int index) { return !needed || index != -1; };
 
-  if (!require(requirements->graphics, outQueueInfo->graphicsFamilyIndex) ||
-      !require(requirements->present, outQueueInfo->presentFamilyIndex) ||
-      !require(requirements->compute, outQueueInfo->computeFamilyIndex) ||
-      !require(requirements->transfer, outQueueInfo->transferFamilyIndex)) {
+  if (!require(requirements->graphics,  outQueueInfo->graphicsFamilyIndex) ||
+      !require(requirements->present,   outQueueInfo->presentFamilyIndex)  ||
+      !require(requirements->compute,   outQueueInfo->computeFamilyIndex)  ||
+      !require(requirements->transfer,  outQueueInfo->transferFamilyIndex)) {
     return FeFalse;
   }
 
@@ -380,64 +434,73 @@ bool DeviceManager::PhysicalDeviceMeetsRequirements(
   FLOG_TRACE("swapchain queried");
 
   if (!swapRes.has_value()) {
-    FLOG_ERROR("failed to query swapchain support: {}",
-               swapRes.error().message);
+    FLOG_ERROR("failed to query swapchain support: {}", swapRes.error().message);
     return FeFalse;
   }
 
-  if (outSwapchainInfo->formatCount < 1 ||
-      outSwapchainInfo->presentModeCount < 1) {
+  if (outSwapchainInfo->formatCount < 1 || outSwapchainInfo->presentModeCount < 1) {
     FLOG_INFO("Required swapchain support not present, skipping device.");
     return FeFalse;
   }
 
-  // --- Device extensions -----------------------------------------------------
-  if (requirements->deviceExtNames.Empty()) {
-    return FeTrue;
-  }
-
-  uint32 extCount = 0;
-  if (auto res = VkCheck(vkEnumerateDeviceExtensionProperties(
-          device, nullptr, &extCount, nullptr));
-      !res.has_value()) {
-    FLOG_ERROR("failed to get device extension property count");
-    return FeFalse;
-  }
-
-  if (extCount == 0) {
-    // Nenhuma extensão exposta — quem exige swapchain vai falhar depois
-    return FeTrue;
-  }
-
-  uint32 capacity = extCount;
-  VkExtensionProperties *exts = nullptr;
-
-  for (;;) {
-    exts = FeCast<VkExtensionProperties>(_memoryManager.RawAlloc(
-        sizeof(VkExtensionProperties) * capacity,
-        alignof(VkExtensionProperties), memory::Tag::Renderer));
-
-    uint32 written = capacity;
-    VkResult r =
-        vkEnumerateDeviceExtensionProperties(device, nullptr, &written, exts);
-
-    if (r == VK_SUCCESS) {
-      break;
+  // --- Device extensions (ACTUALLY validate) --------------------------------
+  if (!requirements->deviceExtNames.Empty()) {
+    uint32 extCount = 0;
+    if (auto res = VkCheck(vkEnumerateDeviceExtensionProperties(
+            device, nullptr, &extCount, nullptr));
+        !res.has_value()) {
+      FLOG_ERROR("failed to get device extension property count");
+      return FeFalse;
     }
 
-    _memoryManager.RawFree(FeCast<std::byte>(exts),
-                           sizeof(VkExtensionProperties) * capacity,
-                           memory::Tag::Renderer);
+    if (extCount == 0) {
+      FLOG_INFO("device exposes 0 extensions but extensions are required.");
+      return FeFalse;
+    }
 
-    if (r != VK_INCOMPLETE || written == 0) {
+    VkExtensionProperties* exts =
+        FeCast<VkExtensionProperties>(_memoryManager.RawAlloc(
+            sizeof(VkExtensionProperties) * extCount,
+            alignof(VkExtensionProperties),
+            memory::Tag::Renderer));
+
+    uint32 written = extCount;
+    VkResult r = vkEnumerateDeviceExtensionProperties(device, nullptr, &written, exts);
+    if (r != VK_SUCCESS) {
+      _memoryManager.RawFree(FeCast<std::byte>(exts),
+                             sizeof(VkExtensionProperties) * extCount,
+                             memory::Tag::Renderer);
       FLOG_ERROR("vkEnumerateDeviceExtensionProperties failed");
       return FeFalse;
     }
 
-    capacity = written; // retry com novo tamanho
+    // Check required extension names exist
+    for (uint32 req = 0; req < requirements->deviceExtNames.Length(); ++req) {
+      const char* needed = requirements->deviceExtNames[req];
+      bool found = FeFalse;
+
+      for (uint32 i = 0; i < written; ++i) {
+        if (std::strcmp(needed, exts[i].extensionName) == 0) {
+          found = FeTrue;
+          break;
+        }
+      }
+
+      if (!found) {
+        FLOG_INFO("missing required device extension: {}", needed);
+        _memoryManager.RawFree(FeCast<std::byte>(exts),
+                               sizeof(VkExtensionProperties) * extCount,
+                               memory::Tag::Renderer);
+        return FeFalse;
+      }
+    }
+
+    _memoryManager.RawFree(FeCast<std::byte>(exts),
+                           sizeof(VkExtensionProperties) * extCount,
+                           memory::Tag::Renderer);
   }
 
-  // --- Feature requirements -------------------------------------------------
+  // --- Feature requirements --------------------------------------------------
   if (requirements->samplerAnisotropy && !features->samplerAnisotropy) {
     FLOG_INFO("Device does not support sampler anisotropy, skipping.");
     return FeFalse;
