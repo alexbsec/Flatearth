@@ -16,7 +16,7 @@ Engine::Engine(Game &game)
       _frontendRenderer(&_appState, _memoryManager) {
   _engineListener =
       _memoryManager.Allocate<event::IEventListener, EngineListener>(
-          memory::Tag::Application, _eventManager, _appState);
+          memory::Tag::Application, _eventManager, _appState, _frontendRenderer);
 }
 
 Engine::~Engine() {

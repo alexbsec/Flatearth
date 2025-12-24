@@ -89,7 +89,8 @@ QuerySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface,
 
 SwapchainManager::SwapchainManager(memory::MemoryManager &memManager,
                                    ImageManager &imgManager)
-    : _memoryManager(memManager), _imageManager(imgManager) {}
+    : _memoryManager(memManager), _imageManager(imgManager),
+      _frameBufferManager(memManager) {}
 
 FeExpect<void, Error> SwapchainManager::CreateSwapchain(Context &ctx,
                                                         Swapchain *pSwapchain,
@@ -176,6 +177,41 @@ FeExpect<void, Error> SwapchainManager::PresentSwapchain(
   return {};
 }
 
+FeExpect<void, Error>
+SwapchainManager::RegenerateFrameBuffer(Context &ctx, Swapchain *pSwapchain,
+                                        Renderpass *pRenderpass) {
+  if (pSwapchain == nullptr) {
+    return FeErr{Error("cannot regenerate frame buffer with nullptr swapchain",
+                       ErrorType::NullptrException)};
+  }
+
+  if (pRenderpass == nullptr) {
+    return FeErr{Error("cannot regenerate frame buffer with nullptr renderpass",
+                       ErrorType::NullptrException)};
+  }
+
+  // TODO: remove this hardcoded part
+  constexpr uint32 cAttachmentCount = 2;
+  for (uint32 i = 0; i < pSwapchain->imageCount; i++) {
+    uint32 attachmentCount = cAttachmentCount;
+    VkImageView attachments[] = {
+        pSwapchain->pViews[i],
+        pSwapchain->depthAttachment.view,
+    };
+
+    auto createRes = _frameBufferManager.CreateFrameBuffer(
+        ctx, *pRenderpass, &ctx.swapchain.framebuffers[i], ctx.framebufferWidth,
+        ctx.framebufferHeight, attachmentCount, attachments);
+
+    if (!createRes.has_value()) {
+      FLOG_ERROR("failed to create framebuffer at index {}", i);
+      return FeErr{createRes.error()};
+    }
+  }
+
+  return {};
+}
+
 FeExpect<void, Error> SwapchainManager::CreateLogic(Context &ctx,
                                                     Swapchain *pSwapchain,
                                                     uint32 width,
@@ -252,6 +288,9 @@ FeExpect<void, Error> SwapchainManager::CreateLogic(Context &ctx,
   swapchainExtent.width = FECLAMP(swapchainExtent.width, min.width, max.width);
   swapchainExtent.height =
       FECLAMP(swapchainExtent.height, min.height, max.height);
+
+  pSwapchain->widthExtent = swapchainExtent.width;
+  pSwapchain->heightExtent = swapchainExtent.height;
 
   uint32 imageCount =
       ctx.device.swapchainSupportInfo.capabilities.minImageCount + 1;
@@ -393,6 +432,16 @@ FeExpect<void, Error> SwapchainManager::DestroyLogic(Context &ctx,
   }
 
   vkDeviceWaitIdle(ctx.device.logicalDevice);
+
+  for (uint32 i = 0; i < pSwapchain->imageCount; i++) {
+    auto delRes = _frameBufferManager.DestroyFrameBuffer(
+        ctx, &pSwapchain->framebuffers[i]);
+    if (!delRes.has_value()) {
+      FLOG_ERROR("failed to delete frame buffer at index {}", i);
+      return FeErr{delRes.error()};
+    }
+  }
+  pSwapchain->framebuffers.Clear();
 
   // Destroy image
   auto imageRes = _imageManager.DestroyImage(ctx, pSwapchain->depthAttachment);

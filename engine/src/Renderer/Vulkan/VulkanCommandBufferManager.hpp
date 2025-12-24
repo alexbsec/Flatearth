@@ -11,17 +11,18 @@ public:
   explicit CommandBufferManager(memory::MemoryManager &memManager);
   ~CommandBufferManager();
 
-  FeExpect<void, Error> AllocateBuffer(Context &ctx, CommandBuffer *pCmdBuffer,
-                                       VkCommandPool pool, bool isPrimary);
-
-  FeExpect<void, Error> FreeBuffer(Context &ctx, CommandBuffer *pCmdBuffer);
-
+  FeExpect<void, Error> CreateBuffers(Context &ctx);
+  FeExpect<void, Error> DestroyBuffers(Context &ctx);
   void BeginBuffer(Context &ctx, CommandBuffer &cmdBuffer, bool isSingleUse,
                    bool isRenderpassContinue, bool isSimultaneousUse);
-
   void EndBuffer(Context &ctx, CommandBuffer &cmdBuffer);
+  void ResetBuffer(Context &ctx, CommandBuffer &cmdBuffer);
 
-  void ResetBuffer(Context &ctx, CommandBuffer *pCmdBuffer);
+private:
+  FeExpect<void, Error> AllocateBuffer(Context &ctx, CommandBuffer *pCmdBuffer,
+                                       VkCommandPool pool, bool isPrimary);
+  FeExpect<void, Error> FreeBuffer(Context &ctx, CommandBuffer *pCmdBuffer,
+                                   VkCommandPool pool);
 
 
 private:

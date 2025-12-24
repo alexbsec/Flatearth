@@ -73,8 +73,8 @@ struct Renderpass {
 struct FrameBuffer {
   VkFramebuffer handle;
   uint32 attachmentCount;
-  VkImageView *pAttachments;
-  Renderpass *pRenderpass;
+  VkImageView *pAttachments{nullptr};
+  Renderpass *pRenderpass{nullptr};
 };
 
 struct Swapchain {
@@ -87,6 +87,7 @@ struct Swapchain {
   uint32 imageCount;
   uint32 viewsCapacity;
   uint32 imagesCapacity;
+  uint32 widthExtent{0}, heightExtent{0};
   containers::DArray<FrameBuffer> framebuffers;
 
   explicit Swapchain(memory::MemoryManager &memManager)
@@ -103,8 +104,8 @@ enum class CmdBufferState {
 };
 
 struct CommandBuffer {
-  VkCommandBuffer handle;
-  CmdBufferState state;
+  VkCommandBuffer handle{nullptr};
+  CmdBufferState state{CmdBufferState::NotAllocated};
 };
 
 struct Fence {
@@ -120,8 +121,8 @@ struct ShaderStage {
 
 struct Context {
   uint32 framebufferWidth, framebufferHeight;
-  uint64 framebufferSizeGeneration;
-  uint64 framebufferSizeLastGeneration;
+  uint64 framebufferSizeGeneration{0};
+  uint64 framebufferSizeLastGeneration{0};
   uint32 currentFrame;
   uint32 imageIndex;
   VkInstance instance;

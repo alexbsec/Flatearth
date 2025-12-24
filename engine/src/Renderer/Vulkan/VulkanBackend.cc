@@ -17,7 +17,14 @@ VulkanBackend::VulkanBackend(memory::MemoryManager &memManager)
       _ctx(memManager) {}
 
 VulkanBackend::~VulkanBackend() {
-  auto destroyRes =
+  auto destroyRes = _cmdBufferManager.DestroyBuffers(_ctx);
+  if (!destroyRes.has_value()) {
+    FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}",
+               destroyRes.error().message);
+    return;
+  }
+
+  destroyRes =
       _renderpassManager.DestroyRenderpass(_ctx, &_ctx.mainRenderpass);
   if (!destroyRes.has_value()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}",
@@ -48,9 +55,9 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   _cachedFrameBufferWidth = appState->width;
   _cachedFrameBufferHeight = appState->height;
   _ctx.framebufferWidth =
-      (_cachedFrameBufferWidth != 0) ? _cachedFrameBufferWidth : 1280;
+      (_cachedFrameBufferWidth != 0) ? _cachedFrameBufferWidth : 946;
   _ctx.framebufferHeight =
-      (_cachedFrameBufferHeight != 0) ? _cachedFrameBufferHeight : 920;
+      (_cachedFrameBufferHeight != 0) ? _cachedFrameBufferHeight : 507;
 
   _cachedFrameBufferWidth = 0;
   _cachedFrameBufferHeight = 0;
@@ -204,10 +211,32 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   }
   FLOG_INFO("renderpass created successfully");
 
+  FLOG_DEBUG("regenerating frame buffers");
+  _ctx.swapchain.framebuffers.Reserve(_ctx.swapchain.imageCount);
+  auto frameBufRes = _swapchainManager.RegenerateFrameBuffer(
+      _ctx, &_ctx.swapchain, &_ctx.mainRenderpass);
+  if (!frameBufRes.has_value()) {
+    FLOG_ERROR("failed regenerating frame buffers");
+    return FeErr{frameBufRes.error()};
+  }
+  FLOG_INFO("frame buffers regenerated successfully");
+
+  FLOG_DEBUG("creating command buffers");
+  auto cmdBufRes = _cmdBufferManager.CreateBuffers(_ctx);
+  if (!cmdBufRes.has_value()) {
+    FLOG_ERROR("failed to create command buffers");
+    return FeErr{cmdBufRes.error()};
+  }
+  FLOG_INFO("command buffers created successfully");
+
   return FeTrue;
 }
 
 FeExpect<bool, Error> VulkanBackend::OnResize(uint32 width, uint32 height) {
+  _cachedFrameBufferWidth = width;
+  _cachedFrameBufferHeight = height;
+  _ctx.framebufferSizeGeneration++;
+  FLOG_INFO("w/h/gen: {}/{}/{}", width, height, _ctx.framebufferSizeGeneration);
   return FeTrue;
 }
 

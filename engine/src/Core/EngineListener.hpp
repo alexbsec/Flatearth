@@ -3,6 +3,7 @@
 
 #include "ApplicationConfig.hpp"
 #include "Core/Event.hpp"
+#include "Renderer/RendererFrontend.hpp"
 
 namespace flatearth {
 
@@ -10,7 +11,7 @@ namespace flatearth {
 class EngineListener final : public event::ListenerAdapter {
 public:
   explicit EngineListener(event::EventManager &eventManager,
-                          ApplicationState &appState);
+                          ApplicationState &appState, renderer::FrontendRenderer &renderer);
 
   ~EngineListener();
   // Inherited overrrides
@@ -41,6 +42,7 @@ private:
 
 private:
   ApplicationState &_appState;
+  renderer::FrontendRenderer &_frontendRenderer;
   event::EventManager &_eventManager;
 };
 

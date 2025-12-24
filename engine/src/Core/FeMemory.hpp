@@ -47,8 +47,10 @@ public:
   MemoryManager();
   ~MemoryManager();
 
+
   void *RawAlloc(uint64 size, uint64 alignment, Tag tag);
   void RawFree(void *block, uint64 size, Tag tag);
+  void ZeroMemory(void *block, uint64 size);
 
   template <typename T, typename... Args>
   inline FePtr<T> Allocate(Tag tag, Args &&...args) {

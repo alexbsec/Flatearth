@@ -4,6 +4,7 @@
 #include "Core/FeMemory.hpp"
 #include "Renderer/Vulkan/VulkanImager.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
+#include "Renderer/Vulkan/VulkanFrameBufferManager.hpp"
 
 namespace flatearth::renderer::vulkan {
 
@@ -32,6 +33,10 @@ public:
                                          VkSemaphore renderCompleteSemaphore,
                                          uint32 presentImageIndex);
 
+  FeExpect<void, Error> RegenerateFrameBuffer(Context &ctx,
+                                              Swapchain *pSwapchain,
+                                              Renderpass *pRenderpass);
+
 private:
   FeExpect<void, Error> CreateLogic(Context &ctx, Swapchain *pSwapchain,
                                     uint32 width, uint32 height);
@@ -42,6 +47,8 @@ private:
 private:
   memory::MemoryManager &_memoryManager;
   ImageManager &_imageManager;
+
+  FrameBufferManager _frameBufferManager;
 };
 
 } // namespace flatearth::renderer::vulkan

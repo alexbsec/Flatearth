@@ -95,6 +95,14 @@ void MemoryManager::RawFree(void *block, uint64 size, Tag tag) {
 #endif
 }
 
+void MemoryManager::ZeroMemory(void *block, uint64 size) {
+  if (block == nullptr || size == 0) {
+    return;
+  }
+
+  std::memset(block, 0, size);
+}
+
 void MemoryManager::MemoryUsage() {
   std::println("========== Memory Usage ==========");
 

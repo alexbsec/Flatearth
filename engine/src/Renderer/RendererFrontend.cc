@@ -55,7 +55,20 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
   return FeTrue;
 }
 
-FeExpect<void, Error> OnResize(uint32 width, uint32 height) { return {}; }
+FeExpect<void, Error> FrontendRenderer::OnResize(uint32 width, uint32 height) { 
+  if (_pActiveBackend == nullptr) {
+    FLOG_WARN("no active backends");
+    return {};
+  }
+
+  auto res = _pActiveBackend->OnResize(width, height);
+  if (!res.has_value()) {
+    FLOG_ERROR("backend renderer failed to resize");
+    return FeErr{res.error()};
+  }
+
+  return {}; 
+}
 
 FeExpect<void, Error> FrontendRenderer::MakeBackends() {
   uint32 vulkanIndex = static_cast<uint32>(BackendType::Vulkan);

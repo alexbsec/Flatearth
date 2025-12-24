@@ -1,13 +1,16 @@
 #include "EngineListener.hpp"
 #include "Core/Logger.hpp"
+#include "Renderer/RendererFrontend.hpp"
 
 namespace flatearth {
 
 const char *KeyToString(input::Keys key);
 
 EngineListener::EngineListener(event::EventManager &eventManager,
-                               ApplicationState &appState)
-    : _eventManager(eventManager), _appState(appState) {}
+                               ApplicationState &appState,
+                               renderer::FrontendRenderer &renderer)
+    : _eventManager(eventManager), _appState(appState),
+      _frontendRenderer(renderer) {}
 
 EngineListener::~EngineListener() {
   if (!_allInitialized) {
@@ -108,7 +111,12 @@ EngineListener::OnResize(const event::EventDispatchContext &ctx,
     return FeErr{Error("game failed to resize", ErrorType::GameResizeError)};
   }
 
-  // TODO: resize renderer
+  auto res = _frontendRenderer.OnResize(width, height);
+  if (!res.has_value()) {
+    FLOG_ERROR("renderer failed to resize to {}x{}", width, height);
+    return FeFalse;
+  }
+
   return FeTrue;
 }
 
@@ -562,4 +570,4 @@ const char *KeyToString(input::Keys key) {
   }
 }
 
-}
+} // namespace flatearth

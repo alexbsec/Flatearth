@@ -270,7 +270,20 @@ FeExpect<bool, Error> Platform::PollEvents() {
       }
     } break;
     case XCB_CONFIGURE_NOTIFY: {
-
+      xcb_configure_notify_event_t *configureEvent =
+          (xcb_configure_notify_event_t *)event;
+      event::EventContext eventCtx{};
+      event::Uint32x4 resizePayload{
+          configureEvent->width,
+          configureEvent->height,
+      };
+      eventCtx.Set(event::EventLayout::Uint32x4, resizePayload);
+      auto res = _eventManager.FireEvent(event::SystemEventCode::WindowResized,
+                                         nullptr, eventCtx);
+      if (!res.has_value()) {
+        FLOG_ERROR("event manager failed to fire resize event: {}",
+                   res.error().message);
+      }
     } break;
     case XCB_CLIENT_MESSAGE: {
       auto *cm = (xcb_client_message_event_t *)event;

@@ -8,7 +8,7 @@
 #include "Renderer/Vulkan/VulkanImager.hpp"
 #include "Renderer/Vulkan/VulkanRenderpassManager.hpp"
 #include "Renderer/Vulkan/VulkanSwapchainManager.hpp"
-#include "Renderer/Vulkan/CommandBufferManager.hpp"
+#include "Renderer/Vulkan/VulkanCommandBufferManager.hpp"
 
 namespace flatearth::renderer::vulkan {
 
