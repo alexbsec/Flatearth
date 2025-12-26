@@ -81,7 +81,7 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
   }
 
   if (!beginRes.value()) {
-    FLOG_INFO("skipping frame draw because begin frame returned false");
+    // Skips frame rendering (usually when resizing)
     return FeTrue;
   }
 
