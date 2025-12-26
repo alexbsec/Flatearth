@@ -3,6 +3,7 @@
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
 #include "Platform/Platform.hpp"
+#include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan {
 
@@ -17,6 +18,29 @@ VulkanBackend::VulkanBackend(memory::MemoryManager &memManager)
       _ctx(memManager) {}
 
 VulkanBackend::~VulkanBackend() {
+  for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
+    if (_ctx.imageAvailableSemaphores[i] != nullptr) {
+      vkDestroySemaphore(_ctx.device.logicalDevice,
+                         _ctx.imageAvailableSemaphores[i], _ctx.pAllocator);
+
+      _ctx.imageAvailableSemaphores[i] = nullptr;
+    }
+
+    if (_ctx.queueCompleteSemaphores[i] != nullptr) {
+      vkDestroySemaphore(_ctx.device.logicalDevice,
+                         _ctx.queueCompleteSemaphores[i], _ctx.pAllocator);
+
+      _ctx.queueCompleteSemaphores[i] = nullptr;
+    }
+
+    auto destroyRes = DestroyFence(&_ctx.inFlightFences[i]);
+    if (!destroyRes.has_value()) {
+      FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}",
+                 destroyRes.error().message);
+      return;
+    }
+  }
+
   auto destroyRes = _cmdBufferManager.DestroyBuffers(_ctx);
   if (!destroyRes.has_value()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}",
@@ -24,8 +48,7 @@ VulkanBackend::~VulkanBackend() {
     return;
   }
 
-  destroyRes =
-      _renderpassManager.DestroyRenderpass(_ctx, &_ctx.mainRenderpass);
+  destroyRes = _renderpassManager.DestroyRenderpass(_ctx, &_ctx.mainRenderpass);
   if (!destroyRes.has_value()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}",
                destroyRes.error().message);
@@ -229,6 +252,48 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   }
   FLOG_INFO("command buffers created successfully");
 
+  FLOG_DEBUG("creating sync objects & fences");
+  _ctx.imageAvailableSemaphores.Reserve(_ctx.swapchain.imageCount);
+  _ctx.queueCompleteSemaphores.Reserve(_ctx.swapchain.imageCount);
+  _ctx.inFlightFences.Reserve(_ctx.swapchain.imageCount);
+  for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
+    VkSemaphoreCreateInfo semaphoreInfo = {
+        VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+    semaphoreInfo.pNext = nullptr;
+    semaphoreInfo.flags = 0;
+    if (auto res = VkCheck(vkCreateSemaphore(
+            _ctx.device.logicalDevice, &semaphoreInfo, _ctx.pAllocator,
+            &_ctx.imageAvailableSemaphores[i]));
+        !res.has_value()) {
+      FLOG_ERROR("failed to create image available semaphore");
+      return FeErr{res.error()};
+    }
+
+    if (auto res = VkCheck(vkCreateSemaphore(_ctx.device.logicalDevice,
+                                             &semaphoreInfo, _ctx.pAllocator,
+                                             &_ctx.queueCompleteSemaphores[i]));
+        !res.has_value()) {
+      FLOG_ERROR("failed to create queue complete semaphore");
+      return FeErr{res.error()};
+    }
+
+    auto fenceRes = CreateFence(&_ctx.inFlightFences[i], FeTrue);
+    if (!fenceRes.has_value()) {
+      FLOG_ERROR("failed to create in-flight fence");
+      return FeErr{fenceRes.error()};
+    }
+  }
+
+  // At this point no in flight fences exist, so clear the array. These
+  // are stored in pointers because initial state must be nullptr and will
+  // be nullptr when not in use. Actual fences are not owned by this array
+  _ctx.imagesInFlight.Reserve(_ctx.swapchain.imageCount);
+  for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
+    _memoryManager.ZeroMemory(&_ctx.imagesInFlight[i], sizeof(Fence *));
+    _ctx.imagesInFlight[i] = nullptr;
+  }
+  FLOG_INFO("sync objects & fences created successfully");
+  FLOG_INFO("Vulkan backend initialized successfully");
   return FeTrue;
 }
 
@@ -241,11 +306,118 @@ FeExpect<bool, Error> VulkanBackend::OnResize(uint32 width, uint32 height) {
 }
 
 FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
+  Device &device = _ctx.device;
+
+  // check if recreating swapchain is happening
+  if (!_ctx.recreatingSwapchain) {
+    vkDeviceWaitIdle(device.logicalDevice);
+  }
+
   return FeTrue;
 }
 
 FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
   return FeTrue;
+}
+
+// PRIVATE MEMBERS
+
+FeExpect<void, Error> VulkanBackend::CreateFence(Fence *pFence, bool signaled) {
+  if (pFence == nullptr) {
+    FLOG_ERROR("cannot create fence on a nullptr fence");
+    return FeErr{Error("attempt to create a fence on a nullptr",
+                       ErrorType::NullptrException)};
+  }
+
+  pFence->isSignaled = signaled;
+  VkFenceCreateInfo createInfo = {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+  if (pFence->isSignaled) {
+    createInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+  }
+
+  if (auto res = VkCheck(vkCreateFence(_ctx.device.logicalDevice, &createInfo,
+                                       _ctx.pAllocator, &pFence->handle));
+      !res.has_value()) {
+    FLOG_ERROR("failed to create vulkan fence");
+    return FeErr{res.error()};
+  }
+  return {};
+}
+
+FeExpect<void, Error> VulkanBackend::DestroyFence(Fence *pFence) {
+  if (pFence == nullptr) {
+    FLOG_ERROR("cannot destroy fence on a nullptr fence");
+    return FeErr{Error("attempt to destroy a fence on a nullptr",
+                       ErrorType::NullptrException)};
+  }
+
+  if (pFence->handle != VK_NULL_HANDLE) {
+    vkDestroyFence(_ctx.device.logicalDevice, pFence->handle, _ctx.pAllocator);
+    pFence->handle = VK_NULL_HANDLE;
+  }
+
+  pFence->isSignaled = false;
+  return {};
+}
+
+FeExpect<bool, Error> VulkanBackend::AwaitFence(Fence *pFence,
+                                                uint64 timeoutNs) {
+  if (pFence == nullptr) {
+    FLOG_ERROR("cannot await fence on a nullptr fence");
+    return FeErr{Error("attempt to await a fence on a nullptr",
+                       ErrorType::NullptrException)};
+  }
+
+  constexpr uint32 cFenceCount = 1;
+  constexpr bool cAwaitAll = FeTrue;
+  VkResult result = vkWaitForFences(_ctx.device.logicalDevice, cFenceCount,
+                                    &pFence->handle, cAwaitAll, timeoutNs);
+
+  switch (result) {
+  case VK_SUCCESS:
+    pFence->isSignaled = FeTrue;
+    return FeTrue;
+  case VK_TIMEOUT:
+    FLOG_WARN("fence await timed out");
+    break;
+  case VK_ERROR_DEVICE_LOST:
+    FLOG_ERROR("device lost while awaiting fence");
+    return FeErr{Error("device lost while awaiting fence",
+                       ErrorType::RendererVulkanError)};
+  case VK_ERROR_OUT_OF_HOST_MEMORY:
+    FLOG_ERROR("out of host memory while awaiting fence");
+    return FeErr{Error("out of host memory while awaiting fence",
+                       ErrorType::RendererVulkanError)};
+  case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+    FLOG_ERROR("out of device memory while awaiting fence");
+    return FeErr{Error("out of device memory while awaiting fence",
+                       ErrorType::RendererVulkanError)};
+  default:
+    FLOG_ERROR("unmapped error while awaiting fence: {}",
+               static_cast<uint32>(result));
+    return FeErr{Error("unmapped error while awaiting fence")};
+  }
+
+  return FeFalse;
+}
+
+FeExpect<void, Error> VulkanBackend::ResetFence(Fence *pFence) {
+  if (pFence == nullptr) {
+    FLOG_ERROR("cannot reset fence on a nullptr fence");
+    return FeErr{Error("attempt to reset a fence on a nullptr",
+                       ErrorType::NullptrException)};
+  }
+
+  constexpr uint32 cFenceCount = 1;
+  if (auto res = VkCheck(vkResetFences(_ctx.device.logicalDevice, cFenceCount,
+                                       &pFence->handle));
+      !res.has_value()) {
+    FLOG_ERROR("failed to reset vulkan fence");
+    return FeErr{res.error()};
+  }
+
+  pFence->isSignaled = FeFalse;
+  return {};
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(

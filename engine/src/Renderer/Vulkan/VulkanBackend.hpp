@@ -23,6 +23,14 @@ public:
   FeExpect<bool, Error> EndFrame(float32 deltaTime) override;
 
 private:
+  FeExpect<void, Error> CreateFence(Fence *pFence, bool signaled);
+  FeExpect<void, Error> DestroyFence(Fence *pFence);
+  FeExpect<bool, Error> AwaitFence(Fence *pFence, uint64 timeoutNs);
+  FeExpect<void, Error> ResetFence(Fence *pFence);
+
+
+
+private:
   memory::MemoryManager &_memoryManager;
   DeviceManager _deviceManager;
   SwapchainManager _swapchainManager;
