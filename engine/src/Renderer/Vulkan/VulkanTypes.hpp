@@ -169,6 +169,19 @@ struct ShaderStage {
   VkPipelineShaderStageCreateInfo shaderStageCreateInfo;
 };
 
+struct Pipeline {
+  VkPipeline handle;
+  VkPipelineLayout layout;
+};
+
+struct ObjectShader {
+  containers::DArray<ShaderStage> shaderStages;
+  containers::DArray<Pipeline> pipelines;
+
+  ObjectShader(memory::MemoryManager &memManager)
+      : shaderStages(memManager), pipelines(memManager) {}
+};
+
 struct Context {
   uint32 framebufferWidth, framebufferHeight;
   uint64 framebufferSizeGeneration{0};
@@ -189,13 +202,15 @@ struct Context {
   containers::DArray<Fence> inFlightFences;
   containers::DArray<Fence *> imagesInFlight;
 
+  ObjectShader objectShader;
+
   bool recreatingSwapchain{false};
 
   explicit Context(memory::MemoryManager &memManager)
       : swapchain(memManager), graphicsCommandBuffer(memManager),
         imageAvailableSemaphores(memManager),
         queueCompleteSemaphores(memManager), inFlightFences(memManager),
-        imagesInFlight(memManager) {}
+        imagesInFlight(memManager), objectShader(memManager) {}
 
   int32 FindMemoryIndex(uint32 typeFilter, uint32 propertyFlags) {
     VkPhysicalDeviceMemoryProperties memoryProps;

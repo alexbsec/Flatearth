@@ -15,10 +15,18 @@ VulkanBackend::VulkanBackend(memory::MemoryManager &memManager)
     : _memoryManager(memManager), _deviceManager(memManager),
       _swapchainManager(memManager, _imageManager),
       _renderpassManager(memManager), _cmdBufferManager(memManager),
-      _ctx(memManager) {}
+      _vulkanShader(memManager), _ctx(memManager) {}
 
 VulkanBackend::~VulkanBackend() {
   vkDeviceWaitIdle(_ctx.device.logicalDevice);
+
+  auto destroyRes =
+      _vulkanShader.DestroyObjectShader(_ctx, &_ctx.objectShader);
+  if (!destroyRes.has_value()) {
+    FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}",
+               destroyRes.error().message);
+    return;
+  }
 
   for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
     if (_ctx.queueCompleteSemaphores[i] != nullptr) {
@@ -45,8 +53,7 @@ VulkanBackend::~VulkanBackend() {
     }
   }
 
-
-  auto destroyRes = _cmdBufferManager.DestroyBuffers(_ctx);
+  destroyRes = _cmdBufferManager.DestroyBuffers(_ctx);
   if (!destroyRes.has_value()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}",
                destroyRes.error().message);
@@ -86,7 +93,6 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
       (_cachedFrameBufferWidth != 0) ? _cachedFrameBufferWidth : 946;
   _ctx.framebufferHeight =
       (_cachedFrameBufferHeight != 0) ? _cachedFrameBufferHeight : 507;
-
 
   _cachedFrameBufferWidth = 0;
   _cachedFrameBufferHeight = 0;
@@ -278,8 +284,6 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
       return FeErr{res.error()};
     }
 
-
-
     auto fenceRes = CreateFence(&_ctx.inFlightFences[i], FeTrue);
     if (!fenceRes.has_value()) {
       FLOG_ERROR("failed to create in-flight fence");
@@ -312,6 +316,13 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
     _ctx.imagesInFlight[i] = nullptr;
   }
 
+  // create builtin shaders
+  auto shaderRes =
+      _vulkanShader.CreateObjectShader(_ctx, &_ctx.objectShader);
+  if (!shaderRes.has_value()) {
+    FLOG_ERROR("failed to create object shader");
+    return FeErr{shaderRes.error()};
+  }
 
   FLOG_INFO("sync objects & fences created successfully");
   FLOG_INFO("Vulkan backend initialized successfully");
@@ -384,7 +395,8 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
   constexpr VkFence cFence = 0;
   auto acquireRes = _swapchainManager.AcquireNextImage(
       _ctx, _ctx.swapchain, UINT64_MAX,
-      _ctx.imageAvailableSemaphores[_ctx.currentFrame], cFence, &_ctx.imageIndex);
+      _ctx.imageAvailableSemaphores[_ctx.currentFrame], cFence,
+      &_ctx.imageIndex);
   if (!acquireRes.has_value()) {
     FLOG_ERROR("failed to acquire next image from swapchain");
     return FeErr{acquireRes.error()};
@@ -430,7 +442,6 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
   Device &device = _ctx.device;
   CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
 
-
   _renderpassManager.EndRenderpass(_ctx, &cmdBuffer, &_ctx.mainRenderpass);
   _cmdBufferManager.EndBuffer(_ctx, cmdBuffer);
 
@@ -456,7 +467,8 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &cmdBuffer.handle;
   submitInfo.waitSemaphoreCount = 1;
-  submitInfo.pWaitSemaphores = &_ctx.imageAvailableSemaphores[_ctx.currentFrame];
+  submitInfo.pWaitSemaphores =
+      &_ctx.imageAvailableSemaphores[_ctx.currentFrame];
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = &_ctx.queueCompleteSemaphores[_ctx.imageIndex];
 

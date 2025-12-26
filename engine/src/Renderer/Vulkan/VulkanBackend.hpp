@@ -4,6 +4,7 @@
 #include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Renderer/RendererTypes.hpp"
+#include "Renderer/Vulkan/Shaders/ObjectShader.hpp"
 #include "Renderer/Vulkan/VulkanDeviceManager.hpp"
 #include "Renderer/Vulkan/VulkanImager.hpp"
 #include "Renderer/Vulkan/VulkanRenderpassManager.hpp"
@@ -37,6 +38,7 @@ private:
   ImageManager _imageManager;
   RenderpassManager _renderpassManager;
   CommandBufferManager _cmdBufferManager;
+  shaders::VulkanShader _vulkanShader;
   Context _ctx;
 
   uint32 _cachedFrameBufferWidth{0}, _cachedFrameBufferHeight{0};
