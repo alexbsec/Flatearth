@@ -102,6 +102,9 @@ FeExpect<void, Error> Engine::Start() {
     }
 
     if (_appState.isSuspended) {
+      _appState.clock.Update();
+      _inputManager.Update(0.0);
+      LOG_DEBUG("application is suspended, skipping frame update");
       continue;
     }
 
@@ -114,6 +117,36 @@ FeExpect<void, Error> Engine::Start() {
     if (!_appState.gameInstance.Update(&_appState.gameInstance, deltaTime)) {
       FLOG_FATAL("game update failed, shutting down application");
       break;
+    }
+
+    // Hardcoded just to make it up and running
+    // TODO: remove
+    renderer::RenderPacket packet;
+    packet.deltaTime = deltaTime;
+    auto drawRes = _frontendRenderer.DrawFrame(&packet);
+    if (!drawRes.has_value()) {
+      FLOG_ERROR("frontend renderer failed to draw frame: {}",
+                 drawRes.error().message);
+      return FeErr{drawRes.error()};
+    }
+
+    FLOG_DEBUG("frame {} rendered in {} ms", frameCount,
+               (clock::GetAbsoluteTime() - frameStartTime) * 1000.0);
+
+    float64 frameEndTime = clock::GetAbsoluteTime();
+    float64 frameElapsed = frameEndTime - frameStartTime;
+    runnigTime += frameElapsed;
+    float64 remainingSeconds= targetFrameSeconds - frameElapsed;
+
+    if (remainingSeconds > 0.0) {
+      float64 remainingMs = remainingSeconds * 1000.0;
+      // hardcoded due to debbuging purposes
+      bool limitFrames = FeFalse;
+      if (remainingMs > 0.0 && limitFrames) {
+        // sleep
+      }
+
+      frameCount++;
     }
 
     _inputManager.Update(deltaTime);

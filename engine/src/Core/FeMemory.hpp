@@ -27,6 +27,7 @@ enum class Tag : uint64 {
   Entity,
   EntityNode,
   Scene,
+  Lo,
   MaxTags,
 };
 

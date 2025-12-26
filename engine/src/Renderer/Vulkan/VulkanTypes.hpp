@@ -19,14 +19,64 @@ inline FeExpect<void, Error> VkCheck(VkResult result) {
   return {};
 }
 
+inline bool VkResultIsSuccess(VkResult result) {
+  // From:
+  // https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkResult.html
+  switch (result) {
+    // Success Codes
+  default:
+  case VK_SUCCESS:
+  case VK_NOT_READY:
+  case VK_TIMEOUT:
+  case VK_EVENT_SET:
+  case VK_EVENT_RESET:
+  case VK_INCOMPLETE:
+  case VK_SUBOPTIMAL_KHR:
+  case VK_THREAD_IDLE_KHR:
+  case VK_THREAD_DONE_KHR:
+  case VK_OPERATION_DEFERRED_KHR:
+  case VK_OPERATION_NOT_DEFERRED_KHR:
+  case VK_PIPELINE_COMPILE_REQUIRED_EXT:
+    return FeTrue;
+
+  // Error codes
+  case VK_ERROR_OUT_OF_HOST_MEMORY:
+  case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+  case VK_ERROR_INITIALIZATION_FAILED:
+  case VK_ERROR_DEVICE_LOST:
+  case VK_ERROR_MEMORY_MAP_FAILED:
+  case VK_ERROR_LAYER_NOT_PRESENT:
+  case VK_ERROR_EXTENSION_NOT_PRESENT:
+  case VK_ERROR_FEATURE_NOT_PRESENT:
+  case VK_ERROR_INCOMPATIBLE_DRIVER:
+  case VK_ERROR_TOO_MANY_OBJECTS:
+  case VK_ERROR_FORMAT_NOT_SUPPORTED:
+  case VK_ERROR_FRAGMENTED_POOL:
+  case VK_ERROR_SURFACE_LOST_KHR:
+  case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
+  case VK_ERROR_OUT_OF_DATE_KHR:
+  case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
+  case VK_ERROR_INVALID_SHADER_NV:
+  case VK_ERROR_OUT_OF_POOL_MEMORY:
+  case VK_ERROR_INVALID_EXTERNAL_HANDLE:
+  case VK_ERROR_FRAGMENTATION:
+  case VK_ERROR_INVALID_DEVICE_ADDRESS_EXT:
+  // NOTE: Same as above
+  // case VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS:
+  case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
+  case VK_ERROR_UNKNOWN:
+    return FeFalse;
+  }
+}
+
 struct SwapchainSupportInfo {
   VkSurfaceCapabilitiesKHR capabilities{};
   uint32 formatCount{0};
-  VkSurfaceFormatKHR* pFormats{nullptr};
+  VkSurfaceFormatKHR *pFormats{nullptr};
   uint32 formatsCapacity{0};
 
   uint32 presentModeCount{0};
-  VkPresentModeKHR* pPresentMode{nullptr};
+  VkPresentModeKHR *pPresentMode{nullptr};
   uint32 presentModesCapacity{0};
 };
 
@@ -123,8 +173,8 @@ struct Context {
   uint32 framebufferWidth, framebufferHeight;
   uint64 framebufferSizeGeneration{0};
   uint64 framebufferSizeLastGeneration{0};
-  uint32 currentFrame;
-  uint32 imageIndex;
+  uint32 currentFrame{0};
+  uint32 imageIndex{0};
   VkInstance instance;
   VkAllocationCallbacks *pAllocator;
   VkSurfaceKHR surface;
@@ -139,7 +189,7 @@ struct Context {
   containers::DArray<Fence> inFlightFences;
   containers::DArray<Fence *> imagesInFlight;
 
-  bool recreatingSwapchain;
+  bool recreatingSwapchain{false};
 
   explicit Context(memory::MemoryManager &memManager)
       : swapchain(memManager), graphicsCommandBuffer(memManager),

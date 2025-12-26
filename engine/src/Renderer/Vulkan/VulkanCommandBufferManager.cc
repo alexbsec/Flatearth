@@ -102,11 +102,45 @@ CommandBufferManager::FreeBuffer(Context &ctx, CommandBuffer *pCmdBuffer,
 void CommandBufferManager::BeginBuffer(Context &ctx, CommandBuffer &cmdBuffer,
                                        bool isSingleUse,
                                        bool isRenderpassContinue,
-                                       bool isSimultaneousUse) {}
+                                       bool isSimultaneousUse) {
+  VkCommandBufferBeginInfo beginInfo = {
+      VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+  beginInfo.flags = 0;
+  if (isSingleUse) {
+    beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+  }
 
-void CommandBufferManager::EndBuffer(Context &ctx, CommandBuffer &cmdBuffer) {}
+  if (isRenderpassContinue) {
+    beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+  }
+
+  if (isSimultaneousUse) {
+    beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+  }
+
+  if (auto res = VkCheck(vkBeginCommandBuffer(cmdBuffer.handle, &beginInfo));
+      !res.has_value()) {
+    FLOG_ERROR("failed to begin command buffer");
+    return;
+  }
+  cmdBuffer.state = CmdBufferState::Recording;
+
+  FLOG_INFO("began command buffer recording");
+}
+
+void CommandBufferManager::EndBuffer(Context &ctx, CommandBuffer &cmdBuffer) {
+  if (auto res = VkCheck(vkEndCommandBuffer(cmdBuffer.handle));
+      !res.has_value()) {
+    FLOG_ERROR("failed to end command buffer");
+    return;
+  }
+  cmdBuffer.state = CmdBufferState::RecordingEnded;
+
+  FLOG_INFO("ended command buffer recording");
+}
 
 void CommandBufferManager::ResetBuffer(Context &ctx, CommandBuffer &cmdBuffer) {
+  cmdBuffer.state = CmdBufferState::Ready;
 }
 
 } // namespace flatearth::renderer::vulkan

@@ -236,6 +236,10 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
 
   FLOG_DEBUG("regenerating frame buffers");
   _ctx.swapchain.framebuffers.Reserve(_ctx.swapchain.imageCount);
+  for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
+    _ctx.swapchain.framebuffers.Push(FrameBuffer{});
+  }
+
   auto frameBufRes = _swapchainManager.RegenerateFrameBuffer(
       _ctx, &_ctx.swapchain, &_ctx.mainRenderpass);
   if (!frameBufRes.has_value()) {
@@ -243,6 +247,12 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
     return FeErr{frameBufRes.error()};
   }
   FLOG_INFO("frame buffers regenerated successfully");
+
+  for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
+    LOG_DEBUG("after regenerating");
+    LOG_DEBUG("Framebuffer[{}] handle: {}", i,
+              (void *)_ctx.swapchain.framebuffers[i].handle);
+  }
 
   FLOG_DEBUG("creating command buffers");
   auto cmdBufRes = _cmdBufferManager.CreateBuffers(_ctx);
@@ -294,6 +304,9 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   }
   FLOG_INFO("sync objects & fences created successfully");
   FLOG_INFO("Vulkan backend initialized successfully");
+  LOG_DEBUG("INIT: fb.data={}, fb[0].handle={}",
+            (void *)_ctx.swapchain.framebuffers.Data(),
+            (void *)_ctx.swapchain.framebuffers[0].handle);
   return FeTrue;
 }
 
@@ -306,17 +319,171 @@ FeExpect<bool, Error> VulkanBackend::OnResize(uint32 width, uint32 height) {
 }
 
 FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
+  LOG_DEBUG("BEGIN: fb.data={}, fb[0].handle={}",
+            (void *)_ctx.swapchain.framebuffers.Data(),
+            (void *)_ctx.swapchain.framebuffers[0].handle);
   Device &device = _ctx.device;
 
   // check if recreating swapchain is happening
-  if (!_ctx.recreatingSwapchain) {
-    vkDeviceWaitIdle(device.logicalDevice);
+  LOG_TRACE("recreating swapchain");
+  if (_ctx.recreatingSwapchain) {
+    VkResult res = vkDeviceWaitIdle(device.logicalDevice);
+    if (!VkResultIsSuccess(res)) {
+      FLOG_ERROR("device lost while waiting for idle");
+      return FeErr{Error("device lost while waiting for idle",
+                         ErrorType::RendererVulkanError)};
+    }
+
+    FLOG_INFO("recreating swapchain on begin frame");
+    return FeFalse;
   }
+
+  if (_ctx.framebufferSizeGeneration != _ctx.framebufferSizeLastGeneration) {
+    FLOG_INFO("framebuffer size generation changed, recreating swapchain");
+    VkResult res = vkDeviceWaitIdle(device.logicalDevice);
+    if (!VkResultIsSuccess(res)) {
+      FLOG_ERROR("device lost while waiting for idle");
+      return FeErr{Error("device lost while waiting for idle",
+                         ErrorType::RendererVulkanError)};
+    }
+
+    auto swapRes = _swapchainManager.RecreateSwapchain(
+        _ctx, _cachedFrameBufferWidth, _cachedFrameBufferHeight);
+    if (!swapRes.has_value()) {
+      FLOG_ERROR("failed to recreate swapchain");
+      return FeErr{swapRes.error()};
+    }
+
+    auto cmdBufRes = _cmdBufferManager.CreateBuffers(_ctx);
+    if (!cmdBufRes.has_value()) {
+      FLOG_ERROR("failed to recreate command buffers");
+      return FeErr{cmdBufRes.error()};
+    }
+
+    LOG_DEBUG("after recreating swapchain");
+
+    return FeFalse;
+  }
+
+  auto awaitRes =
+      AwaitFence(&_ctx.inFlightFences[_ctx.currentFrame], UINT64_MAX);
+  if (!awaitRes.has_value()) {
+    FLOG_ERROR("failed to await in-flight fence");
+    return FeErr{awaitRes.error()};
+  }
+
+  constexpr VkFence cFence = 0;
+  auto acquireRes = _swapchainManager.AcquireNextImage(
+      _ctx, _ctx.swapchain, UINT64_MAX,
+      _ctx.imageAvailableSemaphores[_ctx.imageIndex], cFence, &_ctx.imageIndex);
+  if (!acquireRes.has_value()) {
+    FLOG_ERROR("failed to acquire next image from swapchain");
+    return FeErr{acquireRes.error()};
+  }
+
+  CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
+  _cmdBufferManager.ResetBuffer(_ctx, cmdBuffer);
+  LOG_DEBUG("calling begin frame for image index: {}", _ctx.imageIndex);
+  _cmdBufferManager.BeginBuffer(_ctx, cmdBuffer, FeFalse, FeFalse, FeFalse);
+
+  // Prepare viewport and scissor
+  VkViewport viewport = {};
+  viewport.x = 0.0f;
+  viewport.y = static_cast<float32>(_ctx.framebufferHeight);
+  viewport.width = static_cast<float32>(_ctx.framebufferWidth);
+  viewport.height = -viewport.y;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+
+  VkRect2D scissor = {};
+  scissor.offset = {0, 0};
+  scissor.extent = {_ctx.framebufferWidth, _ctx.framebufferHeight};
+
+  constexpr uint32 cFirstViewport = 0;
+  constexpr uint32 cViewportCount = 1;
+  constexpr uint32 cFirstScissor = 0;
+  constexpr uint32 cScissorCount = 1;
+
+  vkCmdSetViewport(cmdBuffer.handle, cFirstViewport, cViewportCount, &viewport);
+  vkCmdSetScissor(cmdBuffer.handle, cFirstScissor, cScissorCount, &scissor);
+
+  LOG_DEBUG("frambuffer addr inside begin frame: {}, image index: {}",
+            (void *)&_ctx.swapchain.framebuffers[_ctx.imageIndex],
+            _ctx.imageIndex);
+  _renderpassManager.BeginRenderpass(
+      _ctx, &cmdBuffer, &_ctx.mainRenderpass,
+      _ctx.swapchain.framebuffers[_ctx.imageIndex].handle);
 
   return FeTrue;
 }
 
 FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
+  Device &device = _ctx.device;
+  CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
+
+  LOG_DEBUG("cmd ptr at end frame: {}", (void *)&cmdBuffer);
+
+  _renderpassManager.EndRenderpass(_ctx, &cmdBuffer, &_ctx.mainRenderpass);
+  _cmdBufferManager.EndBuffer(_ctx, cmdBuffer);
+
+  if (_ctx.imagesInFlight[_ctx.imageIndex] != VK_NULL_HANDLE) {
+    auto awaitRes =
+        AwaitFence(_ctx.imagesInFlight[_ctx.imageIndex], UINT64_MAX);
+    if (!awaitRes.has_value()) {
+      FLOG_ERROR("failed to await image in-flight fence");
+      return FeErr{awaitRes.error()};
+    }
+  }
+
+  _ctx.imagesInFlight[_ctx.imageIndex] =
+      &_ctx.inFlightFences[_ctx.currentFrame];
+
+  auto resetRes = ResetFence(&_ctx.inFlightFences[_ctx.currentFrame]);
+  if (!resetRes.has_value()) {
+    FLOG_ERROR("failed to reset in-flight fence");
+    return FeErr{resetRes.error()};
+  }
+
+  VkSubmitInfo submitInfo = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &cmdBuffer.handle;
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = &_ctx.imageAvailableSemaphores[_ctx.imageIndex];
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = &_ctx.queueCompleteSemaphores[_ctx.imageIndex];
+
+  constexpr uint32 cFlagCount = 1;
+  constexpr uint32 cSubmitCount = 1;
+
+  // Each semaphore waits on the corresponding pipeline stage to complete 1:1
+  // ratio. VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT prevents subsequent
+  // color attachment writes from executing until the semaphore signals
+  VkPipelineStageFlags waitStages[cFlagCount] = {
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  submitInfo.pWaitDstStageMask = waitStages;
+
+  LOG_DEBUG("logicalDevice={} graphicsQueue={} presentQueue={}",
+            (void *)device.logicalDevice, (void *)device.graphicsQueue,
+            (void *)device.presentQueue);
+
+  VkResult result =
+      vkQueueSubmit(device.graphicsQueue, cSubmitCount, &submitInfo,
+                    _ctx.inFlightFences[_ctx.currentFrame].handle);
+  if (auto res = VkCheck(result); !res.has_value()) {
+    FLOG_ERROR("failed to submit to graphics queue");
+    return FeErr{res.error()};
+  }
+
+  cmdBuffer.state = CmdBufferState::Submitted;
+
+  auto presentRes = _swapchainManager.PresentSwapchain(
+      _ctx, _ctx.swapchain, device.graphicsQueue, device.presentQueue,
+      _ctx.queueCompleteSemaphores[_ctx.imageIndex], _ctx.imageIndex);
+  if (!presentRes.has_value()) {
+    FLOG_ERROR("failed to present swapchain image");
+    return FeErr{presentRes.error()};
+  }
+
   return FeTrue;
 }
 

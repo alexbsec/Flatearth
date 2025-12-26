@@ -157,6 +157,9 @@ void RenderpassManager::BeginRenderpass(Context &ctx, CommandBuffer *pCmdBuffer,
   beginInfo.clearValueCount = clearValCount;
   beginInfo.pClearValues = clearVals;
 
+  LOG_DEBUG("BeginRenderpass: cmd={} rp={} fb={} extent={}x{}",
+            (void *)pCmdBuffer->handle, (void *)pRenderpass->handle,
+            (void *)frameBuffer, pRenderpass->width, pRenderpass->height);
   vkCmdBeginRenderPass(pCmdBuffer->handle, &beginInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
   pCmdBuffer->state = CmdBufferState::InRenderpass;

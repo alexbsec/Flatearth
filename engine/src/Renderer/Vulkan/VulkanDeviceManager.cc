@@ -112,8 +112,15 @@ FeExpect<void, Error> DeviceManager::CreateDevice(Context &ctx) {
   }
 
   FLOG_INFO("logical device created");
-  FLOG_INFO("creating graphics command pool");
 
+  vkGetDeviceQueue(ctx.device.logicalDevice,
+                   ctx.device.graphicsQueueIndex, 0,
+                   &ctx.device.graphicsQueue);
+  vkGetDeviceQueue(ctx.device.logicalDevice,
+                   ctx.device.presentQueueIndex, 0,
+                   &ctx.device.presentQueue);
+
+  FLOG_DEBUG("creating graphics command pool");
   VkCommandPoolCreateInfo poolCreateInfo = {
       VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
   poolCreateInfo.queueFamilyIndex = ctx.device.graphicsQueueIndex;

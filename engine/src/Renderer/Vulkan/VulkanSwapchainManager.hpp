@@ -2,9 +2,9 @@
 #define _FLATEARTH_ENGINE_RENDERER_VULKAN_SWAPCHAIN_MANAGER_HPP
 
 #include "Core/FeMemory.hpp"
+#include "Renderer/Vulkan/VulkanFrameBufferManager.hpp"
 #include "Renderer/Vulkan/VulkanImager.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
-#include "Renderer/Vulkan/VulkanFrameBufferManager.hpp"
 
 namespace flatearth::renderer::vulkan {
 
@@ -24,11 +24,12 @@ public:
                                           uint32 &height);
   FeExpect<void, Error> DestroySwapchain(Context &ctx, Swapchain *pSwapchain);
 
-  FeExpect<void, Error> AcquireNextImage(Context &ctx, uint64 timeoutNs,
+  FeExpect<bool, Error> AcquireNextImage(Context &ctx, Swapchain &swapchain,
+                                         uint64 timeoutNs,
                                          VkSemaphore imageAvailableSemaphore,
                                          VkFence fence, uint32 *outImageIndex);
 
-  FeExpect<void, Error> PresentSwapchain(Context &ctx, VkQueue graphicsQueue,
+  FeExpect<void, Error> PresentSwapchain(Context &ctx, Swapchain &swapchain, VkQueue graphicsQueue,
                                          VkQueue presentQueue,
                                          VkSemaphore renderCompleteSemaphore,
                                          uint32 presentImageIndex);

@@ -44,14 +44,55 @@ FrontendRenderer::Initialize() {
 }
 
 FeExpect<bool, Error> FrontendRenderer::BeginFrame(float32 deltaTime) {
-  return FeTrue;
+  if (_pActiveBackend == nullptr) {
+    FLOG_WARN("no active backends");
+    return FeFalse;
+  }
+
+  auto res = _pActiveBackend->BeginFrame(deltaTime);
+  if (!res.has_value()) {
+    FLOG_ERROR("backend renderer failed to begin frame");
+    return FeErr{res.error()};
+  }
+
+  return res.value();
 }
 
 FeExpect<bool, Error> FrontendRenderer::EndFrame(float32 deltaTime) {
+  if (_pActiveBackend == nullptr) {
+    FLOG_WARN("no active backends");
+    return FeFalse;
+  }
+
+  auto res = _pActiveBackend->EndFrame(deltaTime);
+  if (!res.has_value()) {
+    FLOG_ERROR("backend renderer failed to end frame");
+    return FeErr{res.error()};
+  }
+
   return FeTrue;
 }
 
 FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
+  auto beginRes = BeginFrame(pRenderPacket->deltaTime);
+  if (!beginRes.has_value()) {
+    FLOG_ERROR("failed to begin frame");
+    return FeErr{beginRes.error()};
+  }
+
+  if (!beginRes.value()) {
+    FLOG_INFO("skipping frame draw because begin frame returned false");
+    return FeTrue;
+  }
+
+  auto endRes = EndFrame(pRenderPacket->deltaTime);
+  if (!endRes.has_value()) {
+    FLOG_ERROR("failed to end frame");
+    return FeErr{endRes.error()};
+  }
+
+  LOG_DEBUG("frame ended");
+
   return FeTrue;
 }
 

@@ -151,8 +151,10 @@ FeExpect<bool, Error> SwapchainManager::RecreateSwapchain(Context &ctx,
   ctx.mainRenderpass.width = ctx.framebufferWidth;
   ctx.mainRenderpass.height = ctx.framebufferHeight;
 
-  // Regenerate framebuffer
-  // Create command buffer
+  auto fbRes = RegenerateFrameBuffer(ctx, &ctx.swapchain, &ctx.mainRenderpass);
+  if (!fbRes.has_value()) {
+    return FeErr{fbRes.error()};
+  }
 
   ctx.recreatingSwapchain = FeFalse;
   FLOG_INFO("swapchain recreated successfully");
@@ -164,16 +166,69 @@ SwapchainManager::DestroySwapchain(Context &ctx, Swapchain *pSwapchain) {
   return DestroyLogic(ctx, pSwapchain);
 }
 
-FeExpect<void, Error>
-SwapchainManager::AcquireNextImage(Context &ctx, uint64 timeoutNs,
-                                   VkSemaphore imageAvailableSemaphore,
-                                   VkFence fence, uint32 *outImageIndex) {
+FeExpect<bool, Error> SwapchainManager::AcquireNextImage(
+    Context &ctx, Swapchain &swapchain, uint64 timeoutNs,
+    VkSemaphore imageAvailableSemaphore, VkFence fence, uint32 *outImageIndex) {
+
+  VkResult result = vkAcquireNextImageKHR(
+      ctx.device.logicalDevice, swapchain.handle, timeoutNs,
+      imageAvailableSemaphore, fence, outImageIndex);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    // This errors happens when resizing goes wrong for example
+    // We simply recreate the swapchain in this case
+    auto res = RecreateLogic(ctx, &swapchain, ctx.framebufferWidth,
+                             ctx.framebufferHeight);
+    if (!res.has_value()) {
+      FLOG_ERROR("failed to recreate swapchain after VK_ERROR_OUT_OF_DATE_KHR");
+      return FeErr{res.error()};
+    }
+    return FeFalse;
+  } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    // These are only Vulkan errors and we simply log a fatal error
+    // for the engine
+    FLOG_FATAL("VulkanBackend::SwapchainAcquireNextImage(): Failed to acquire "
+               "swapchain image");
+    return FeErr{Error("failed to acquire next image from swapchain",
+                       ErrorType::RendererVulkanError)};
+  }
+
+  // If hits here, it means everything is ok
   return {};
 }
 
 FeExpect<void, Error> SwapchainManager::PresentSwapchain(
-    Context &ctx, VkQueue graphicsQueue, VkQueue presentQueue,
+    Context &ctx, Swapchain &swapchain, VkQueue graphicsQueue, VkQueue presentQueue,
     VkSemaphore renderCompleteSemaphore, uint32 presentImageIndex) {
+
+  // Return the image to the swapchain for presentation
+  VkPresentInfoKHR presentInfo = {VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pNext = nullptr;
+  presentInfo.pWaitSemaphores = &renderCompleteSemaphore;
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = &swapchain.handle;
+  presentInfo.pImageIndices = &presentImageIndex;
+  presentInfo.pResults = nullptr;
+
+  VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    // Must recreate
+    auto res = RecreateSwapchain(ctx, ctx.framebufferWidth, ctx.framebufferHeight);
+    if (!res.has_value()) {
+      FLOG_ERROR("failed to recreate swapchain after present returned out of "
+                 "date or suboptimal");
+      return FeErr{res.error()};
+    }
+  } else if (result != VK_SUCCESS) {
+    FLOG_FATAL("Failed to present swapchain image");
+    return FeErr{Error("failed to present swapchain image",
+                       ErrorType::RendererVulkanError)};
+  }
+
+  // Increment and loop the index
+  ctx.currentFrame = (ctx.currentFrame + 1) % swapchain.maxFrames;
+  ctx.imageIndex = (ctx.imageIndex + 1) % swapchain.imageCount;
   return {};
 }
 
