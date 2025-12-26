@@ -91,7 +91,6 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
     return FeErr{endRes.error()};
   }
 
-  LOG_DEBUG("frame ended");
 
   return FeTrue;
 }

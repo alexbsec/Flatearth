@@ -140,7 +140,6 @@ FeExpect<bool, Error> SwapchainManager::RecreateSwapchain(Context &ctx,
   ctx.framebufferHeight = height;
   ctx.mainRenderpass.width = width;
   ctx.mainRenderpass.height = height;
-  width = height = 0;
 
   ctx.framebufferSizeLastGeneration = ctx.framebufferSizeGeneration;
 
@@ -187,19 +186,20 @@ FeExpect<bool, Error> SwapchainManager::AcquireNextImage(
   } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
     // These are only Vulkan errors and we simply log a fatal error
     // for the engine
-    FLOG_FATAL("VulkanBackend::SwapchainAcquireNextImage(): Failed to acquire "
-               "swapchain image");
+    FLOG_FATAL("failed to acquire swapchain image");
     return FeErr{Error("failed to acquire next image from swapchain",
                        ErrorType::RendererVulkanError)};
   }
 
   // If hits here, it means everything is ok
-  return {};
+  return FeTrue;
 }
 
-FeExpect<void, Error> SwapchainManager::PresentSwapchain(
-    Context &ctx, Swapchain &swapchain, VkQueue graphicsQueue, VkQueue presentQueue,
-    VkSemaphore renderCompleteSemaphore, uint32 presentImageIndex) {
+FeExpect<void, Error>
+SwapchainManager::PresentSwapchain(Context &ctx, Swapchain &swapchain,
+                                   VkQueue graphicsQueue, VkQueue presentQueue,
+                                   VkSemaphore renderCompleteSemaphore,
+                                   uint32 presentImageIndex) {
 
   // Return the image to the swapchain for presentation
   VkPresentInfoKHR presentInfo = {VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
@@ -214,7 +214,8 @@ FeExpect<void, Error> SwapchainManager::PresentSwapchain(
   VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
     // Must recreate
-    auto res = RecreateSwapchain(ctx, ctx.framebufferWidth, ctx.framebufferHeight);
+    auto res =
+        RecreateSwapchain(ctx, ctx.framebufferWidth, ctx.framebufferHeight);
     if (!res.has_value()) {
       FLOG_ERROR("failed to recreate swapchain after present returned out of "
                  "date or suboptimal");
@@ -243,6 +244,10 @@ SwapchainManager::RegenerateFrameBuffer(Context &ctx, Swapchain *pSwapchain,
   if (pRenderpass == nullptr) {
     return FeErr{Error("cannot regenerate frame buffer with nullptr renderpass",
                        ErrorType::NullptrException)};
+  }
+
+  if (ctx.framebufferWidth == 0 || ctx.framebufferHeight == 0) {
+    return {};
   }
 
   // TODO: remove this hardcoded part

@@ -18,19 +18,23 @@ VulkanBackend::VulkanBackend(memory::MemoryManager &memManager)
       _ctx(memManager) {}
 
 VulkanBackend::~VulkanBackend() {
+  vkDeviceWaitIdle(_ctx.device.logicalDevice);
+
   for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
-    if (_ctx.imageAvailableSemaphores[i] != nullptr) {
-      vkDestroySemaphore(_ctx.device.logicalDevice,
-                         _ctx.imageAvailableSemaphores[i], _ctx.pAllocator);
-
-      _ctx.imageAvailableSemaphores[i] = nullptr;
-    }
-
     if (_ctx.queueCompleteSemaphores[i] != nullptr) {
       vkDestroySemaphore(_ctx.device.logicalDevice,
                          _ctx.queueCompleteSemaphores[i], _ctx.pAllocator);
 
       _ctx.queueCompleteSemaphores[i] = nullptr;
+    }
+  }
+
+  for (uint32 i = 0; i < _ctx.swapchain.maxFrames; i++) {
+    if (_ctx.imageAvailableSemaphores[i] != nullptr) {
+      vkDestroySemaphore(_ctx.device.logicalDevice,
+                         _ctx.imageAvailableSemaphores[i], _ctx.pAllocator);
+
+      _ctx.imageAvailableSemaphores[i] = nullptr;
     }
 
     auto destroyRes = DestroyFence(&_ctx.inFlightFences[i]);
@@ -40,6 +44,7 @@ VulkanBackend::~VulkanBackend() {
       return;
     }
   }
+
 
   auto destroyRes = _cmdBufferManager.DestroyBuffers(_ctx);
   if (!destroyRes.has_value()) {
@@ -81,6 +86,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
       (_cachedFrameBufferWidth != 0) ? _cachedFrameBufferWidth : 946;
   _ctx.framebufferHeight =
       (_cachedFrameBufferHeight != 0) ? _cachedFrameBufferHeight : 507;
+
 
   _cachedFrameBufferWidth = 0;
   _cachedFrameBufferHeight = 0;
@@ -248,12 +254,6 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   }
   FLOG_INFO("frame buffers regenerated successfully");
 
-  for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
-    LOG_DEBUG("after regenerating");
-    LOG_DEBUG("Framebuffer[{}] handle: {}", i,
-              (void *)_ctx.swapchain.framebuffers[i].handle);
-  }
-
   FLOG_DEBUG("creating command buffers");
   auto cmdBufRes = _cmdBufferManager.CreateBuffers(_ctx);
   if (!cmdBufRes.has_value()) {
@@ -263,10 +263,9 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   FLOG_INFO("command buffers created successfully");
 
   FLOG_DEBUG("creating sync objects & fences");
-  _ctx.imageAvailableSemaphores.Reserve(_ctx.swapchain.imageCount);
-  _ctx.queueCompleteSemaphores.Reserve(_ctx.swapchain.imageCount);
-  _ctx.inFlightFences.Reserve(_ctx.swapchain.imageCount);
-  for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
+  _ctx.imageAvailableSemaphores.Reserve(_ctx.swapchain.maxFrames);
+  _ctx.inFlightFences.Reserve(_ctx.swapchain.maxFrames);
+  for (uint32 i = 0; i < _ctx.swapchain.maxFrames; i++) {
     VkSemaphoreCreateInfo semaphoreInfo = {
         VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
     semaphoreInfo.pNext = nullptr;
@@ -279,18 +278,28 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
       return FeErr{res.error()};
     }
 
+
+
+    auto fenceRes = CreateFence(&_ctx.inFlightFences[i], FeTrue);
+    if (!fenceRes.has_value()) {
+      FLOG_ERROR("failed to create in-flight fence");
+      return FeErr{fenceRes.error()};
+    }
+  }
+
+  _ctx.queueCompleteSemaphores.Reserve(_ctx.swapchain.imageCount);
+  for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
+    VkSemaphoreCreateInfo semaphoreInfo = {
+
+        VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+    semaphoreInfo.pNext = nullptr;
+    semaphoreInfo.flags = 0;
     if (auto res = VkCheck(vkCreateSemaphore(_ctx.device.logicalDevice,
                                              &semaphoreInfo, _ctx.pAllocator,
                                              &_ctx.queueCompleteSemaphores[i]));
         !res.has_value()) {
       FLOG_ERROR("failed to create queue complete semaphore");
       return FeErr{res.error()};
-    }
-
-    auto fenceRes = CreateFence(&_ctx.inFlightFences[i], FeTrue);
-    if (!fenceRes.has_value()) {
-      FLOG_ERROR("failed to create in-flight fence");
-      return FeErr{fenceRes.error()};
     }
   }
 
@@ -302,15 +311,19 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
     _memoryManager.ZeroMemory(&_ctx.imagesInFlight[i], sizeof(Fence *));
     _ctx.imagesInFlight[i] = nullptr;
   }
+
+
   FLOG_INFO("sync objects & fences created successfully");
   FLOG_INFO("Vulkan backend initialized successfully");
-  LOG_DEBUG("INIT: fb.data={}, fb[0].handle={}",
-            (void *)_ctx.swapchain.framebuffers.Data(),
-            (void *)_ctx.swapchain.framebuffers[0].handle);
   return FeTrue;
 }
 
 FeExpect<bool, Error> VulkanBackend::OnResize(uint32 width, uint32 height) {
+  if (width == 0 || height == 0) {
+    FLOG_WARN("attempted to resize framebuffer to zero dimension");
+    return FeFalse;
+  }
+
   _cachedFrameBufferWidth = width;
   _cachedFrameBufferHeight = height;
   _ctx.framebufferSizeGeneration++;
@@ -319,13 +332,9 @@ FeExpect<bool, Error> VulkanBackend::OnResize(uint32 width, uint32 height) {
 }
 
 FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
-  LOG_DEBUG("BEGIN: fb.data={}, fb[0].handle={}",
-            (void *)_ctx.swapchain.framebuffers.Data(),
-            (void *)_ctx.swapchain.framebuffers[0].handle);
   Device &device = _ctx.device;
 
   // check if recreating swapchain is happening
-  LOG_TRACE("recreating swapchain");
   if (_ctx.recreatingSwapchain) {
     VkResult res = vkDeviceWaitIdle(device.logicalDevice);
     if (!VkResultIsSuccess(res)) {
@@ -347,6 +356,8 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
                          ErrorType::RendererVulkanError)};
     }
 
+    FLOG_INFO("new framebuffer size: {}/{}", _cachedFrameBufferWidth,
+              _cachedFrameBufferHeight);
     auto swapRes = _swapchainManager.RecreateSwapchain(
         _ctx, _cachedFrameBufferWidth, _cachedFrameBufferHeight);
     if (!swapRes.has_value()) {
@@ -359,8 +370,6 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
       FLOG_ERROR("failed to recreate command buffers");
       return FeErr{cmdBufRes.error()};
     }
-
-    LOG_DEBUG("after recreating swapchain");
 
     return FeFalse;
   }
@@ -375,15 +384,18 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
   constexpr VkFence cFence = 0;
   auto acquireRes = _swapchainManager.AcquireNextImage(
       _ctx, _ctx.swapchain, UINT64_MAX,
-      _ctx.imageAvailableSemaphores[_ctx.imageIndex], cFence, &_ctx.imageIndex);
+      _ctx.imageAvailableSemaphores[_ctx.currentFrame], cFence, &_ctx.imageIndex);
   if (!acquireRes.has_value()) {
     FLOG_ERROR("failed to acquire next image from swapchain");
     return FeErr{acquireRes.error()};
   }
 
+  if (!acquireRes.value()) {
+    return FeFalse;
+  }
+
   CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
   _cmdBufferManager.ResetBuffer(_ctx, cmdBuffer);
-  LOG_DEBUG("calling begin frame for image index: {}", _ctx.imageIndex);
   _cmdBufferManager.BeginBuffer(_ctx, cmdBuffer, FeFalse, FeFalse, FeFalse);
 
   // Prepare viewport and scissor
@@ -407,9 +419,6 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
   vkCmdSetViewport(cmdBuffer.handle, cFirstViewport, cViewportCount, &viewport);
   vkCmdSetScissor(cmdBuffer.handle, cFirstScissor, cScissorCount, &scissor);
 
-  LOG_DEBUG("frambuffer addr inside begin frame: {}, image index: {}",
-            (void *)&_ctx.swapchain.framebuffers[_ctx.imageIndex],
-            _ctx.imageIndex);
   _renderpassManager.BeginRenderpass(
       _ctx, &cmdBuffer, &_ctx.mainRenderpass,
       _ctx.swapchain.framebuffers[_ctx.imageIndex].handle);
@@ -421,7 +430,6 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
   Device &device = _ctx.device;
   CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
 
-  LOG_DEBUG("cmd ptr at end frame: {}", (void *)&cmdBuffer);
 
   _renderpassManager.EndRenderpass(_ctx, &cmdBuffer, &_ctx.mainRenderpass);
   _cmdBufferManager.EndBuffer(_ctx, cmdBuffer);
@@ -448,7 +456,7 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &cmdBuffer.handle;
   submitInfo.waitSemaphoreCount = 1;
-  submitInfo.pWaitSemaphores = &_ctx.imageAvailableSemaphores[_ctx.imageIndex];
+  submitInfo.pWaitSemaphores = &_ctx.imageAvailableSemaphores[_ctx.currentFrame];
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = &_ctx.queueCompleteSemaphores[_ctx.imageIndex];
 
@@ -461,10 +469,6 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
   VkPipelineStageFlags waitStages[cFlagCount] = {
       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
   submitInfo.pWaitDstStageMask = waitStages;
-
-  LOG_DEBUG("logicalDevice={} graphicsQueue={} presentQueue={}",
-            (void *)device.logicalDevice, (void *)device.graphicsQueue,
-            (void *)device.presentQueue);
 
   VkResult result =
       vkQueueSubmit(device.graphicsQueue, cSubmitCount, &submitInfo,

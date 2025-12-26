@@ -54,7 +54,6 @@ FrameBufferManager::CreateFrameBuffer(Context &ctx, Renderpass &renderpass,
     return FeErr{res.error()};
   }
 
-  LOG_DEBUG("vkCreateFramebuffer OK: fb_handle={}", (void*)pFrameBuffer->handle);
 
   return {};
 }

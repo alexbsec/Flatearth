@@ -102,9 +102,6 @@ FeExpect<void, Error> Engine::Start() {
     }
 
     if (_appState.isSuspended) {
-      _appState.clock.Update();
-      _inputManager.Update(0.0);
-      LOG_DEBUG("application is suspended, skipping frame update");
       continue;
     }
 
@@ -129,9 +126,6 @@ FeExpect<void, Error> Engine::Start() {
                  drawRes.error().message);
       return FeErr{drawRes.error()};
     }
-
-    FLOG_DEBUG("frame {} rendered in {} ms", frameCount,
-               (clock::GetAbsoluteTime() - frameStartTime) * 1000.0);
 
     float64 frameEndTime = clock::GetAbsoluteTime();
     float64 frameElapsed = frameEndTime - frameStartTime;

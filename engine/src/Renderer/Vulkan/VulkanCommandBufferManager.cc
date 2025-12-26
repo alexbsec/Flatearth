@@ -124,8 +124,6 @@ void CommandBufferManager::BeginBuffer(Context &ctx, CommandBuffer &cmdBuffer,
     return;
   }
   cmdBuffer.state = CmdBufferState::Recording;
-
-  FLOG_INFO("began command buffer recording");
 }
 
 void CommandBufferManager::EndBuffer(Context &ctx, CommandBuffer &cmdBuffer) {
@@ -135,8 +133,6 @@ void CommandBufferManager::EndBuffer(Context &ctx, CommandBuffer &cmdBuffer) {
     return;
   }
   cmdBuffer.state = CmdBufferState::RecordingEnded;
-
-  FLOG_INFO("ended command buffer recording");
 }
 
 void CommandBufferManager::ResetBuffer(Context &ctx, CommandBuffer &cmdBuffer) {

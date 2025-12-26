@@ -130,7 +130,7 @@ struct FrameBuffer {
 struct Swapchain {
   VkSwapchainKHR handle;
   VkSurfaceFormatKHR imageFormat;
-  uint8 maxFrames;
+  uint8 maxFrames{3};
   VkImage *pImages{nullptr};
   VkImageView *pViews{nullptr};
   Image depthAttachment;
