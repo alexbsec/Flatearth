@@ -105,7 +105,7 @@ STATIC_ASSERT(sizeof(float64) == 8, "Expected float64 to be 8 bytes");
 #define FINLINE __forceinline
 #define FNOINLINE __declspec(noinline)
 #else
-#define FINLINE static inline
+#define FEINLINE static inline
 #define FNOINLINE
 #endif
 

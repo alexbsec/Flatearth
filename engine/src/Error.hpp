@@ -18,6 +18,7 @@ enum class ErrorType { Unknown,
   GameUpdateUndefined,
   PlatformCreateSurface,
   GameResizeUndefined,
+  DivisionByZero,
   NullptrException,
 };
 
