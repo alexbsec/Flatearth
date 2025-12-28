@@ -82,7 +82,7 @@ EngineListener::OnResize(const event::EventDispatchContext &ctx,
     return FeFalse;
   }
 
-  auto resizeEvent = eventCtx.Get<event::Uint16x8>();
+  auto resizeEvent = eventCtx.Get<event::Uint32x4>();
   uint32 width = resizeEvent[0];
   uint32 height = resizeEvent[1];
 

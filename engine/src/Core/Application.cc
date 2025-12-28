@@ -98,7 +98,7 @@ FeExpect<void, Error> Engine::Start() {
 
     if (!pollRes.value()) {
       FLOG_DEBUG("closing window was requested");
-      _appState.isRunning = FeFalse;
+      break;
     }
 
     if (_appState.isSuspended) {

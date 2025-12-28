@@ -225,9 +225,9 @@ LRESULT Platform::ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     }
 
     EventContext eventCtx{};
-    Uint16x8 resizePayload{ width, height, 0u, 0u };
+    Uint32x4 resizePayload{ width, height, 0u, 0u };
 
-    eventCtx.Set<Uint16x8>(EventLayout::Uint16x8, resizePayload);
+    eventCtx.Set<Uint32x4>(EventLayout::Uint32x4, resizePayload);
     _eventManager.FireEvent(
       SystemEventCode::WindowResized,
       nullptr,
