@@ -183,7 +183,7 @@ struct ObjectShader {
 };
 
 struct Context {
-  uint32 framebufferWidth, framebufferHeight;
+  uint32 framebufferWidth{ 0 }, framebufferHeight{ 0 };
   uint64 framebufferSizeGeneration{0};
   uint64 framebufferSizeLastGeneration{0};
   uint32 currentFrame{0};

@@ -16,7 +16,7 @@ FeExpect<void, Error> CommandBufferManager::CreateBuffers(Context &ctx) {
   if (ctx.graphicsCommandBuffer.Empty()) {
     ctx.graphicsCommandBuffer.Reserve(ctx.swapchain.imageCount);
     for (uint32 i = 0; i < ctx.swapchain.imageCount; i++) {
-      _memoryManager.ZeroMemory(&ctx.graphicsCommandBuffer[i],
+      _memoryManager.FZeroMemory(&ctx.graphicsCommandBuffer[i],
                                 sizeof(CommandBuffer));
     }
   }
@@ -30,7 +30,7 @@ FeExpect<void, Error> CommandBufferManager::CreateBuffers(Context &ctx) {
         return FeErr{freeRes.error()};
       }
     }
-    _memoryManager.ZeroMemory(&ctx.graphicsCommandBuffer[i],
+    _memoryManager.FZeroMemory(&ctx.graphicsCommandBuffer[i],
                               sizeof(CommandBuffer));
     auto allocRes = AllocateBuffer(ctx, &ctx.graphicsCommandBuffer[i],
                                    ctx.device.graphicsCommandPool, FeTrue);
@@ -69,7 +69,7 @@ FeExpect<void, Error>
 CommandBufferManager::AllocateBuffer(Context &ctx, CommandBuffer *pCmdBuffer,
                                      VkCommandPool pool, bool isPrimary) {
   // just to make sure
-  _memoryManager.ZeroMemory(pCmdBuffer, sizeof(CommandBuffer));
+  _memoryManager.FZeroMemory(pCmdBuffer, sizeof(CommandBuffer));
 
   VkCommandBufferAllocateInfo allocInfo = {
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};

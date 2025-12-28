@@ -351,6 +351,8 @@ FeExpect<void, Error> SwapchainManager::CreateLogic(Context &ctx,
 
   pSwapchain->widthExtent = swapchainExtent.width;
   pSwapchain->heightExtent = swapchainExtent.height;
+  ctx.framebufferHeight = pSwapchain->heightExtent;
+  ctx.framebufferWidth = pSwapchain->widthExtent;
 
   uint32 imageCount =
       ctx.device.swapchainSupportInfo.capabilities.minImageCount + 1;

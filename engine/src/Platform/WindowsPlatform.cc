@@ -7,18 +7,47 @@
 #include <stdexcept>
 #include <windows.h>
 #include <windowsx.h>
+#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_win32.h>
 
 static float64 sClockFrequency;
 static LARGE_INTEGER sStartTime;
 
 namespace flatearth::platform {
 
+static const char* scSurface = "VK_KHR_win32_surface";
+
 const string cNullInternalStateError = "platform internal state is nullptr";
 
 struct InternalState {
 	HINSTANCE hInstance;
 	HWND hwnd;
+  VkSurfaceKHR surface;
 };
+
+void GetRequiredExtNames(containers::DArray<const char*>* namesDArray) {
+  namesDArray->Push(scSurface);
+}
+
+FeExpect<void, Error> CreateVulkanSurface(PlatformState* platState,
+  renderer::vulkan::Context &context) {
+  auto& pInternalState = platState->internalState;
+
+  VkWin32SurfaceCreateInfoKHR createInfo = {
+      VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR };
+  createInfo.hinstance = pInternalState->hInstance;
+  createInfo.hwnd = pInternalState->hwnd;
+
+  VkResult result = vkCreateWin32SurfaceKHR(
+    context.instance, &createInfo, context.pAllocator, &pInternalState->surface);
+  if (result != VK_SUCCESS) {
+    FLOG_FATAL("Vulkan surface failed to be created");
+    return FeErr{ Error("failed to create Vulkan surface", ErrorType::RendererVulkanError) };
+  }
+
+  context.surface = pInternalState->surface;
+  return {};
+}
 
 Platform::Platform(const string& applicationName, int32 x, int32 y, int32 width, int32 height, memory::MemoryManager& memManager, input::InputManager& inputManager, event::EventManager &eventManager)
   : _xPos(x), _yPos(y), _width(width), _height(height),
@@ -196,12 +225,7 @@ LRESULT Platform::ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     }
 
     EventContext eventCtx{};
-    Uint16x8 resizePayload{
-      static_cast<uint32>(width),
-      static_cast<uint32>(height),
-      0,
-      0
-    };
+    Uint16x8 resizePayload{ width, height, 0u, 0u };
 
     eventCtx.Set<Uint16x8>(EventLayout::Uint16x8, resizePayload);
     _eventManager.FireEvent(

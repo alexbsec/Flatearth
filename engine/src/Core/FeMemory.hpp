@@ -1,9 +1,12 @@
 #ifndef _FLATEARTH_ENGINE_CORE_FE_MEMORY_HPP
 #define _FLATEARTH_ENGINE_CORE_FE_MEMORY_HPP
 
+
+
 #include "Defines.hpp"
 #include <array>
 #include <functional>
+
 
 namespace flatearth::memory {
 
@@ -51,7 +54,7 @@ public:
 
   void *RawAlloc(uint64 size, uint64 alignment, Tag tag);
   void RawFree(void *block, uint64 size, Tag tag);
-  void ZeroMemory(void *block, uint64 size);
+  void FZeroMemory(void *block, uint64 size);
 
   template <typename T, typename... Args>
   inline FePtr<T> Allocate(Tag tag, Args &&...args) {

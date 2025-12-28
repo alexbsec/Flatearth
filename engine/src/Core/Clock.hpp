@@ -2,16 +2,19 @@
 #define _FLATEARTH_ENGINE_CLOCK_HPP
 
 #include "Defines.hpp"
-#include <ctime>
+#include <chrono>
 
 namespace flatearth::clock {
 
 static constexpr float64 sMillisecond = 0.000000001;
 
 inline static float64 GetAbsoluteTime() {
-  struct std::timespec now;
-  clock_gettime(CLOCK_MONOTONIC, &now);
-  return now.tv_sec + now.tv_nsec * sMillisecond;
+  using clock = std::chrono::steady_clock;
+  using seconds = std::chrono::duration<double>;
+
+  return std::chrono::duration_cast<seconds>(
+    clock::now().time_since_epoch()
+  ).count();
 }
 
 class Clock {

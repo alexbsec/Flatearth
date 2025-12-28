@@ -142,11 +142,13 @@ template <typename Err>
 using FeErr = std::unexpected<Err>;
 
 template <typename T>
-inline T *FeCast(void *ptr) {
+inline T* FeCast(void* ptr) {
+  static_assert(!std::is_array_v<T>,
+    "FeCast<T>: T must not be an array type");
 #ifdef FE_DEBUG
   assert(ptr != nullptr);
 #endif
-  return static_cast<T *>(ptr);
+  return static_cast<T*>(ptr);
 }
 
 template <typename T>

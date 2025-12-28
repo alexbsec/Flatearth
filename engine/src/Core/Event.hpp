@@ -53,6 +53,7 @@ struct EventContext {
   template <typename T> inline void Set(EventLayout l, const T &val) {
     layout = l;
     static_assert(sizeof(T) <= 16);
+    std::memset(payload.storage, 0, 16);
     std::memcpy(payload.storage, &val, sizeof(T));
   }
 

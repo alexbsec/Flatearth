@@ -95,7 +95,7 @@ void MemoryManager::RawFree(void *block, uint64 size, Tag tag) {
 #endif
 }
 
-void MemoryManager::ZeroMemory(void *block, uint64 size) {
+void MemoryManager::FZeroMemory(void *block, uint64 size) {
   if (block == nullptr || size == 0) {
     return;
   }

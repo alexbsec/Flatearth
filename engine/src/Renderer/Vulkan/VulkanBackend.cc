@@ -312,7 +312,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   // be nullptr when not in use. Actual fences are not owned by this array
   _ctx.imagesInFlight.Reserve(_ctx.swapchain.imageCount);
   for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
-    _memoryManager.ZeroMemory(&_ctx.imagesInFlight[i], sizeof(Fence *));
+    _memoryManager.FZeroMemory(&_ctx.imagesInFlight[i], sizeof(Fence *));
     _ctx.imagesInFlight[i] = nullptr;
   }
 

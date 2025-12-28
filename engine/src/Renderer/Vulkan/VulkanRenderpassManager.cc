@@ -32,7 +32,11 @@ FeExpect<void, Error> RenderpassManager::CreateRenderpass(
 
   /***** TODO: MAKE ALL OF THIS CONFIGURABLE *****/
   uint32 attachmentDescriptionCount = 2;
-  VkAttachmentDescription attachmentDescriptions[attachmentDescriptionCount];
+  containers::DArray<VkAttachmentDescription> attachmentDescriptions(_memoryManager);
+  attachmentDescriptions.Reserve(attachmentDescriptionCount);
+  for (uint32 i = 0; i < attachmentDescriptionCount; i++) {
+    attachmentDescriptions.Push(VkAttachmentDescription{});
+  }
 
   // Color attachment
   VkAttachmentDescription colorAttachment = {};
@@ -100,7 +104,7 @@ FeExpect<void, Error> RenderpassManager::CreateRenderpass(
   VkRenderPassCreateInfo renderPassCreateInfo = {
       VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
   renderPassCreateInfo.attachmentCount = attachmentDescriptionCount;
-  renderPassCreateInfo.pAttachments = attachmentDescriptions;
+  renderPassCreateInfo.pAttachments = attachmentDescriptions.Data();
   renderPassCreateInfo.subpassCount = 1;
   renderPassCreateInfo.pSubpasses = &subpass;
   renderPassCreateInfo.dependencyCount = 1;

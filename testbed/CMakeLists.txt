@@ -116,14 +116,16 @@ else()
     )
 endif()
 
-target_compile_options(flatearth_testbed PRIVATE
-    -fsanitize=address,undefined
-    -fno-omit-frame-pointer
-)
+if(NOT WIN32)
+    target_compile_options(flatearth_testbed PRIVATE
+        -fsanitize=address,undefined
+        -fno-omit-frame-pointer
+    )
 
-target_link_options(flatearth_testbed PRIVATE
-    -fsanitize=address,undefined
-)
+    target_link_options(flatearth_testbed PRIVATE
+        -fsanitize=address,undefined
+    )
+endif()
 
 ############################################################################
 #   COPY ENGINE LIB NEXT TO TESTBED (post-build)

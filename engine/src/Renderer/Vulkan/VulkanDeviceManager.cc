@@ -47,9 +47,13 @@ FeExpect<void, Error> DeviceManager::CreateDevice(Context &ctx) {
   uint32 queueFamilyCount = 0;
   vkGetPhysicalDeviceQueueFamilyProperties(ctx.device.physicalDevice,
                                            &queueFamilyCount, nullptr);
-  VkQueueFamilyProperties queueFamilies[queueFamilyCount];
+  containers::DArray<VkQueueFamilyProperties> queueFamilies(_memoryManager);
+  queueFamilies.Reserve(queueFamilyCount);
+  for (uint32 i = 0; i < queueFamilyCount; i++) {
+    queueFamilies.Push(VkQueueFamilyProperties{});
+  }
   vkGetPhysicalDeviceQueueFamilyProperties(ctx.device.physicalDevice,
-                                           &queueFamilyCount, queueFamilies);
+                                           &queueFamilyCount, queueFamilies.Data());
 
   uint32 indices[scMaxQueueTypes];
   uint32 indexCount = 0;
@@ -71,7 +75,12 @@ FeExpect<void, Error> DeviceManager::CreateDevice(Context &ctx) {
   AddUniqueQueueIndex(ctx.device.presentQueueIndex);
   AddUniqueQueueIndex(ctx.device.transferQueueIndex);
 
-  VkDeviceQueueCreateInfo queueCreateInfo[indexCount];
+  containers::DArray<VkDeviceQueueCreateInfo> queueCreateInfo(_memoryManager);
+  queueCreateInfo.Reserve(indexCount);
+  for (uint32 i = 0; i < indexCount; i++) {
+    queueCreateInfo.Push(VkDeviceQueueCreateInfo{});
+  }
+
   float32 queuePrio1[1] = {1.0f};
   float32 queuePrio2[2] = {1.0f, 1.0f};
   for (uint32 i = 0; i < indexCount; i++) {
@@ -95,7 +104,7 @@ FeExpect<void, Error> DeviceManager::CreateDevice(Context &ctx) {
 
   VkDeviceCreateInfo deviceCreateInfo = {VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
   deviceCreateInfo.queueCreateInfoCount = indexCount;
-  deviceCreateInfo.pQueueCreateInfos = queueCreateInfo;
+  deviceCreateInfo.pQueueCreateInfos = queueCreateInfo.Data();
   deviceCreateInfo.pEnabledFeatures = &deviceFeats;
   deviceCreateInfo.enabledExtensionCount = 1;
   const char *extNames = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
@@ -202,10 +211,15 @@ bool DeviceManager::SelectPhysicalDevice(Context &ctx) {
     FLOG_FATAL("no device which support Vulkan were found");
     return FeFalse;
   }
+  
+  containers::DArray<VkPhysicalDevice> physicalDevices(_memoryManager);
+  physicalDevices.Reserve(physicalDeviceCount);
+  for (uint32 i = 0; i < physicalDeviceCount; i++) {
+    physicalDevices.Push(VkPhysicalDevice{});
+  }
 
-  VkPhysicalDevice physicalDevices[physicalDeviceCount];
   if (auto res = VkCheck(vkEnumeratePhysicalDevices(
-          ctx.instance, &physicalDeviceCount, physicalDevices));
+          ctx.instance, &physicalDeviceCount, physicalDevices.Data()));
       !res.has_value()) {
     FLOG_FATAL("failed to store enumerated physical devices: {}",
                res.error().message);
