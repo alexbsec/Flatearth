@@ -127,6 +127,8 @@ constexpr static float64 FE_SEC_TO_MS_MUL = 1000.0f;
 
 constexpr static float64 FE_F64MAX = 1e30f;
 constexpr static float64 FE_F64EPS = 1.192092896e-7f;
+constexpr static float32 FE_F32MAX = 1e20f;
+constexpr static float32 FE_F32EPS = 1.192092896e-7f;
 
 
 template <typename T>

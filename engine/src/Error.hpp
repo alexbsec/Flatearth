@@ -19,6 +19,7 @@ enum class ErrorType { Unknown,
   PlatformCreateSurface,
   GameResizeUndefined,
   DivisionByZero,
+  MathError,
   NullptrException,
 };
 
