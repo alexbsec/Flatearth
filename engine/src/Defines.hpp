@@ -164,4 +164,7 @@ inline T *FeCastPermissive(void *ptr) {
 #define FECLAMP(value, min, max)                                                \
   (value <= min) ? min : (value >= max) ? max : value;
 
+template <typename T>
+using FeOptional = std::optional<T>;
+
 #endif // _FLATEARTH_ENGINE_DEFINITIONS_HP
