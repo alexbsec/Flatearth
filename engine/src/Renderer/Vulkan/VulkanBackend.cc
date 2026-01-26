@@ -20,13 +20,7 @@ VulkanBackend::VulkanBackend(memory::MemoryManager &memManager, platform::FileSy
 VulkanBackend::~VulkanBackend() {
   vkDeviceWaitIdle(_ctx.device.logicalDevice);
 
-  auto destroyRes =
-      _vulkanShader.DestroyObjectShader(_ctx, &_ctx.objectShader);
-  if (!destroyRes.has_value()) {
-    FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}",
-               destroyRes.error().message);
-    return;
-  }
+  _vulkanShader.DestroyObjectShader(_ctx, &_ctx.objectShader);
 
   for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
     if (_ctx.queueCompleteSemaphores[i] != nullptr) {
@@ -53,7 +47,7 @@ VulkanBackend::~VulkanBackend() {
     }
   }
 
-  destroyRes = _cmdBufferManager.DestroyBuffers(_ctx);
+  auto destroyRes = _cmdBufferManager.DestroyBuffers(_ctx);
   if (!destroyRes.has_value()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}",
                destroyRes.error().message);

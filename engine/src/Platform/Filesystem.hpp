@@ -48,8 +48,11 @@ public:
   FEAPI FeExpect<uint64, Error> WriteToFile(FileHandle &handle,
                                             std::span<const std::byte> data);
 
+  FEAPI void SetRootDirectory(const stdfs::path &path);
+
 private:
   memory::MemoryManager &_memoryManager;
+  stdfs::path _rootDir{};
 };
 
 } // namespace flatearth::platform

@@ -1,4 +1,5 @@
 #include "ObjectShader.hpp"
+#include "Renderer/Vulkan/VulkanTypes.hpp"
 #include "Renderer/Vulkan/VulkanUtils.hpp"
 #include <vulkan/vulkan_core.h>
 
@@ -13,6 +14,12 @@ VulkanShader::~VulkanShader() {
 
 FeExpect<bool, Error>
 VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
+  if (pObjShader == nullptr) {
+    FLOG_ERROR("cannot create shader object on nullptr object shader");
+    return FeErr{
+        Error("object shader is nullptr", ErrorType::NullptrException)};
+  }
+
   std::array<string, cObjectShaderStageCount> cStageTypeStrs{
       "vert",
       "frag",
@@ -40,11 +47,16 @@ VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
   return FeTrue;
 }
 
-FeExpect<void, Error>
-VulkanShader::DestroyObjectShader(Context &ctx, ObjectShader *pObjShader) {
-  // Placeholder implementation
-  FLOG_INFO("object shader destroyed");
-  return {};
+void VulkanShader::DestroyObjectShader(Context &ctx, ObjectShader *pObjShader) {
+  if (pObjShader == nullptr) {
+    return;
+  }
+
+  for (uint32 i = 0; i < cObjectShaderStageCount; i++) {
+    vkDestroyShaderModule(ctx.device.logicalDevice,
+                          pObjShader->shaderStages[i].handle, ctx.pAllocator);
+    pObjShader->shaderStages[i].handle = nullptr;
+  }
 }
 
 void VulkanShader::UseShader(Context &ctx, ObjectShader &objShader) {

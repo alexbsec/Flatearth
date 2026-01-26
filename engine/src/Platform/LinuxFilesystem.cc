@@ -2,17 +2,22 @@
 
 #if FEPLATFORM_LINUX
 
+#include "Core/Logger.hpp"
 #include <fcntl.h>
 #include <unistd.h>
 
 namespace flatearth::platform {
+
+stdfs::path WorkDirectory() {
+  return stdfs::current_path(); 
+}
 
 int32 GetFileDescriptor(FileHandle &handle) {
   return static_cast<int32>(reinterpret_cast<intptr_t>(handle.nativeHandle));
 }
 
 FileSystem::FileSystem(memory::MemoryManager &memoryManager)
-    : _memoryManager(memoryManager) {}
+    : _memoryManager(memoryManager), _rootDir(WorkDirectory()) {}
 
 bool FileSystem::Exists(const stdfs::path &path) const {
   return stdfs::exists(path);
@@ -36,8 +41,10 @@ FeExpect<FileHandle, Error> FileSystem::OpenFile(const stdfs::path &path,
   } else {
     return FeErr{Error("invalid file mode", ErrorType::InvalidFileMode)};
   }
+
+  stdfs::path absolutePath = _rootDir / path;
  
-  int32 fd = open(path.c_str(), flags, S_IRUSR | S_IWUSR);
+  int32 fd = open(absolutePath.c_str(), flags, S_IRUSR | S_IWUSR);
   if (fd < 0) {
     return FeErr{Error("failed to open file", ErrorType::FileOpenError)};
   }
@@ -91,6 +98,10 @@ FeExpect<uint64, Error> FileSystem::WriteToFile(FileHandle &handle,
   }
 
   return static_cast<uint64>(bytesWritten);
+}
+
+void FileSystem::SetRootDirectory(const stdfs::path &path) {
+  _rootDir = path;
 }
 
 }

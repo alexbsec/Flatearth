@@ -5,7 +5,6 @@
 
 namespace flatearth::renderer::vulkan::shaders {
 
-
 class VulkanShader {
 public:
   explicit VulkanShader(memory::MemoryManager &memManager);
@@ -13,8 +12,7 @@ public:
 
   FeExpect<bool, Error> CreateObjectShader(Context &ctx,
                                            ObjectShader *pObjShader);
-  FeExpect<void, Error> DestroyObjectShader(Context &ctx,
-                                            ObjectShader *pObjShader);
+  void DestroyObjectShader(Context &ctx, ObjectShader *pObjShader);
 
   void UseShader(Context &ctx, ObjectShader &objShader);
 

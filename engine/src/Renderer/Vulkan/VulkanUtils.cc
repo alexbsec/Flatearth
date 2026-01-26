@@ -4,10 +4,8 @@
 
 namespace flatearth::renderer::vulkan {
 
-void ShaderModuleCleanup(Context &ctx,
-                         platform::FileHandle fileHandle,
-                         uint32 *pWords,
-                         uint64 fileSize) {
+void ShaderModuleCleanup(Context &ctx, platform::FileHandle fileHandle,
+                         uint32 *pWords, uint64 fileSize) {
   if (pWords != nullptr) {
     ctx.memoryManager.RawFree(pWords, fileSize, memory::Tag::Renderer);
   }
@@ -18,14 +16,13 @@ void ShaderModuleCleanup(Context &ctx,
   }
 }
 
-
 FeExpect<bool, Error> CreateShaderModule(Context &ctx, const string &name,
                                          const string &typeStr,
                                          VkShaderStageFlagBits stageFlag,
                                          uint32 stageIndex,
                                          ShaderStage *pShaderStage) {
-  const string cFileName =
-      std::format("bin/assets/shaders/{}.{}.spv", name, typeStr);
+  const std::filesystem::path cFileName = std::filesystem::path(
+      std::format("bin/assets/shaders/{}.{}.spv", name, typeStr));
 
   ctx.memoryManager.FZeroMemory(
       &pShaderStage[stageIndex].shaderModuleCreateInfo,
@@ -35,7 +32,7 @@ FeExpect<bool, Error> CreateShaderModule(Context &ctx, const string &name,
 
   auto openRes = ctx.filesystem.OpenFile(cFileName, platform::FileMode::Read);
   if (!openRes.has_value()) {
-    FLOG_ERROR("failed to open file at path {}: {}", cFileName,
+    FLOG_ERROR("failed to open file at path {}: {}", cFileName.string(),
                openRes.error().message);
     return FeErr{openRes.error()};
   }
@@ -43,7 +40,7 @@ FeExpect<bool, Error> CreateShaderModule(Context &ctx, const string &name,
 
   uint64 fileSize = ctx.filesystem.SizeOfFile(cFileName);
   if (fileSize == 0 || (fileSize % 4) != 0) {
-    FLOG_ERROR("invalid SPIR-V size for path {}. Size: {}", cFileName,
+    FLOG_ERROR("invalid SPIR-V size for path {}. Size: {}", cFileName.string(),
                fileSize);
     ShaderModuleCleanup(ctx, fileHandle, nullptr, fileSize);
     return FeErr{Error("bad SPIR-V file size", ErrorType::InvalidFileHandle)};
@@ -65,7 +62,7 @@ FeExpect<bool, Error> CreateShaderModule(Context &ctx, const string &name,
 
   auto readRes = ctx.filesystem.ReadFromFile(fileHandle, bytes);
   if (!readRes.has_value()) {
-    FLOG_ERROR("failed to read file at path {}: {}", cFileName,
+    FLOG_ERROR("failed to read file at path {}: {}", cFileName.string(),
                readRes.error().message);
     ShaderModuleCleanup(ctx, fileHandle, words, fileSize);
     return FeErr{readRes.error()};
