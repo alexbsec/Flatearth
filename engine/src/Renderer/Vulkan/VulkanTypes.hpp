@@ -72,6 +72,16 @@ inline bool VkResultIsSuccess(VkResult result) {
   }
 }
 
+struct VulkanBuffer {
+  uint32 totalSize;
+  VkBuffer handle;
+  VkBufferUsageFlagBits usage;
+  bool isLocked;
+  VkDeviceMemory memory;
+  int32 memoryIndex;
+  uint32 memoryPropertyFlags;
+};
+
 struct SwapchainSupportInfo {
   VkSurfaceCapabilitiesKHR capabilities{};
   uint32 formatCount{0};

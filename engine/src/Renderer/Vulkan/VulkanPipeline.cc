@@ -155,7 +155,7 @@ FeExpect<void, Error> PipelineManager::CreateGraphicsPipeline(
   VkResult result = vkCreateGraphicsPipelines(
       ctx.device.logicalDevice, VK_NULL_HANDLE, 1, &graphicsInfo,
       ctx.pAllocator, &pPipeline->handle);
-  if (result == VK_SUCCESS) {
+  if (VkResultIsSuccess(result)) {
     FLOG_INFO("graphics pipeline created successfully");
     return {};
   }
