@@ -1,6 +1,7 @@
 #ifndef _FLATEARTH_ENGINE_RENDERER_VULKAN_SHADERS_OBJECT_SHADER_HPP
 #define _FLATEARTH_ENGINE_RENDERER_VULKAN_SHADERS_OBJECT_SHADER_HPP
 
+#include "Renderer/Vulkan/VulkanPipeline.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
 
 namespace flatearth::renderer::vulkan::shaders {
@@ -18,6 +19,7 @@ public:
 
 private:
   memory::MemoryManager &_memoryManager;
+  PipelineManager _pipelineManager;
 };
 
 } // namespace flatearth::renderer::vulkan::shaders
