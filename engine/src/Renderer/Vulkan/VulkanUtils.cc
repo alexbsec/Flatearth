@@ -96,7 +96,6 @@ FeExpect<bool, Error> CreateShaderModule(Context &ctx, const string &name,
   ShaderModuleCleanup(ctx, fileHandle, words, fileSize);
   pShaderStage[stageIndex].shaderModuleCreateInfo.pCode = nullptr;
   pShaderStage[stageIndex].shaderModuleCreateInfo.codeSize = 0;
-
   return FeTrue;
 }
 

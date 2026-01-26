@@ -34,9 +34,9 @@ VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
       FLOG_ERROR("failed to create shader module at index {}", i);
       return FeErr{createRes.error()};
     }
+    FLOG_INFO("{} object shader created", cStageTypeStrs[i]);
   }
 
-  FLOG_INFO("object shader created");
   return FeTrue;
 }
 
