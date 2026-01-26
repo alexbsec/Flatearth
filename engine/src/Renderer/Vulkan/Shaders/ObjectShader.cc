@@ -46,7 +46,7 @@ VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
 
   VkViewport viewport;
   viewport.x = 0.0f;
-  viewport.y = static_cast<float32>(ctx.framebufferHeight);
+  viewport.y = 0.0f;
   viewport.width = static_cast<float32>(ctx.framebufferWidth);
   viewport.height = viewport.y;
   viewport.minDepth = 0.0f;
