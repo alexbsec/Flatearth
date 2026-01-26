@@ -11,7 +11,7 @@
 
 // String alias
 using string = std::string;
-using vstring = std::string_view;
+using stringv = std::string_view;
 using osstream = std::ostringstream;
 
 // Unsigned types

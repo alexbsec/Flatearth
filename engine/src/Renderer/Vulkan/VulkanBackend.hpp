@@ -3,6 +3,7 @@
 
 #include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
+#include "Platform/Filesystem.hpp"
 #include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/Shaders/ObjectShader.hpp"
 #include "Renderer/Vulkan/VulkanDeviceManager.hpp"
@@ -15,7 +16,7 @@ namespace flatearth::renderer::vulkan {
 
 class VulkanBackend : public IRendererBackend {
 public:
-  explicit VulkanBackend(memory::MemoryManager &memManager);
+  explicit VulkanBackend(memory::MemoryManager &memManager, platform::FileSystem &fs);
   ~VulkanBackend();
 
   FeExpect<bool, Error> Initialize(ApplicationState *appState) override;

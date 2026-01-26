@@ -2,15 +2,16 @@
 #include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
+#include "Platform/Filesystem.hpp"
 #include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/VulkanBackend.hpp"
 
 namespace flatearth::renderer {
 
 FrontendRenderer::FrontendRenderer(ApplicationState *appState,
-                                   memory::MemoryManager &memManager)
+                                   memory::MemoryManager &memManager, platform::FileSystem &fs)
     : _applicationName(appState->appConfig.name), _memoryManager(memManager),
-      _pAppState(appState) {}
+      _pAppState(appState), _filesystem(fs) {}
 
 FrontendRenderer::~FrontendRenderer() {
   FLOG_INFO("frontend renderer exited gracefully");
@@ -114,7 +115,7 @@ FeExpect<void, Error> FrontendRenderer::MakeBackends() {
   uint32 vulkanIndex = static_cast<uint32>(BackendType::Vulkan);
   _pBackends[vulkanIndex] =
       _memoryManager.Allocate<IRendererBackend, vulkan::VulkanBackend>(
-          memory::Tag::Renderer, _memoryManager);
+          memory::Tag::Renderer, _memoryManager, _filesystem);
   return {};
 }
 

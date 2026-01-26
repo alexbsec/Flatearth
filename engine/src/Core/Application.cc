@@ -13,15 +13,15 @@ namespace flatearth {
 Engine::Engine(Game &game)
     : _appState(game), _eventManager(_memoryManager),
       _inputManager(_eventManager),
-      _frontendRenderer(&_appState, _memoryManager) {
+      _frontendRenderer(&_appState, _memoryManager, _filesystem),
+      _filesystem(_memoryManager) {
   _engineListener =
       _memoryManager.Allocate<event::IEventListener, EngineListener>(
-          memory::Tag::Application, _eventManager, _appState, _frontendRenderer);
+          memory::Tag::Application, _eventManager, _appState,
+          _frontendRenderer);
 }
 
-Engine::~Engine() {
-  FLOG_INFO("engine shutdown gracefully");
-}
+Engine::~Engine() { FLOG_INFO("engine shutdown gracefully"); }
 
 FeExpect<void, Error> Engine::Initialize() {
   FILE_LOGGING(FeTrue);
@@ -64,8 +64,7 @@ FeExpect<void, Error> Engine::Initialize() {
     return FeErr{listenerInitRes.error()};
   }
 
-  FeExpect<bool, Error> frontendInitRes =
-      _frontendRenderer.Initialize();
+  FeExpect<bool, Error> frontendInitRes = _frontendRenderer.Initialize();
   if (!frontendInitRes.has_value()) {
     FLOG_ERROR("frontend renderer failed to initialize: {}",
                frontendInitRes.error().message);
@@ -130,7 +129,7 @@ FeExpect<void, Error> Engine::Start() {
     float64 frameEndTime = clock::GetAbsoluteTime();
     float64 frameElapsed = frameEndTime - frameStartTime;
     runnigTime += frameElapsed;
-    float64 remainingSeconds= targetFrameSeconds - frameElapsed;
+    float64 remainingSeconds = targetFrameSeconds - frameElapsed;
 
     if (remainingSeconds > 0.0) {
       float64 remainingMs = remainingSeconds * 1000.0;

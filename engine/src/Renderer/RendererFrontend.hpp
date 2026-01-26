@@ -4,6 +4,7 @@
 #include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Defines.hpp"
+#include "Platform/Filesystem.hpp"
 #include "Renderer/RendererTypes.hpp"
 
 namespace flatearth::renderer {
@@ -11,7 +12,7 @@ namespace flatearth::renderer {
 class FrontendRenderer {
 public:
   explicit FrontendRenderer(ApplicationState *appState,
-                            memory::MemoryManager &memManager);
+                            memory::MemoryManager &memManager, platform::FileSystem &fs);
   ~FrontendRenderer();
 
   FeExpect<bool, Error> Initialize();
@@ -28,6 +29,7 @@ private:
   IRendererBackend *_pActiveBackend;
 
   memory::MemoryManager &_memoryManager;
+  platform::FileSystem &_filesystem;
   ApplicationState *_pAppState;
   string _applicationName;
 };

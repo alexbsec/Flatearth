@@ -6,10 +6,13 @@
 #include "Core/Logger.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
+#include "Platform/Filesystem.hpp"
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan {
+
+constexpr uint32 cObjectShaderStageCount = 2;
 
 inline FeExpect<void, Error> VkCheck(VkResult result) {
   if (result != VK_SUCCESS) {
@@ -167,6 +170,8 @@ struct ShaderStage {
   VkShaderModule handle;
   VkShaderModuleCreateInfo shaderModuleCreateInfo;
   VkPipelineShaderStageCreateInfo shaderStageCreateInfo;
+
+  
 };
 
 struct Pipeline {
@@ -175,15 +180,12 @@ struct Pipeline {
 };
 
 struct ObjectShader {
-  containers::DArray<ShaderStage> shaderStages;
-  containers::DArray<Pipeline> pipelines;
-
-  ObjectShader(memory::MemoryManager &memManager)
-      : shaderStages(memManager), pipelines(memManager) {}
+  std::array<ShaderStage, cObjectShaderStageCount> shaderStages;
+  Pipeline pipeline;
 };
 
 struct Context {
-  uint32 framebufferWidth{ 0 }, framebufferHeight{ 0 };
+  uint32 framebufferWidth{0}, framebufferHeight{0};
   uint64 framebufferSizeGeneration{0};
   uint64 framebufferSizeLastGeneration{0};
   uint32 currentFrame{0};
@@ -202,15 +204,18 @@ struct Context {
   containers::DArray<Fence> inFlightFences;
   containers::DArray<Fence *> imagesInFlight;
 
+  memory::MemoryManager &memoryManager;
+  platform::FileSystem &filesystem;
+
   ObjectShader objectShader;
 
   bool recreatingSwapchain{false};
 
-  explicit Context(memory::MemoryManager &memManager)
+  explicit Context(memory::MemoryManager &memManager, platform::FileSystem &fs)
       : swapchain(memManager), graphicsCommandBuffer(memManager),
         imageAvailableSemaphores(memManager),
         queueCompleteSemaphores(memManager), inFlightFences(memManager),
-        imagesInFlight(memManager), objectShader(memManager) {}
+        imagesInFlight(memManager), memoryManager(memManager), filesystem(fs) {}
 
   int32 FindMemoryIndex(uint32 typeFilter, uint32 propertyFlags) {
     VkPhysicalDeviceMemoryProperties memoryProps;

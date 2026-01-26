@@ -5,6 +5,7 @@
 
 namespace flatearth::renderer::vulkan::shaders {
 
+
 class VulkanShader {
 public:
   explicit VulkanShader(memory::MemoryManager &memManager);

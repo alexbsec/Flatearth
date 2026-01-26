@@ -4,6 +4,7 @@
 #include "Core/ApplicationConfig.hpp"
 #include "Core/Event.hpp"
 #include "Core/Input.hpp"
+#include "Platform/Filesystem.hpp"
 #include "Platform/Platform.hpp"
 #include "Renderer/RendererFrontend.hpp"
 
@@ -25,6 +26,7 @@ private:
   memory::MemoryManager _memoryManager;
   event::EventManager _eventManager;
   input::InputManager _inputManager;
+  platform::FileSystem _filesystem;
   renderer::FrontendRenderer _frontendRenderer;
   FePtr<event::IEventListener> _engineListener;
 };

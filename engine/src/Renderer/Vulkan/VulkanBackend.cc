@@ -11,11 +11,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, uint32 messageTypes,
     const VkDebugUtilsMessengerCallbackDataEXT *callbackData, void *userData);
 
-VulkanBackend::VulkanBackend(memory::MemoryManager &memManager)
+VulkanBackend::VulkanBackend(memory::MemoryManager &memManager, platform::FileSystem &fs)
     : _memoryManager(memManager), _deviceManager(memManager),
       _swapchainManager(memManager, _imageManager),
       _renderpassManager(memManager), _cmdBufferManager(memManager),
-      _vulkanShader(memManager), _ctx(memManager) {}
+      _vulkanShader(memManager), _ctx(memManager, fs) {}
 
 VulkanBackend::~VulkanBackend() {
   vkDeviceWaitIdle(_ctx.device.logicalDevice);
