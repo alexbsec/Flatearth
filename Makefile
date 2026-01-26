@@ -7,4 +7,4 @@ run:
 .PHONY: build
 
 build:
-	./build-all.sh
+	./build-all.sh && ./post-build.sh
