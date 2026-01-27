@@ -1,5 +1,6 @@
 #include "FeMemory.hpp"
 #include "Core/Logger.hpp"
+#include <cstring>
 
 namespace flatearth::memory {
 
@@ -101,6 +102,14 @@ void MemoryManager::FZeroMemory(void *block, uint64 size) {
   }
 
   std::memset(block, 0, size);
+}
+
+void MemoryManager::CopyMemory(void *dst, const void *src, uint64 size) {
+  if (src == nullptr || dst == nullptr || size == 0) {
+    return;
+  }
+
+  std::memcpy(dst, src, size);
 }
 
 void MemoryManager::MemoryUsage() {

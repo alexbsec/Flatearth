@@ -75,7 +75,7 @@ inline bool VkResultIsSuccess(VkResult result) {
 struct VulkanBuffer {
   uint32 totalSize;
   VkBuffer handle;
-  VkBufferUsageFlagBits usage;
+  VkBufferUsageFlags usage;
   bool isLocked;
   VkDeviceMemory memory;
   int32 memoryIndex;
@@ -219,7 +219,13 @@ struct Context {
 
   ObjectShader objectShader;
 
+  VulkanBuffer objectVertexShader{};
+  VulkanBuffer objectIndexBuffer{};
+
+  uint64 geometryVertexOffset{0}, geometryIndexOffset{0};
+
   bool recreatingSwapchain{false};
+
 
   explicit Context(memory::MemoryManager &memManager, platform::FileSystem &fs)
       : swapchain(memManager), graphicsCommandBuffer(memManager),

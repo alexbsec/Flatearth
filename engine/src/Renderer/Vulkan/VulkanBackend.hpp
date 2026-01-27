@@ -5,6 +5,7 @@
 #include "Core/FeMemory.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererTypes.hpp"
+#include "Renderer/Vulkan/VulkanBuffer.hpp"
 #include "Renderer/Vulkan/Shaders/ObjectShader.hpp"
 #include "Renderer/Vulkan/VulkanDeviceManager.hpp"
 #include "Renderer/Vulkan/VulkanImager.hpp"
@@ -29,6 +30,7 @@ private:
   FeExpect<void, Error> DestroyFence(Fence *pFence);
   FeExpect<bool, Error> AwaitFence(Fence *pFence, uint64 timeoutNs);
   FeExpect<void, Error> ResetFence(Fence *pFence);
+  FeExpect<void, Error> CreateBuffers();
 
 
 
@@ -39,7 +41,9 @@ private:
   ImageManager _imageManager;
   RenderpassManager _renderpassManager;
   CommandBufferManager _cmdBufferManager;
+  BufferManager _bufferManager;
   shaders::VulkanShader _vulkanShader;
+    // No-op (not an error)
   Context _ctx;
 
   uint32 _cachedFrameBufferWidth{0}, _cachedFrameBufferHeight{0};

@@ -2,6 +2,7 @@
 #include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
+#include "Math/MathTypes.hpp"
 #include "Platform/Platform.hpp"
 #include <vulkan/vulkan_core.h>
 
@@ -11,15 +12,19 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, uint32 messageTypes,
     const VkDebugUtilsMessengerCallbackDataEXT *callbackData, void *userData);
 
-VulkanBackend::VulkanBackend(memory::MemoryManager &memManager, platform::FileSystem &fs)
+VulkanBackend::VulkanBackend(memory::MemoryManager &memManager,
+                             platform::FileSystem &fs)
     : _memoryManager(memManager), _deviceManager(memManager),
       _swapchainManager(memManager, _imageManager),
       _renderpassManager(memManager), _cmdBufferManager(memManager),
-      _vulkanShader(memManager), _ctx(memManager, fs) {}
+      _bufferManager(_cmdBufferManager), _vulkanShader(memManager),
+      _ctx(memManager, fs) {}
 
 VulkanBackend::~VulkanBackend() {
   vkDeviceWaitIdle(_ctx.device.logicalDevice);
 
+  _bufferManager.DestroyVulkanBuffer(_ctx, &_ctx.objectVertexShader);
+  _bufferManager.DestroyVulkanBuffer(_ctx, &_ctx.objectIndexBuffer);
   _vulkanShader.DestroyObjectShader(_ctx, &_ctx.objectShader);
 
   for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
@@ -74,6 +79,7 @@ VulkanBackend::~VulkanBackend() {
                destroyRes.error().message);
     return;
   }
+
 
   FLOG_INFO("Vulkan backend exited gracefully");
 }
@@ -311,11 +317,17 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   }
 
   // create builtin shaders
-  auto shaderRes =
-      _vulkanShader.CreateObjectShader(_ctx, &_ctx.objectShader);
+  auto shaderRes = _vulkanShader.CreateObjectShader(_ctx, &_ctx.objectShader);
   if (!shaderRes.has_value()) {
     FLOG_ERROR("failed to create object shader");
     return FeErr{shaderRes.error()};
+  }
+
+  // create vulkan buffer
+  auto createBufferRes = CreateBuffers();
+  if (!createBufferRes.has_value()) {
+    FLOG_ERROR("vulkan buffers creation failed");
+    return FeErr{createBufferRes.error()};
   }
 
   FLOG_INFO("sync objects & fences created successfully");
@@ -594,6 +606,42 @@ FeExpect<void, Error> VulkanBackend::ResetFence(Fence *pFence) {
   }
 
   pFence->isSignaled = FeFalse;
+  return {};
+}
+
+FeExpect<void, Error> VulkanBackend::CreateBuffers() {
+  VkMemoryPropertyFlagBits memoryPropertyFlag =
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+  VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                                  VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                                  VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+  const uint64 cVertexBufferSize = sizeof(math::Vertex3D) * 1024 * 1024;
+  auto createRes = _bufferManager.CreateVulkanBuffer(
+      _ctx, cVertexBufferSize, usageFlags, memoryPropertyFlag, FeTrue,
+      &_ctx.objectVertexShader);
+  if (!createRes.has_value()) {
+    FLOG_ERROR("failed to create vulkan vertex buffer");
+    return FeErr{createRes.error()};
+  }
+
+  _ctx.geometryVertexOffset = 0;
+
+  usageFlags = VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+               VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+               VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+  const uint64 cIndexBufferSize = sizeof(uint32) * 1024 * 1024;
+  createRes = _bufferManager.CreateVulkanBuffer(
+      _ctx, cIndexBufferSize, usageFlags, memoryPropertyFlag, FeTrue,
+      &_ctx.objectIndexBuffer);
+  if (!createRes.has_value()) {
+    FLOG_ERROR("failed to create vulkan index buffer");
+    return FeErr{createRes.error()};
+  }
+
+  _ctx.geometryIndexOffset = 0;
   return {};
 }
 

@@ -55,6 +55,7 @@ public:
   void *RawAlloc(uint64 size, uint64 alignment, Tag tag);
   void RawFree(void *block, uint64 size, Tag tag);
   void FZeroMemory(void *block, uint64 size);
+  void CopyMemory(void *dst, const void *src, uint64 size);
 
   template <typename T, typename... Args>
   inline FePtr<T> Allocate(Tag tag, Args &&...args) {
