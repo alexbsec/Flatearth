@@ -31,7 +31,7 @@ private:
   FeExpect<bool, Error> AwaitFence(Fence *pFence, uint64 timeoutNs);
   FeExpect<void, Error> ResetFence(Fence *pFence);
   FeExpect<void, Error> CreateBuffers();
-
+  FeExpect<void, Error> UploadDataRange(VkCommandPool pool, VkFence fence, VkQueue queue, uint64 offset, uint64 size, VulkanBuffer &buffer, void *pData);
 
 
 private:

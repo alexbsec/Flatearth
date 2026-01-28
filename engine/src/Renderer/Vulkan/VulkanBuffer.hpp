@@ -32,7 +32,6 @@ public:
                                  uint64 offset, uint64 size, uint32 flags,
                                  const void *data);
 
-private:
   FeExpect<void, Error> CopyBufferTo(Context &ctx, VkCommandPool pool,
                                      VkFence fence, VkQueue queue,
                                      VkBuffer source, uint64 sourceOffset,

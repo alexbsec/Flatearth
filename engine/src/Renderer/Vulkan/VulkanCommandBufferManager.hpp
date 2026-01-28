@@ -3,6 +3,7 @@
 
 #include "Core/FeMemory.hpp"
 #include "VulkanTypes.hpp"
+#include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan {
 
@@ -45,11 +46,14 @@ public:
     // End recording
     EndBuffer(ctx, tmp);
 
-    if (auto res = VkCheck(vkResetFences(ctx.device.logicalDevice, 1, &fence));
-        !res.has_value()) {
-      FLOG_ERROR("ImmediateSubmit: failed to reset fence");
-      auto _ = FreeBuffer(ctx, &tmp, pool);
-      return FeErr{res.error()};
+    if (fence != VK_NULL_HANDLE) {
+      if (auto res =
+              VkCheck(vkResetFences(ctx.device.logicalDevice, 1, &fence));
+          !res.has_value()) {
+        FLOG_ERROR("ImmediateSubmit: failed to reset fence");
+        auto _ = FreeBuffer(ctx, &tmp, pool);
+        return FeErr{res.error()};
+      }
     }
 
     // Submit
@@ -57,21 +61,25 @@ public:
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &tmp.handle;
 
-    if (auto res = VkCheck(vkQueueSubmit(queue, 1, &submitInfo, fence));
-        !res.has_value()) {
-      FLOG_ERROR("ImmediateSubmit: vkQueueSubmit failed");
-      auto _ = FreeBuffer(ctx, &tmp, pool);
-      return FeErr{res.error()};
+    if (fence != VK_NULL_HANDLE) {
+      if (auto res = VkCheck(vkQueueSubmit(queue, 1, &submitInfo, fence));
+          !res.has_value()) {
+        FLOG_ERROR("ImmediateSubmit: vkQueueSubmit failed");
+        auto _ = FreeBuffer(ctx, &tmp, pool);
+        return FeErr{res.error()};
+      }
     }
 
     // Wait for completion (so resources used by recordFn are safe to
     // reuse/free)
-    if (auto res = VkCheck(vkWaitForFences(ctx.device.logicalDevice, 1, &fence,
-                                           VK_TRUE, UINT64_MAX));
-        !res.has_value()) {
-      FLOG_ERROR("ImmediateSubmit: vkWaitForFences failed");
-      auto _ = FreeBuffer(ctx, &tmp, pool);
-      return FeErr{res.error()};
+    if (fence != VK_NULL_HANDLE) {
+      if (auto res = VkCheck(vkWaitForFences(ctx.device.logicalDevice, 1, &fence,
+                                             VK_TRUE, UINT64_MAX));
+          !res.has_value()) {
+        FLOG_ERROR("ImmediateSubmit: vkWaitForFences failed");
+        auto _ = FreeBuffer(ctx, &tmp, pool);
+        return FeErr{res.error()};
+      }
     }
 
     // Free the temporary command buffer

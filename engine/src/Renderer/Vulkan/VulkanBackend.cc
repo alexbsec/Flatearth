@@ -4,6 +4,7 @@
 #include "Core/Logger.hpp"
 #include "Math/MathTypes.hpp"
 #include "Platform/Platform.hpp"
+#include "Renderer/Vulkan/VulkanTypes.hpp"
 #include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan {
@@ -23,7 +24,7 @@ VulkanBackend::VulkanBackend(memory::MemoryManager &memManager,
 VulkanBackend::~VulkanBackend() {
   vkDeviceWaitIdle(_ctx.device.logicalDevice);
 
-  _bufferManager.DestroyVulkanBuffer(_ctx, &_ctx.objectVertexShader);
+  _bufferManager.DestroyVulkanBuffer(_ctx, &_ctx.objectVertexBuffer);
   _bufferManager.DestroyVulkanBuffer(_ctx, &_ctx.objectIndexBuffer);
   _vulkanShader.DestroyObjectShader(_ctx, &_ctx.objectShader);
 
@@ -79,7 +80,6 @@ VulkanBackend::~VulkanBackend() {
                destroyRes.error().message);
     return;
   }
-
 
   FLOG_INFO("Vulkan backend exited gracefully");
 }
@@ -239,7 +239,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   FLOG_DEBUG("creating renderpass");
   auto rpassRes = _renderpassManager.CreateRenderpass(
       _ctx, &_ctx.mainRenderpass, 0, 0, _ctx.framebufferWidth,
-      _ctx.framebufferHeight, 1.0f, 1.0f, 0.3f, 1.0f, 1.0f, 0);
+      _ctx.framebufferHeight, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0);
   if (!rpassRes.has_value()) {
     FLOG_ERROR("failed to create renderpass");
     return FeErr{rpassRes.error()};
@@ -328,6 +328,45 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   if (!createBufferRes.has_value()) {
     FLOG_ERROR("vulkan buffers creation failed");
     return FeErr{createBufferRes.error()};
+  }
+
+  // TEMPORARY TEST CODEBack
+  const uint32 cVertCount = 4;
+  std::array<math::Vertex3D, cVertCount> vertices;
+  _memoryManager.FZeroMemory(vertices.data(),
+                             sizeof(math::Vertex3D) * cVertCount);
+
+  vertices[0].position = math::Vec3D(0.0f, -0.5f, 0.0f);
+  vertices[1].position = math::Vec3D(0.5f, 0.5f, 0.0f);
+  vertices[2].position = math::Vec3D(0.0f, 0.5f, 0.0f);
+  vertices[3].position = math::Vec3D(0.5f, -0.5f, 0.0f);
+
+  const uint32 cIndexCount = 6;
+  std::array<uint32, cIndexCount> indicies = {0, 2, 1, 0, 3, 1};
+
+
+  VkFence tempFence;
+  VkFenceCreateInfo fenceInfo = {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+  vkCreateFence(_ctx.device.logicalDevice, &fenceInfo, _ctx.pAllocator,
+                &tempFence);
+
+  auto uploadRes = UploadDataRange(_ctx.device.graphicsCommandPool, tempFence,
+                                   _ctx.device.graphicsQueue, 0,
+                                   sizeof(math::Vertex3D) * cVertCount,
+                                   _ctx.objectVertexBuffer, vertices.data());
+  if (!uploadRes.has_value()) {
+    FLOG_ERROR("failed to upload data range in test");
+    return FeErr{uploadRes.error()};
+  }
+
+  uploadRes = UploadDataRange(
+      _ctx.device.graphicsCommandPool, tempFence, _ctx.device.graphicsQueue, 0,
+      sizeof(uint32) * cIndexCount, _ctx.objectIndexBuffer, indicies.data());
+
+  vkDestroyFence(_ctx.device.logicalDevice, tempFence, _ctx.pAllocator);
+  if (!uploadRes.has_value()) {
+    FLOG_ERROR("failed to upload index data");
+    return FeErr{uploadRes.error()};
   }
 
   FLOG_INFO("sync objects & fences created successfully");
@@ -429,17 +468,34 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
   scissor.offset = {0, 0};
   scissor.extent = {_ctx.framebufferWidth, _ctx.framebufferHeight};
 
+
+
   constexpr uint32 cFirstViewport = 0;
   constexpr uint32 cViewportCount = 1;
   constexpr uint32 cFirstScissor = 0;
   constexpr uint32 cScissorCount = 1;
 
-  vkCmdSetViewport(cmdBuffer.handle, cFirstViewport, cViewportCount, &viewport);
-  vkCmdSetScissor(cmdBuffer.handle, cFirstScissor, cScissorCount, &scissor);
-
   _renderpassManager.BeginRenderpass(
       _ctx, &cmdBuffer, &_ctx.mainRenderpass,
       _ctx.swapchain.framebuffers[_ctx.imageIndex].handle);
+
+  _vulkanShader.UseShader(_ctx, _ctx.objectShader);
+
+  // TODO: remove (for tests)
+
+  std::array<VkDeviceSize, 1> offsets = {0};
+
+  vkCmdSetViewport(cmdBuffer.handle, cFirstViewport, cViewportCount, &viewport);
+  vkCmdSetScissor(cmdBuffer.handle, cFirstScissor, cScissorCount, &scissor);
+
+  vkCmdBindVertexBuffers(cmdBuffer.handle, 0, 1,
+                         &_ctx.objectVertexBuffer.handle,
+                         static_cast<VkDeviceSize *>(offsets.data()));
+
+  vkCmdBindIndexBuffer(cmdBuffer.handle, _ctx.objectIndexBuffer.handle, 0,
+                       VK_INDEX_TYPE_UINT32);
+
+  vkCmdDrawIndexed(cmdBuffer.handle, 6, 1, 0, 0, 0);
 
   return FeTrue;
 }
@@ -620,7 +676,7 @@ FeExpect<void, Error> VulkanBackend::CreateBuffers() {
   const uint64 cVertexBufferSize = sizeof(math::Vertex3D) * 1024 * 1024;
   auto createRes = _bufferManager.CreateVulkanBuffer(
       _ctx, cVertexBufferSize, usageFlags, memoryPropertyFlag, FeTrue,
-      &_ctx.objectVertexShader);
+      &_ctx.objectVertexBuffer);
   if (!createRes.has_value()) {
     FLOG_ERROR("failed to create vulkan vertex buffer");
     return FeErr{createRes.error()};
@@ -642,6 +698,39 @@ FeExpect<void, Error> VulkanBackend::CreateBuffers() {
   }
 
   _ctx.geometryIndexOffset = 0;
+  return {};
+}
+
+FeExpect<void, Error>
+VulkanBackend::UploadDataRange(VkCommandPool pool, VkFence fence, VkQueue queue,
+                               uint64 offset, uint64 size, VulkanBuffer &buffer,
+                               void *pData) {
+  VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+  VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+  VulkanBuffer staging;
+
+  auto createRes = _bufferManager.CreateVulkanBuffer(
+      _ctx, size, usageFlags, memoryFlags, FeTrue, &staging);
+  if (!createRes.has_value()) {
+    FLOG_ERROR("failed to create vulkan buffer");
+    return FeErr{createRes.error()};
+  }
+
+  auto loadRes = _bufferManager.LoadData(_ctx, staging, 0, size, 0, pData);
+  if (!loadRes.has_value()) {
+    FLOG_ERROR("failed to load data from vulkan buffer");
+    return FeErr{loadRes.error()};
+  }
+
+  auto copyRes = _bufferManager.CopyBufferTo(
+      _ctx, pool, fence, queue, staging.handle, 0, buffer.handle, offset, size);
+  if (!copyRes.has_value()) {
+    FLOG_ERROR("failed to copy buffer on upload");
+    return FeErr{copyRes.error()};
+  }
+
+  _bufferManager.DestroyVulkanBuffer(_ctx, &staging);
   return {};
 }
 

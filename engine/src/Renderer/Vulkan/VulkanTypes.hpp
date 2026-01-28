@@ -219,7 +219,7 @@ struct Context {
 
   ObjectShader objectShader;
 
-  VulkanBuffer objectVertexShader{};
+  VulkanBuffer objectVertexBuffer{};
   VulkanBuffer objectIndexBuffer{};
 
   uint64 geometryVertexOffset{0}, geometryIndexOffset{0};

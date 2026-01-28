@@ -38,7 +38,7 @@ FeExpect<void, Error> PipelineManager::CreateGraphicsPipeline(
   rasterizerInfo.polygonMode =
       isWireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
   rasterizerInfo.lineWidth = 1.0f;
-  rasterizerInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+  rasterizerInfo.cullMode = VK_CULL_MODE_NONE;
   rasterizerInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizerInfo.depthBiasEnable = VK_FALSE;
   rasterizerInfo.depthBiasConstantFactor = 0.0f;
@@ -58,7 +58,7 @@ FeExpect<void, Error> PipelineManager::CreateGraphicsPipeline(
   // Depth and stencil
   VkPipelineDepthStencilStateCreateInfo stencilInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
-  stencilInfo.depthTestEnable = VK_TRUE;
+  stencilInfo.depthTestEnable = VK_FALSE;
   stencilInfo.depthWriteEnable = VK_TRUE;
   stencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
   stencilInfo.depthBoundsTestEnable = VK_FALSE;

@@ -48,7 +48,7 @@ VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
   viewport.x = 0.0f;
   viewport.y = 0.0f;
   viewport.width = static_cast<float32>(ctx.framebufferWidth);
-  viewport.height = viewport.y;
+  viewport.height = static_cast<float32>(ctx.framebufferHeight);
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
 
@@ -107,8 +107,10 @@ void VulkanShader::DestroyObjectShader(Context &ctx, ObjectShader *pObjShader) {
 }
 
 void VulkanShader::UseShader(Context &ctx, ObjectShader &objShader) {
-  // Placeholder implementation
-  FLOG_INFO("using object shader");
+  uint32 imageIndex = ctx.imageIndex;
+  VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  _pipelineManager.BindPipeline(ctx.graphicsCommandBuffer[imageIndex],
+                                bindPoint, objShader.pipeline);
 }
 
 } // namespace flatearth::renderer::vulkan::shaders
