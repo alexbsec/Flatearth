@@ -9,5 +9,5 @@ layout(set = 0, binding = 0) uniform globalUniformObject {
 } globalUbo;
 
 void main() {
-  gl_Position = vec4(inPosition.xy, 0.5, 1.0);
+  gl_Position = globalUbo.projection * globalUbo.view * vec4(inPosition, 1.0);
 }
