@@ -18,8 +18,8 @@ VulkanBackend::VulkanBackend(memory::MemoryManager &memManager,
     : _memoryManager(memManager), _deviceManager(memManager),
       _swapchainManager(memManager, _imageManager),
       _renderpassManager(memManager), _cmdBufferManager(memManager),
-      _bufferManager(_cmdBufferManager), _vulkanShader(memManager),
-      _ctx(memManager, fs) {}
+      _bufferManager(_cmdBufferManager),
+      _vulkanShader(memManager, _bufferManager), _ctx(memManager, fs) {}
 
 VulkanBackend::~VulkanBackend() {
   vkDeviceWaitIdle(_ctx.device.logicalDevice);
@@ -344,7 +344,6 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   const uint32 cIndexCount = 6;
   std::array<uint32, cIndexCount> indicies = {0, 2, 1, 0, 3, 1};
 
-
   VkFence tempFence;
   VkFenceCreateInfo fenceInfo = {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
   vkCreateFence(_ctx.device.logicalDevice, &fenceInfo, _ctx.pAllocator,
@@ -468,8 +467,6 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
   scissor.offset = {0, 0};
   scissor.extent = {_ctx.framebufferWidth, _ctx.framebufferHeight};
 
-
-
   constexpr uint32 cFirstViewport = 0;
   constexpr uint32 cViewportCount = 1;
   constexpr uint32 cFirstScissor = 0;
@@ -481,8 +478,18 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
 
   _vulkanShader.UseShader(_ctx, _ctx.objectShader);
 
-  // TODO: remove (for tests)
+  {
+    VkDescriptorSet set0 = _ctx.objectShader.globalDescriptorSets[_ctx.imageIndex];
+    vkCmdBindDescriptorSets(
+        cmdBuffer.handle,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _ctx.objectShader.pipeline.layout,
+        0, 1,
+        &set0,
+        0, nullptr);
+  }
 
+  // TODO: remove (for tests)
   std::array<VkDeviceSize, 1> offsets = {0};
 
   vkCmdSetViewport(cmdBuffer.handle, cFirstViewport, cViewportCount, &viewport);
@@ -496,7 +503,6 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
                        VK_INDEX_TYPE_UINT32);
 
   vkCmdDrawIndexed(cmdBuffer.handle, 6, 1, 0, 0, 0);
-
   return FeTrue;
 }
 
@@ -565,7 +571,8 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
   return FeTrue;
 }
 
-FeExpect<bool, Error> VulkanBackend::DrawFrame(const RenderPacket &renderPacket) {
+FeExpect<bool, Error>
+VulkanBackend::DrawFrame(const RenderPacket &renderPacket) {
   if (_ctx.recreatingSwapchain) {
     return FeFalse;
   }
@@ -575,6 +582,9 @@ FeExpect<bool, Error> VulkanBackend::DrawFrame(const RenderPacket &renderPacket)
   CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
 
   _vulkanShader.UseShader(_ctx, _ctx.objectShader);
+
+
+
   VkDeviceSize offset = 0;
   vkCmdBindVertexBuffers(cmdBuffer.handle, 0, 1,
                          &_ctx.objectVertexBuffer.handle, &offset);
@@ -585,6 +595,26 @@ FeExpect<bool, Error> VulkanBackend::DrawFrame(const RenderPacket &renderPacket)
   // Draw quad (6 indices)
   vkCmdDrawIndexed(cmdBuffer.handle, 6, 1, 0, 0, 0);
   return FeTrue;
+}
+
+FeExpect<void, Error> VulkanBackend::UpdateGlobalState(math::Mat4D projection,
+                                                       math::Mat4D view,
+                                                       math::Vec3D viewPosition,
+                                                       int32 mode) {
+  CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
+  _vulkanShader.UseShader(_ctx, _ctx.objectShader);
+
+  _ctx.objectShader.globalUBO.projection = projection;
+  _ctx.objectShader.globalUBO.view = view;
+  // TODO: other ubo properties
+  
+  auto updateRes = _vulkanShader.UpdateGlobalState(_ctx, _ctx.objectShader);
+  if (!updateRes.has_value()) {
+    FLOG_ERROR("failed to update global state");
+    return FeErr{updateRes.error()};
+  }
+
+  return {};
 }
 
 // PRIVATE MEMBERS
