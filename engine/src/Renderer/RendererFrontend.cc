@@ -9,7 +9,8 @@
 namespace flatearth::renderer {
 
 FrontendRenderer::FrontendRenderer(ApplicationState *appState,
-                                   memory::MemoryManager &memManager, platform::FileSystem &fs)
+                                   memory::MemoryManager &memManager,
+                                   platform::FileSystem &fs)
     : _applicationName(appState->appConfig.name), _memoryManager(memManager),
       _pAppState(appState), _filesystem(fs) {}
 
@@ -17,8 +18,7 @@ FrontendRenderer::~FrontendRenderer() {
   FLOG_INFO("frontend renderer exited gracefully");
 }
 
-FeExpect<bool, Error>
-FrontendRenderer::Initialize() {
+FeExpect<bool, Error> FrontendRenderer::Initialize() {
   auto backendsRes = MakeBackends();
   if (!backendsRes.has_value()) {
     FLOG_ERROR("failed to scaffold renderer backends: {}",
@@ -26,6 +26,7 @@ FrontendRenderer::Initialize() {
     return FeErr{backendsRes.error()};
   }
 
+  // TODO: make this selection smart once OpenGL is integrated
   uint32 vulkanIndex = static_cast<uint32>(BackendType::Vulkan);
   if (_pBackends[vulkanIndex] == nullptr) {
     FLOG_FATAL("no valid backend found");
@@ -75,6 +76,11 @@ FeExpect<bool, Error> FrontendRenderer::EndFrame(float32 deltaTime) {
 }
 
 FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
+  if (pRenderPacket == nullptr) {
+    FLOG_WARN("nullptr renderpacket passed");
+    return FeFalse;
+  }
+
   auto beginRes = BeginFrame(pRenderPacket->deltaTime);
   if (!beginRes.has_value()) {
     FLOG_ERROR("failed to begin frame");
@@ -98,11 +104,10 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
     return FeErr{endRes.error()};
   }
 
-
   return FeTrue;
 }
 
-FeExpect<void, Error> FrontendRenderer::OnResize(uint32 width, uint32 height) { 
+FeExpect<void, Error> FrontendRenderer::OnResize(uint32 width, uint32 height) {
   if (_pActiveBackend == nullptr) {
     FLOG_WARN("no active backends");
     return {};
@@ -114,7 +119,7 @@ FeExpect<void, Error> FrontendRenderer::OnResize(uint32 width, uint32 height) {
     return FeErr{res.error()};
   }
 
-  return {}; 
+  return {};
 }
 
 FeExpect<void, Error> FrontendRenderer::MakeBackends() {
