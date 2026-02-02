@@ -3,7 +3,7 @@
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
 #include "Platform/Filesystem.hpp"
-#include "Renderer/RendererTypes.hpp"
+#include "Renderer/RendererInterface.hpp"
 #include "Renderer/Vulkan/VulkanBackend.hpp"
 
 namespace flatearth::renderer {
@@ -92,10 +92,11 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
     return FeTrue;
   }
 
-  auto drawRes = _pActiveBackend->DrawFrame(*pRenderPacket);
-  if (!drawRes.has_value()) {
-    FLOG_ERROR("failed to draw frame");
-    return FeErr{drawRes.error()};
+  auto updateRes = _pActiveBackend->UpdateGlobalState(
+      math::Mat4D::Identity(), math::Mat4D::Identity(), math::Vec3D::Zero(), 0);
+  if (!updateRes.has_value()) {
+    FLOG_ERROR("failed to update global state on frontend renderer");
+    return FeErr{updateRes.error()};
   }
 
   auto endRes = EndFrame(pRenderPacket->deltaTime);

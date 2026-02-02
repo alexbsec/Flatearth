@@ -50,6 +50,19 @@ public:
   uint64 Length() const { return _length; }
   uint64 Stride() const { return _stride; }
 
+  void Resize(uint64 newLength, bool zeroNewMemory = true) {
+    if (newLength > _capacity) {
+      Reserve(newLength);
+    }
+
+    if (zeroNewMemory && newLength > _length) {
+      uint64 bytes = (newLength - _length) * _stride;
+      _memoryManager.FZeroMemory(AddressOf(_length), bytes);
+    }
+
+    _length = newLength;
+  }
+
   void Reserve(uint64 size) {
     if (size <= _capacity || size < _length) {
       return;

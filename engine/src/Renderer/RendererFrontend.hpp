@@ -5,7 +5,7 @@
 #include "Core/FeMemory.hpp"
 #include "Defines.hpp"
 #include "Platform/Filesystem.hpp"
-#include "Renderer/RendererTypes.hpp"
+#include "Renderer/RendererInterface.hpp"
 
 namespace flatearth::renderer {
 

@@ -7,12 +7,14 @@
 #include "Defines.hpp"
 #include "Error.hpp"
 #include "Platform/Filesystem.hpp"
+#include "Renderer/RendererTypes.hpp"
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan {
 
 constexpr uint32 cObjectShaderStageCount = 2;
+constexpr uint32 cDescriptorSetCount = 3;
 
 inline FeExpect<void, Error> VkCheck(VkResult result) {
   if (result != VK_SUCCESS) {
@@ -180,8 +182,6 @@ struct ShaderStage {
   VkShaderModule handle;
   VkShaderModuleCreateInfo shaderModuleCreateInfo;
   VkPipelineShaderStageCreateInfo shaderStageCreateInfo;
-
-  
 };
 
 struct Pipeline {
@@ -192,6 +192,18 @@ struct Pipeline {
 struct ObjectShader {
   std::array<ShaderStage, cObjectShaderStageCount> shaderStages;
   Pipeline pipeline;
+
+  VkDescriptorPool globalDescriptorPool;
+  VkDescriptorSetLayout globalDescriptorSetLayout;
+
+  containers::DArray<VkDescriptorSet> globalDescriptorSets;
+
+  // Global uniform object
+  GlobalUniformObject globalUBO;
+  VulkanBuffer globalUniformBuffer;
+
+  ObjectShader(memory::MemoryManager &memManager)
+      : globalDescriptorSets(memManager) {}
 };
 
 struct Context {
@@ -226,12 +238,12 @@ struct Context {
 
   bool recreatingSwapchain{false};
 
-
   explicit Context(memory::MemoryManager &memManager, platform::FileSystem &fs)
       : swapchain(memManager), graphicsCommandBuffer(memManager),
         imageAvailableSemaphores(memManager),
         queueCompleteSemaphores(memManager), inFlightFences(memManager),
-        imagesInFlight(memManager), memoryManager(memManager), filesystem(fs) {}
+        imagesInFlight(memManager), memoryManager(memManager), filesystem(fs),
+        objectShader(memManager) {}
 
   int32 FindMemoryIndex(uint32 typeFilter, uint32 propertyFlags) {
     VkPhysicalDeviceMemoryProperties memoryProps;
