@@ -16,6 +16,30 @@ static HANDLE GetHandle(FileHandle& handle) {
 	return reinterpret_cast<HANDLE>(handle.nativeHandle);
 }
 
+static std::string Win32LastErrorToString(DWORD err) {
+	LPSTR msg = nullptr;
+	const DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS;
+
+	const DWORD len = FormatMessageA(
+		flags,
+		nullptr,
+		err,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPSTR)&msg,
+		0,
+		nullptr);
+
+	std::string out = (len && msg) ? std::string(msg, len) : std::string("unknown");
+	if (msg) LocalFree(msg);
+
+	// trim trailing newlines
+	while (!out.empty() && (out.back() == '\n' || out.back() == '\r')) out.pop_back();
+	return out;
+}
+
+
 FileSystem::FileSystem(memory::MemoryManager& memManager)
 	: _memoryManager(memManager), _rootDir(WorkDirectory()) {}
 
@@ -36,7 +60,6 @@ uint64 FileSystem::SizeOfFile(const stdfs::path& path) const {
 FeExpect<FileHandle, Error> FileSystem::OpenFile(const stdfs::path& path, FileMode mode, bool binary) {
 	(void)binary;
 
-	// Desired access
 	DWORD access = 0;
 	const bool cCanRead = HasFileMode(mode, FileMode::Read);
 	const bool cCanWrite = HasFileMode(mode, FileMode::Write);
@@ -45,23 +68,24 @@ FeExpect<FileHandle, Error> FileSystem::OpenFile(const stdfs::path& path, FileMo
 		return FeErr{ Error("invalid file mode", ErrorType::InvalidFileMode) };
 	}
 
-	DWORD creation;
+	DWORD creation = OPEN_EXISTING;
+
 	if (cCanRead && cCanWrite) {
 		access |= GENERIC_READ | GENERIC_WRITE;
 		creation = OPEN_ALWAYS;
 	}
 	else if (cCanWrite) {
 		access |= GENERIC_WRITE;
-		creation = CREATE_ALWAYS;
+		creation = OPEN_ALWAYS;
 	}
 	else {
 		access |= GENERIC_READ;
 		creation = OPEN_EXISTING;
 	}
 
-	DWORD share = FILE_SHARE_READ;
+	DWORD share = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 
-	stdfs::path absolutePath = _rootDir / path;
+	stdfs::path absolutePath = (_rootDir / path).make_preferred();
 
 	HANDLE handle = CreateFileW(
 		absolutePath.c_str(),
@@ -74,15 +98,19 @@ FeExpect<FileHandle, Error> FileSystem::OpenFile(const stdfs::path& path, FileMo
 	);
 
 	if (handle == INVALID_HANDLE_VALUE) {
-		FLOG_ERROR("could not get file handle in windows API");
-		return FeErr{Error("failed to open file", ErrorType::FileOpenError)};
+		const DWORD err = GetLastError();
+		FLOG_ERROR("could not get file handle in windows API (err={} {}) at path: {}",
+			(uint32)err, Win32LastErrorToString(err), absolutePath.string());
+		return FeErr{ Error("failed to open file", ErrorType::FileOpenError) };
 	}
 
+	FLOG_INFO("file loaded at path: {}", absolutePath.string());
 	return FileHandle{
-		.nativeHandle = reinterpret_cast<void *>(handle),
-		.valid = FeTrue,
+			.nativeHandle = reinterpret_cast<void*>(handle),
+			.valid = FeTrue,
 	};
 }
+
 
 FeExpect<void, Error> FileSystem::CloseFile(FileHandle& handle) {
 	if (!handle.valid || handle.nativeHandle == nullptr) {
@@ -103,6 +131,7 @@ FeExpect<void, Error> FileSystem::CloseFile(FileHandle& handle) {
 
 	handle.valid = FeFalse;
 	handle.nativeHandle = nullptr;
+	FLOG_INFO("file closed successfully");
 	return {};
 }
 

@@ -5,6 +5,7 @@
 #include "Defines.hpp"
 #include "Error.hpp"
 #include <filesystem>
+#include <span>
 
 namespace flatearth::platform {
 

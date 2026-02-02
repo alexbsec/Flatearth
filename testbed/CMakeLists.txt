@@ -134,3 +134,39 @@ add_custom_command(TARGET ${BINARY_NAME} POST_BUILD
         $<TARGET_FILE:flatearth>
         $<TARGET_FILE_DIR:${BINARY_NAME}>
 )
+
+if(WIN32)
+  get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+
+  set(GLSLC "$ENV{VULKAN_SDK}/Bin/glslc.exe")
+  if(NOT EXISTS "${GLSLC}")
+    message(FATAL_ERROR "glslc not found at: ${GLSLC} (VULKAN_SDK not set?)")
+  endif()
+
+  set(SHADER_SRC_DIR "${REPO_ROOT}/assets/shaders")
+  set(ASSET_SRC_DIR  "${REPO_ROOT}/assets")
+
+  set(ASSET_OUT_DIR  "$<TARGET_FILE_DIR:flatearth_testbed>/bin/assets")
+  set(SHADER_OUT_DIR "${ASSET_OUT_DIR}/shaders")
+
+  add_custom_command(
+    TARGET flatearth_testbed
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${SHADER_OUT_DIR}"
+
+    COMMAND "${GLSLC}" -fshader-stage=vert
+            "${SHADER_SRC_DIR}/Builtin.ObjectShader.vert.glsl"
+            -o "${SHADER_OUT_DIR}/Builtin.ObjectShader.vert.spv"
+
+    COMMAND "${GLSLC}" -fshader-stage=frag
+            "${SHADER_SRC_DIR}/Builtin.ObjectShader.frag.glsl"
+            -o "${SHADER_OUT_DIR}/Builtin.ObjectShader.frag.spv"
+
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${ASSET_SRC_DIR}"
+            "${ASSET_OUT_DIR}"
+
+    COMMENT "Compiling shaders + copying assets to testbed runtime dir"
+    VERBATIM
+  )
+endif()

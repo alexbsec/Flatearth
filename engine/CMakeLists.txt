@@ -45,6 +45,7 @@ target_include_directories(${BINARY_NAME}
 ############################################################################
 #   PLATFORM-SPECIFIC SETTINGS
 
+target_compile_features(${BINARY_NAME} PUBLIC cxx_std_23)
 find_package(Vulkan REQUIRED)
 
 if(UNIX AND NOT MSVC)
@@ -64,8 +65,7 @@ if(UNIX AND NOT MSVC)
     )
 elseif(WIN32)
     if(MSVC)
-        # Add target name to target_compile_options
-        target_compile_options(${BINARY_NAME} PRIVATE /W4 /permissive- /std:c++latest)
+        target_compile_options(${BINARY_NAME} PRIVATE /W4 /permissive-)
         target_link_libraries(${BINARY_NAME} PRIVATE Vulkan::Vulkan)
     endif()
 endif()

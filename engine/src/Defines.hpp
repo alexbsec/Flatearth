@@ -8,6 +8,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <optional>
 
 // String alias
 using string = std::string;
@@ -102,11 +103,11 @@ STATIC_ASSERT(sizeof(float64) == 8, "Expected float64 to be 8 bytes");
 
 // Inlining
 #ifdef _MSC_VER
-#define FINLINE __forceinline
-#define FNOINLINE __declspec(noinline)
+#define FEINLINE __forceinline
+#define FENOINLINE __declspec(noinline)
 #else
 #define FEINLINE static inline
-#define FNOINLINE
+#define FENOINLINE
 #endif
 
 constexpr static float64 FE_PI = 3.14159265358979323846f;
