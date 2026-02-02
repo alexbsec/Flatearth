@@ -86,6 +86,12 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
     return FeTrue;
   }
 
+  auto drawRes = _pActiveBackend->DrawFrame(*pRenderPacket);
+  if (!drawRes.has_value()) {
+    FLOG_ERROR("failed to draw frame");
+    return FeErr{drawRes.error()};
+  }
+
   auto endRes = EndFrame(pRenderPacket->deltaTime);
   if (!endRes.has_value()) {
     FLOG_ERROR("failed to end frame");

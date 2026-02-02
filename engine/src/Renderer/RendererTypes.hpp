@@ -26,6 +26,7 @@ public:
   virtual FeExpect<bool, Error> OnResize(uint32 width, uint32 height) = 0;
   virtual FeExpect<bool, Error> BeginFrame(float32 deltaTime) = 0;
   virtual FeExpect<bool, Error> EndFrame(float32 deltaTime) = 0;
+  virtual FeExpect<bool, Error> DrawFrame(const RenderPacket &renderPacket) = 0;
 
 protected:
   virtual ~IRendererBackend() = default;

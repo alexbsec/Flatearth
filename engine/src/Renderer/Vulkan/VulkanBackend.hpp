@@ -24,6 +24,7 @@ public:
   FeExpect<bool, Error> OnResize(uint32 width, uint32 height) override;
   FeExpect<bool, Error> BeginFrame(float32 deltaTime) override;
   FeExpect<bool, Error> EndFrame(float32 deltaTime) override;
+  FeExpect<bool, Error> DrawFrame(const RenderPacket &renderPacket) override;
 
 private:
   FeExpect<void, Error> CreateFence(Fence *pFence, bool signaled);

@@ -29,9 +29,9 @@ private:
   IRendererBackend *_pActiveBackend;
 
   memory::MemoryManager &_memoryManager;
-  platform::FileSystem &_filesystem;
   ApplicationState *_pAppState;
   string _applicationName;
+  platform::FileSystem &_filesystem;
 };
 
 } // namespace flatearth::renderer

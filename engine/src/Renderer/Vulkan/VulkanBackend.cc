@@ -565,6 +565,28 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
   return FeTrue;
 }
 
+FeExpect<bool, Error> VulkanBackend::DrawFrame(const RenderPacket &renderPacket) {
+  if (_ctx.recreatingSwapchain) {
+    return FeFalse;
+  }
+
+  (void)renderPacket;
+
+  CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
+
+  _vulkanShader.UseShader(_ctx, _ctx.objectShader);
+  VkDeviceSize offset = 0;
+  vkCmdBindVertexBuffers(cmdBuffer.handle, 0, 1,
+                         &_ctx.objectVertexBuffer.handle, &offset);
+
+  vkCmdBindIndexBuffer(cmdBuffer.handle, _ctx.objectIndexBuffer.handle, 0,
+                       VK_INDEX_TYPE_UINT32);
+
+  // Draw quad (6 indices)
+  vkCmdDrawIndexed(cmdBuffer.handle, 6, 1, 0, 0, 0);
+  return FeTrue;
+}
+
 // PRIVATE MEMBERS
 
 FeExpect<void, Error> VulkanBackend::CreateFence(Fence *pFence, bool signaled) {
