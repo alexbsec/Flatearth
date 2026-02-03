@@ -1,5 +1,4 @@
 #include "ObjectShader.hpp"
-
 #include "Math/Vector3D.hpp"
 #include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
@@ -277,7 +276,7 @@ void VulkanShader::UpdateObject(Context &ctx, ObjectShader &objShader, math::Mat
                      objShader.pipeline.layout,
                      VK_SHADER_STAGE_VERTEX_BIT,
                      0,
-                     sizeof(math::Mat4D),
+                     sizeof(math::Mat4D) * 2,
                      &model);
 }
 

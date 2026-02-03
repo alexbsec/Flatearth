@@ -7,12 +7,11 @@
 #include "Platform/Platform.hpp"
 #include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
+#include "Renderer/Vulkan/VulkanUtils.hpp"
 
 #include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan {
-
-void EnsureGPUMatrixLayout(math::Mat4D &inProj, math::Mat4D &inView);
 
 VKAPI_ATTR VkBool32 VKAPI_CALL
 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -339,9 +338,9 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   std::array<math::Vertex3D, cVertCount> vertices;
   _memoryManager.FZeroMemory(vertices.data(), sizeof(math::Vertex3D) * cVertCount);
 
-  vertices[0].position = math::Vec3D(0.0f, -0.5f, 0.0f);
+  vertices[0].position = math::Vec3D(-0.5f, -0.5f, 0.0f);
   vertices[1].position = math::Vec3D(0.5f, 0.5f, 0.0f);
-  vertices[2].position = math::Vec3D(0.0f, 0.5f, 0.0f);
+  vertices[2].position = math::Vec3D(-0.5f, 0.5f, 0.0f);
   vertices[3].position = math::Vec3D(0.5f, -0.5f, 0.0f);
 
   const uint32 cIndexCount = 6;
@@ -462,56 +461,9 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
   _cmdBufferManager.ResetBuffer(_ctx, cmdBuffer);
   _cmdBufferManager.BeginBuffer(_ctx, cmdBuffer, FeFalse, FeFalse, FeFalse);
 
-  // Prepare viewport and scissor
-  VkViewport viewport = {};
-  viewport.x = 0.0f;
-  viewport.y = static_cast<float32>(_ctx.framebufferHeight);
-  viewport.width = static_cast<float32>(_ctx.framebufferWidth);
-  viewport.height = -viewport.y;
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
-
-  VkRect2D scissor = {};
-  scissor.offset = {0, 0};
-  scissor.extent = {_ctx.framebufferWidth, _ctx.framebufferHeight};
-
-  constexpr uint32 cFirstViewport = 0;
-  constexpr uint32 cViewportCount = 1;
-  constexpr uint32 cFirstScissor = 0;
-  constexpr uint32 cScissorCount = 1;
-
   _renderpassManager.BeginRenderpass(
       _ctx, &cmdBuffer, &_ctx.mainRenderpass, _ctx.swapchain.framebuffers[_ctx.imageIndex].handle);
 
-  _vulkanShader.UseShader(_ctx, _ctx.objectShader);
-
-  {
-    VkDescriptorSet set0 = _ctx.objectShader.globalDescriptorSets[_ctx.imageIndex];
-    vkCmdBindDescriptorSets(cmdBuffer.handle,
-                            VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            _ctx.objectShader.pipeline.layout,
-                            0,
-                            1,
-                            &set0,
-                            0,
-                            nullptr);
-  }
-
-  // TODO: remove (for tests)
-  std::array<VkDeviceSize, 1> offsets = {0};
-
-  vkCmdSetViewport(cmdBuffer.handle, cFirstViewport, cViewportCount, &viewport);
-  vkCmdSetScissor(cmdBuffer.handle, cFirstScissor, cScissorCount, &scissor);
-
-  vkCmdBindVertexBuffers(cmdBuffer.handle,
-                         0,
-                         1,
-                         &_ctx.objectVertexBuffer.handle,
-                         static_cast<VkDeviceSize *>(offsets.data()));
-
-  vkCmdBindIndexBuffer(cmdBuffer.handle, _ctx.objectIndexBuffer.handle, 0, VK_INDEX_TYPE_UINT32);
-
-  vkCmdDrawIndexed(cmdBuffer.handle, 6, 1, 0, 0, 0);
   return FeTrue;
 }
 
@@ -621,6 +573,59 @@ FeExpect<void, Error> VulkanBackend::UpdateGlobalState(math::Mat4D projection,
   }
 
   return {};
+}
+
+void VulkanBackend::UpdateObject(math::Mat4D model) {
+  CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
+  _vulkanShader.UpdateObject(_ctx, _ctx.objectShader, model.ToGPUMatrix());
+
+  _vulkanShader.UseShader(_ctx, _ctx.objectShader);
+
+  {
+    VkDescriptorSet set0 = _ctx.objectShader.globalDescriptorSets[_ctx.imageIndex];
+    vkCmdBindDescriptorSets(cmdBuffer.handle,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            _ctx.objectShader.pipeline.layout,
+                            0,
+                            1,
+                            &set0,
+                            0,
+                            nullptr);
+  }
+
+  // Prepare viewport and scissor
+  VkViewport viewport = {};
+  viewport.x = 0.0f;
+  viewport.y = static_cast<float32>(_ctx.framebufferHeight);
+  viewport.width = static_cast<float32>(_ctx.framebufferWidth);
+  viewport.height = -viewport.y;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+
+  VkRect2D scissor = {};
+  scissor.offset = {0, 0};
+  scissor.extent = {_ctx.framebufferWidth, _ctx.framebufferHeight};
+
+  constexpr uint32 cFirstViewport = 0;
+  constexpr uint32 cViewportCount = 1;
+  constexpr uint32 cFirstScissor = 0;
+  constexpr uint32 cScissorCount = 1;
+
+  // TODO: remove (for tests)
+  std::array<VkDeviceSize, 1> offsets = {0};
+
+  vkCmdSetViewport(cmdBuffer.handle, cFirstViewport, cViewportCount, &viewport);
+  vkCmdSetScissor(cmdBuffer.handle, cFirstScissor, cScissorCount, &scissor);
+
+  vkCmdBindVertexBuffers(cmdBuffer.handle,
+                         0,
+                         1,
+                         &_ctx.objectVertexBuffer.handle,
+                         static_cast<VkDeviceSize *>(offsets.data()));
+
+  vkCmdBindIndexBuffer(cmdBuffer.handle, _ctx.objectIndexBuffer.handle, 0, VK_INDEX_TYPE_UINT32);
+
+  vkCmdDrawIndexed(cmdBuffer.handle, 6, 1, 0, 0, 0);
 }
 
 // PRIVATE MEMBERS
@@ -781,15 +786,6 @@ FeExpect<void, Error> VulkanBackend::UploadDataRange(VkCommandPool pool,
 
   _bufferManager.DestroyVulkanBuffer(_ctx, &staging);
   return {};
-}
-
-void VulkanBackend::UpdateObject(math::Mat4D model) {
-  _vulkanShader.UpdateObject(_ctx, _ctx.objectShader, model);
-}
-
-void EnsureGPUMatrixLayout(math::Mat4D &inProj, math::Mat4D &inView) {
-  inProj = inProj.ToGPUMatrix();
-  inView = inView.ToGPUMatrix();
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL

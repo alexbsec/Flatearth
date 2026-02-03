@@ -6,6 +6,8 @@
 
 namespace flatearth::renderer::vulkan {
 
+void EnsureGPUMatrixLayout(math::Mat4D &inProj, math::Mat4D &inView);
+
 FeExpect<bool, Error> CreateShaderModule(Context &ctx,
                                          const string &name,
                                          const string &typeStr,

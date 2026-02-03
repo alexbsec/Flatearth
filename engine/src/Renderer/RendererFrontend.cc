@@ -3,7 +3,6 @@
 #include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
-#include "Math/FeMath.hpp"
 #include "Math/Matrix4D.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererInterface.hpp"
@@ -94,11 +93,15 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
     return FeTrue;
   }
 
-  math::Mat4D projection =
-      math::Mat4D::Perspective(math::DegToRad(45.0f), 1280 / 720.f, 0.1f, 1000.f);
-  math::Mat4D view = math::Mat4D::Translation(0.0f, 0.0f, -30.0f);
+  math::Mat4D projection = math::Mat4D::Orthographic(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+  math::Mat4D view = math::Mat4D::Identity();
 
-  math::Mat4D model = math::Mat4D::Translation(0.0f, 0.0f, 0.0f);
+  static float32 angle = 0.0f;
+
+  // radians per second (tweak speed)
+  angle += pRenderPacket->deltaTime * 1.5f;
+
+  math::Mat4D model = math::Mat4D::RotationZ(angle) * math::Mat4D::Translation(0.0f, 0.0f, 0.0f);
   _pActiveBackend->UpdateObject(model);
   auto updateRes = _pActiveBackend->UpdateGlobalState(projection, view, math::Vec3D::Zero(), 0);
   if (!updateRes.has_value()) {

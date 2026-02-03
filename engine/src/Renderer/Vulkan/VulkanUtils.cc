@@ -19,6 +19,11 @@ void ShaderModuleCleanup(Context &ctx,
   }
 }
 
+void EnsureGPUMatrixLayout(math::Mat4D &inProj, math::Mat4D &inView) {
+  inProj = inProj.ToGPUMatrix();
+  inView = inView.ToGPUMatrix();
+}
+
 FeExpect<bool, Error> CreateShaderModule(Context &ctx,
                                          const string &name,
                                          const string &typeStr,

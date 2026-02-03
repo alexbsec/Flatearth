@@ -133,6 +133,7 @@ PipelineManager::CreateGraphicsPipeline(Context &ctx,
 
   pipelineLayoutInfo.setLayoutCount = descriptorSetLayoutCount;
   pipelineLayoutInfo.pSetLayouts = pDescriptorLayouts;
+  pipelineLayoutInfo.pushConstantRangeCount = 1;
   pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
   auto res = VkCheck(vkCreatePipelineLayout(
       ctx.device.logicalDevice, &pipelineLayoutInfo, ctx.pAllocator, &pPipeline->layout));
