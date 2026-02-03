@@ -2,6 +2,7 @@
 #define _FLATEARTH_ENGINE_MATH_FEMATH_HPP
 
 #include "Defines.hpp"
+
 #include <cmath>
 namespace flatearth::math {
 

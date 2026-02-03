@@ -1,11 +1,12 @@
 #include "Game.hpp"
 #include "GameTypes.hpp"
-#include <Entrypoint.hpp>
-#include <Core/Logger.hpp>
+
 #include <Core/Application.hpp>
+#include <Core/Logger.hpp>
+#include <Entrypoint.hpp>
 #include <cstdlib>
 
-bool CreateGame(flatearth::Game *outGame) {
+bool CreateGame(flatearth::Game* outGame) {
   using namespace flatearth::testbed;
   outGame->Update = GameTest::GameUpdate;
   outGame->Initialize = GameTest::GameInitialize;
@@ -21,7 +22,7 @@ int main(void) {
     return EXIT_FAILURE;
   }
 
-  flatearth::Engine engine(gameInstance); 
+  flatearth::Engine engine(gameInstance);
   if (auto res = engine.Initialize(); !res.has_value()) {
     LOG_ERROR("engine failed to initialize");
     return EXIT_FAILURE;
@@ -31,6 +32,6 @@ int main(void) {
     LOG_ERROR("engine failed to start");
     return EXIT_FAILURE;
   }
- 
+
   return EXIT_SUCCESS;
 }

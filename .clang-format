@@ -1,0 +1,76 @@
+
+# .clang-format — C++ engine / systems style (Vulkan-friendly)
+BasedOnStyle: LLVM
+Language: Cpp
+
+# ---- Indentation / width ----
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ContinuationIndentWidth: 4
+ColumnLimit: 100
+
+# ---- Braces ----
+BreakBeforeBraces: Attach
+
+# Keep short functions on one line only if truly tiny
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+
+# ---- Pointers / references ----
+PointerAlignment: Left
+ReferenceAlignment: Pointer
+DerivePointerAlignment: false
+
+# ---- Spacing ----
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceInEmptyParentheses: false
+SpaceAfterCStyleCast: false
+SpacesInCStyleCastParentheses: false
+SpacesInAngles: false
+SpaceBeforeAssignmentOperators: true
+
+# ---- Line breaking & bin-packing ----
+BinPackArguments: false
+BinPackParameters: false
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+PenaltyBreakAssignment: 2
+PenaltyBreakBeforeFirstCallParameter: 1
+
+# ---- Alignments (reasonable defaults) ----
+AlignAfterOpenBracket: Align
+AlignOperands: Align
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
+AlignConsecutiveMacros: None
+AlignEscapedNewlines: Left
+
+# ---- Includes ----
+SortIncludes: true
+IncludeBlocks: Regroup
+
+# ---- Namespaces ----
+NamespaceIndentation: None
+CompactNamespaces: false
+
+# ---- Switch / case ----
+IndentCaseLabels: true
+
+# ---- Comments ----
+ReflowComments: true
+
+# ---- Templates & misc ----
+AlwaysBreakTemplateDeclarations: Yes
+
+# ---- Preprocessor ----
+IndentPPDirectives: None
+
+# ---- For modern C++ ----
+Cpp11BracedListStyle: true
+Standard: c++20

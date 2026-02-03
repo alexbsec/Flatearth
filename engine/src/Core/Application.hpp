@@ -12,7 +12,7 @@ namespace flatearth {
 
 class Engine {
 public:
-  FEAPI Engine(Game &game);
+  FEAPI Engine(Game& game);
   FEAPI ~Engine();
   FEAPI FeExpect<void, Error> Initialize();
   FEAPI FeExpect<void, Error> Start();

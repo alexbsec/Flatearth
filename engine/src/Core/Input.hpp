@@ -13,8 +13,7 @@ enum class Button {
   MaxButtons,
 };
 
-constexpr uint64 cButtonCount =
-    static_cast<uint64>(Button::MaxButtons);
+constexpr uint64 cButtonCount = static_cast<uint64>(Button::MaxButtons);
 
 #define DEFINE_KEY(name, code) KEY_##name = code
 
@@ -163,7 +162,7 @@ struct InputState {
 
 class InputManager {
 public:
-  FEAPI explicit InputManager(event::EventManager &eventManager);
+  FEAPI explicit InputManager(event::EventManager& eventManager);
 
   FEAPI void Update(float64 deltaTime);
   FeExpect<bool, Error> ProcessKey(Keys key, bool pressed);
@@ -180,17 +179,17 @@ public:
   FEAPI bool IsButtonUp(Button button);
   FEAPI bool WasButtonDown(Button button);
   FEAPI bool WasButtonUp(Button button);
-  FEAPI void GetMousePosition(int32 &x, int32 &y);
-  FEAPI void GetPreviousMousePosition(int32 &x, int32 &y);
+  FEAPI void GetMousePosition(int32& x, int32& y);
+  FEAPI void GetPreviousMousePosition(int32& x, int32& y);
 
-  InputState &State() noexcept;
-  const InputState &State() const noexcept;
+  InputState& State() noexcept;
+  const InputState& State() const noexcept;
 
 private:
   InputState _state;
-  event::EventManager &_eventManager;
+  event::EventManager& _eventManager;
 };
 
-}
+} // namespace flatearth::input
 
 #endif // _FLATEARTH_ENGINE_CORE_INPUT_HPP

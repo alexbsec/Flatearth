@@ -11,12 +11,11 @@ class Mat4D {
 public:
   // Identity
   constexpr Mat4D() noexcept
-      : _x00(1), _x01(0), _x02(0), _x03(0), _x10(0), _x11(1), _x12(0), _x13(0),
-        _x20(0), _x21(0), _x22(1), _x23(0), _x30(0), _x31(0), _x32(0), _x33(1) {
-  }
+      : _x00(1), _x01(0), _x02(0), _x03(0), _x10(0), _x11(1), _x12(0), _x13(0), _x20(0), _x21(0),
+        _x22(1), _x23(0), _x30(0), _x31(0), _x32(0), _x33(1) {}
 
-  constexpr Mat4D(const Mat4D &) noexcept = default;
-  constexpr Mat4D &operator=(const Mat4D &) noexcept = default;
+  constexpr Mat4D(const Mat4D&) noexcept = default;
+  constexpr Mat4D& operator=(const Mat4D&) noexcept = default;
 
   /*==============================
     Static factories
@@ -93,7 +92,7 @@ public:
     Operators
   ==============================*/
 
-  inline constexpr Mat4D operator*(const Mat4D &o) const noexcept {
+  inline constexpr Mat4D operator*(const Mat4D& o) const noexcept {
     Mat4D result;
 
     result._x00 = _x00 * o._x00 + _x01 * o._x10 + _x02 * o._x20 + _x03 * o._x30;
@@ -119,7 +118,7 @@ public:
     return result;
   }
 
-  inline constexpr Mat4D &operator*=(const Mat4D &o) noexcept {
+  inline constexpr Mat4D& operator*=(const Mat4D& o) noexcept {
     *this = *this * o;
     return *this;
   }
@@ -128,14 +127,14 @@ public:
     Transform
   ==============================*/
 
-  inline Vec3D TransformPoint(const Vec3D &p) const noexcept {
+  inline Vec3D TransformPoint(const Vec3D& p) const noexcept {
     float32 x = _x00 * p.x() + _x01 * p.y() + _x02 * p.z() + _x03;
     float32 y = _x10 * p.x() + _x11 * p.y() + _x12 * p.z() + _x13;
     float32 z = _x20 * p.x() + _x21 * p.y() + _x22 * p.z() + _x23;
     return Vec3D(x, y, z);
   }
 
-  inline Vec3D TransformVector(const Vec3D &v) const noexcept {
+  inline Vec3D TransformVector(const Vec3D& v) const noexcept {
     float32 x = _x00 * v.x() + _x01 * v.y() + _x02 * v.z();
     float32 y = _x10 * v.x() + _x11 * v.y() + _x12 * v.z();
     float32 z = _x20 * v.x() + _x21 * v.y() + _x22 * v.z();
@@ -143,8 +142,8 @@ public:
   }
 
 private:
-  float32 _x00, _x01, _x02, _x03, _x10, _x11, _x12, _x13, _x20, _x21, _x22,
-      _x23, _x30, _x31, _x32, _x33;
+  float32 _x00, _x01, _x02, _x03, _x10, _x11, _x12, _x13, _x20, _x21, _x22, _x23, _x30, _x31, _x32,
+      _x33;
 };
 
 } // namespace flatearth::math

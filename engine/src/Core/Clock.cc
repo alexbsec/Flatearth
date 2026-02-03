@@ -16,4 +16,4 @@ float64 Clock::Elapsed() const noexcept {
   return _elapsed;
 }
 
-}
+} // namespace flatearth::clock

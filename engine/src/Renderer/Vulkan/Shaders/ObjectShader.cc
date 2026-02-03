@@ -1,26 +1,26 @@
 #include "ObjectShader.hpp"
+
 #include "Math/Vector3D.hpp"
 #include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
 #include "Renderer/Vulkan/VulkanUtils.hpp"
+
 #include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan::shaders {
 
-VulkanShader::VulkanShader(memory::MemoryManager &memManager,
-                           BufferManager &bufferManager)
-    : _memoryManager(memManager), _bufferManager(bufferManager) {}
+VulkanShader::VulkanShader(memory::MemoryManager& memManager, BufferManager& bufferManager)
+    : _memoryManager(memManager), _bufferManager(bufferManager) {
+}
 
 VulkanShader::~VulkanShader() {
   FLOG_INFO("vulkan shader successfully destroyed");
 }
 
-FeExpect<bool, Error>
-VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
+FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context& ctx, ObjectShader* pObjShader) {
   if (pObjShader == nullptr) {
     FLOG_ERROR("cannot create shader object on nullptr object shader");
-    return FeErr{
-        Error("object shader is nullptr", ErrorType::NullptrException)};
+    return FeErr{Error("object shader is nullptr", ErrorType::NullptrException)};
   }
 
   std::array<string, cObjectShaderStageCount> cStageTypeStrs{
@@ -28,17 +28,19 @@ VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
       "frag",
   };
 
-  constexpr std::array<VkShaderStageFlagBits, cObjectShaderStageCount>
-      cStageTypes{
-          VK_SHADER_STAGE_VERTEX_BIT,
-          VK_SHADER_STAGE_FRAGMENT_BIT,
-      };
+  constexpr std::array<VkShaderStageFlagBits, cObjectShaderStageCount> cStageTypes{
+      VK_SHADER_STAGE_VERTEX_BIT,
+      VK_SHADER_STAGE_FRAGMENT_BIT,
+  };
 
   const string cBuiltinShaderName = "Builtin.ObjectShader";
   for (uint32 i = 0; i < cObjectShaderStageCount; i++) {
-    auto createRes =
-        CreateShaderModule(ctx, cBuiltinShaderName, cStageTypeStrs[i],
-                           cStageTypes[i], i, pObjShader->shaderStages.data());
+    auto createRes = CreateShaderModule(ctx,
+                                        cBuiltinShaderName,
+                                        cStageTypeStrs[i],
+                                        cStageTypes[i],
+                                        i,
+                                        pObjShader->shaderStages.data());
     if (!createRes.has_value()) {
       FLOG_ERROR("failed to create shader module at index {}", i);
       return FeErr{createRes.error()};
@@ -61,9 +63,10 @@ VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
   layoutCreateInfo.bindingCount = 1;
   layoutCreateInfo.pBindings = &globalUBOLayoutBinding;
 
-  if (auto res = VkCheck(vkCreateDescriptorSetLayout(
-          ctx.device.logicalDevice, &layoutCreateInfo, ctx.pAllocator,
-          &pObjShader->globalDescriptorSetLayout));
+  if (auto res = VkCheck(vkCreateDescriptorSetLayout(ctx.device.logicalDevice,
+                                                     &layoutCreateInfo,
+                                                     ctx.pAllocator,
+                                                     &pObjShader->globalDescriptorSetLayout));
       !res.has_value()) {
     FLOG_ERROR("failed to create descriptor set layout");
     return FeErr{res.error()};
@@ -76,15 +79,13 @@ VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
   globalPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   globalPoolSize.descriptorCount = ctx.swapchain.imageCount; // 1 UBO per set
 
-  VkDescriptorPoolCreateInfo poolInfo{
-      VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+  VkDescriptorPoolCreateInfo poolInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
   poolInfo.poolSizeCount = 1;
   poolInfo.pPoolSizes = &globalPoolSize;
   poolInfo.maxSets = ctx.swapchain.imageCount;
 
   if (auto res = VkCheck(vkCreateDescriptorPool(
-          ctx.device.logicalDevice, &poolInfo, ctx.pAllocator,
-          &pObjShader->globalDescriptorPool));
+          ctx.device.logicalDevice, &poolInfo, ctx.pAllocator, &pObjShader->globalDescriptorPool));
       !res.has_value()) {
     FLOG_ERROR("failed to create descriptor pool");
     return FeErr{res.error()};
@@ -109,8 +110,7 @@ VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
 
   uint32 offset = 0;
   const int32 attributeCount = 1;
-  std::array<VkVertexInputAttributeDescription, attributeCount>
-      attrDescription{};
+  std::array<VkVertexInputAttributeDescription, attributeCount> attrDescription{};
   std::array<VkFormat, attributeCount> formats = {VK_FORMAT_R32G32B32_SFLOAT};
   std::array<uint32, attributeCount> sizes = {sizeof(math::Vec3D)};
 
@@ -129,17 +129,24 @@ VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
   };
 
   // Shader stages
-  std::array<VkPipelineShaderStageCreateInfo, cObjectShaderStageCount>
-      stageInfos{};
+  std::array<VkPipelineShaderStageCreateInfo, cObjectShaderStageCount> stageInfos{};
   _memoryManager.FZeroMemory(stageInfos.data(), sizeof(stageInfos));
   for (uint32 i = 0; i < cObjectShaderStageCount; i++) {
     stageInfos[i] = pObjShader->shaderStages[i].shaderStageCreateInfo;
   }
 
-  auto pipelineRes = _pipelineManager.CreateGraphicsPipeline(
-      ctx, &ctx.mainRenderpass, attributeCount, attrDescription.data(),
-      cLayoutCount, layouts.data(), cObjectShaderStageCount, stageInfos.data(),
-      viewport, scissor, FeFalse, &pObjShader->pipeline);
+  auto pipelineRes = _pipelineManager.CreateGraphicsPipeline(ctx,
+                                                             &ctx.mainRenderpass,
+                                                             attributeCount,
+                                                             attrDescription.data(),
+                                                             cLayoutCount,
+                                                             layouts.data(),
+                                                             cObjectShaderStageCount,
+                                                             stageInfos.data(),
+                                                             viewport,
+                                                             scissor,
+                                                             FeFalse,
+                                                             &pObjShader->pipeline);
   if (!pipelineRes.has_value()) {
     FLOG_ERROR("failed to create graphics pipeline");
     return FeErr{pipelineRes.error()};
@@ -149,12 +156,10 @@ VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
   // Global uniform buffer (host visible)
   // -----------------------------
   VkBufferUsageFlags usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-  uint32 memFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+  uint32 memFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
   auto createBufferRes = _bufferManager.CreateVulkanBuffer(
-      ctx, sizeof(GlobalUniformObject), usage, memFlags, FeTrue,
-      &pObjShader->globalUniformBuffer);
+      ctx, sizeof(GlobalUniformObject), usage, memFlags, FeTrue, &pObjShader->globalUniformBuffer);
   if (!createBufferRes.has_value()) {
     FLOG_ERROR("failed to create vulkan buffer for GlobalUniformObject");
     return FeErr{createBufferRes.error()};
@@ -175,15 +180,13 @@ VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
     globalLayouts[i] = pObjShader->globalDescriptorSetLayout;
   }
 
-  VkDescriptorSetAllocateInfo allocInfo{
-      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+  VkDescriptorSetAllocateInfo allocInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
   allocInfo.descriptorPool = pObjShader->globalDescriptorPool;
   allocInfo.descriptorSetCount = count;
   allocInfo.pSetLayouts = globalLayouts.Data();
 
-  if (auto res = VkCheck(
-          vkAllocateDescriptorSets(ctx.device.logicalDevice, &allocInfo,
-                                   pObjShader->globalDescriptorSets.Data()));
+  if (auto res = VkCheck(vkAllocateDescriptorSets(
+          ctx.device.logicalDevice, &allocInfo, pObjShader->globalDescriptorSets.Data()));
       !res.has_value()) {
     FLOG_ERROR("failed to allocate descriptor sets");
     return FeErr{res.error()};
@@ -210,14 +213,14 @@ VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
     writes[i].pBufferInfo = &infos[i];
   }
 
-  vkUpdateDescriptorSets(ctx.device.logicalDevice, count, writes.Data(), 0,
-                         nullptr);
+  vkUpdateDescriptorSets(ctx.device.logicalDevice, count, writes.Data(), 0, nullptr);
 
   return FeTrue;
 }
 
-void VulkanShader::DestroyObjectShader(Context &ctx, ObjectShader *pObjShader) {
-  if (!pObjShader) return;
+void VulkanShader::DestroyObjectShader(Context& ctx, ObjectShader* pObjShader) {
+  if (!pObjShader)
+    return;
 
   VkDevice dev = ctx.device.logicalDevice;
 
@@ -245,25 +248,19 @@ void VulkanShader::DestroyObjectShader(Context &ctx, ObjectShader *pObjShader) {
   }
 }
 
-void VulkanShader::UseShader(Context &ctx, ObjectShader &objShader) {
+void VulkanShader::UseShader(Context& ctx, ObjectShader& objShader) {
   uint32 imageIndex = ctx.imageIndex;
   VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  _pipelineManager.BindPipeline(ctx.graphicsCommandBuffer[imageIndex],
-                                bindPoint, objShader.pipeline);
+  _pipelineManager.BindPipeline(
+      ctx.graphicsCommandBuffer[imageIndex], bindPoint, objShader.pipeline);
 }
 
-
-FeExpect<void, Error>
-VulkanShader::UpdateGlobalState(Context &ctx, ObjectShader &objShader) {
-  constexpr uint32 cRange  = sizeof(GlobalUniformObject);
+FeExpect<void, Error> VulkanShader::UpdateGlobalState(Context& ctx, ObjectShader& objShader) {
+  constexpr uint32 cRange = sizeof(GlobalUniformObject);
   constexpr uint64 cOffset = 0;
 
-  auto loadRes = _bufferManager.LoadData(ctx,
-                                        objShader.globalUniformBuffer,
-                                        cOffset,
-                                        cRange,
-                                        0,
-                                        &objShader.globalUBO);
+  auto loadRes = _bufferManager.LoadData(
+      ctx, objShader.globalUniformBuffer, cOffset, cRange, 0, &objShader.globalUBO);
   if (!loadRes.has_value()) {
     FLOG_ERROR("failed to load data while updating global state");
     return FeErr{loadRes.error()};
@@ -271,6 +268,5 @@ VulkanShader::UpdateGlobalState(Context &ctx, ObjectShader &objShader) {
 
   return {};
 }
-
 
 } // namespace flatearth::renderer::vulkan::shaders

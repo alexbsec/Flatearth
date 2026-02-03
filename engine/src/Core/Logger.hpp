@@ -18,13 +18,13 @@
 
 namespace febundle::core {
 
-inline const char *COLOR_GREY = "\x1b[90m";
-inline const char *COLOR_BLUE = "\x1b[34m";
-inline const char *COLOR_GREEN = "\x1b[32m";
-inline const char *COLOR_YELLOW = "\x1b[33m";
-inline const char *COLOR_RED = "\x1b[31m";
-inline const char *COLOR_FATAL = "\x1b[41;97m";
-inline const char *COLOR_RESET = "\x1b[0m";
+inline const char* COLOR_GREY = "\x1b[90m";
+inline const char* COLOR_BLUE = "\x1b[34m";
+inline const char* COLOR_GREEN = "\x1b[32m";
+inline const char* COLOR_YELLOW = "\x1b[33m";
+inline const char* COLOR_RED = "\x1b[31m";
+inline const char* COLOR_FATAL = "\x1b[41;97m";
+inline const char* COLOR_RESET = "\x1b[0m";
 
 enum class LogLevel {
   Trace = 0,
@@ -45,16 +45,14 @@ struct LogMessage {
 
 class Logger {
 public:
-  inline static Logger &Self() {
+  inline static Logger& Self() {
     static Logger instance;
     return instance;
   }
 
   inline void SetLevel(LogLevel lvl) { _level = lvl; }
 
-  inline void SetLogfilePath(const std::filesystem::path &path) {
-    _logPath = path;
-  }
+  inline void SetLogfilePath(const std::filesystem::path& path) { _logPath = path; }
 
   inline void FileLogging(bool enable) {
     if (enable) {
@@ -63,8 +61,7 @@ public:
       }
       _logFile.open(_logPath, std::ios::out | std::ios::app);
       if (!_logFile.is_open()) {
-        Log(LogLevel::Error, std::source_location::current(),
-            "Failed to open file");
+        Log(LogLevel::Error, std::source_location::current(), "Failed to open file");
         _logToFile = false;
         return;
       }
@@ -76,10 +73,13 @@ public:
   }
 
   template <typename... Args>
-  inline void LogToFile(LogLevel level, std::source_location where,
-                        std::string_view fmt, const Args &...args) noexcept {
+  inline void LogToFile(LogLevel level,
+                        std::source_location where,
+                        std::string_view fmt,
+                        const Args&... args) noexcept {
     if (!_logToFile) {
-      Log(LogLevel::Warn, std::source_location::current(),
+      Log(LogLevel::Warn,
+          std::source_location::current(),
           "cannot log to file if it was not previously enabled");
       return;
     }
@@ -98,8 +98,10 @@ public:
   }
 
   template <typename... Args>
-  void Log(LogLevel level, std::source_location where, std::string_view fmt,
-           const Args &...args) noexcept {
+  void Log(LogLevel level,
+           std::source_location where,
+           std::string_view fmt,
+           const Args&... args) noexcept {
     if (level < _level) {
       return;
     }
@@ -165,27 +167,36 @@ private:
     }
   }
 
-  Logger(const Logger &) = delete;
-  Logger &operator=(const Logger &) = delete;
+  Logger(const Logger&) = delete;
+  Logger& operator=(const Logger&) = delete;
 
   template <typename... Args>
-  inline string format(LogLevel level, std::source_location where,
-                       std::string_view fmt, const Args &...args) noexcept {
+  inline string format(LogLevel level,
+                       std::source_location where,
+                       std::string_view fmt,
+                       const Args&... args) noexcept {
     std::lock_guard<std::mutex> guard(_mutex);
     auto payload = std::vformat(fmt, std::make_format_args(args...));
-    const char *color = LevelColour(level);
-    const char *reset = COLOR_RESET;
-    const char *lvlStr = toString(level);
-    const char *full = where.file_name();
-    const char *p = std::strstr(full, "src/");
+    const char* color = LevelColour(level);
+    const char* reset = COLOR_RESET;
+    const char* lvlStr = toString(level);
+    const char* full = where.file_name();
+    const char* p = std::strstr(full, "src/");
     if (p == nullptr) {
       auto slash = std::strrchr(full, '/');
       p = slash ? slash + 1 : full;
     }
 
-    return std::format("{}[{}] {}:{} in function {}'{}'{}: {}{}\n", color,
-                       lvlStr, p, where.line(), reset, where.function_name(),
-                       color, payload, reset);
+    return std::format("{}[{}] {}:{} in function {}'{}'{}: {}{}\n",
+                       color,
+                       lvlStr,
+                       p,
+                       where.line(),
+                       reset,
+                       where.function_name(),
+                       color,
+                       payload,
+                       reset);
   }
 
   inline void pushToQ(LogMessage msg) {
@@ -193,45 +204,45 @@ private:
     _cv.notify_one();
   }
 
-  inline constexpr const char *toString(LogLevel lvl) const {
+  inline constexpr const char* toString(LogLevel lvl) const {
     switch (lvl) {
-    case LogLevel::Trace:
-      return "TRACE";
-    case LogLevel::Debug:
-      return "DEBUG";
-    case LogLevel::Info:
-      return "INFO";
-    case LogLevel::Warn:
-      return "WARN";
-    case LogLevel::Error:
-      return "ERROR";
-    case LogLevel::Fatal:
-      return "FATAL";
-    case LogLevel::Off:
-      return "";
+      case LogLevel::Trace:
+        return "TRACE";
+      case LogLevel::Debug:
+        return "DEBUG";
+      case LogLevel::Info:
+        return "INFO";
+      case LogLevel::Warn:
+        return "WARN";
+      case LogLevel::Error:
+        return "ERROR";
+      case LogLevel::Fatal:
+        return "FATAL";
+      case LogLevel::Off:
+        return "";
     }
 
     // This should never hit
     return "UNKNOWN";
   }
 
-  inline constexpr const char *LevelColour(LogLevel lvl) {
+  inline constexpr const char* LevelColour(LogLevel lvl) {
     switch (lvl) {
-    case LogLevel::Trace:
-      return COLOR_GREEN;
-    case LogLevel::Debug:
-      return COLOR_BLUE;
-    case LogLevel::Info:
-      return COLOR_GREEN;
-      ;
-    case LogLevel::Warn:
-      return COLOR_YELLOW;
-    case LogLevel::Error:
-      return COLOR_RED;
-    case LogLevel::Fatal:
-      return COLOR_FATAL; // red bg, white text
-    default:
-      return COLOR_RESET;
+      case LogLevel::Trace:
+        return COLOR_GREEN;
+      case LogLevel::Debug:
+        return COLOR_BLUE;
+      case LogLevel::Info:
+        return COLOR_GREEN;
+        ;
+      case LogLevel::Warn:
+        return COLOR_YELLOW;
+      case LogLevel::Error:
+        return COLOR_RED;
+      case LogLevel::Fatal:
+        return COLOR_FATAL; // red bg, white text
+      default:
+        return COLOR_RESET;
     }
   }
 
@@ -266,121 +277,103 @@ private:
 
 #if FLATEARTH_LOGGING_ENABLED
 
-#define LOG_TRACE(fmt, ...)                                                    \
-  febundle::core::Logger::Self().Log(febundle::core::LogLevel::Trace,          \
-                                     std::source_location::current(), fmt,     \
-                                     ##__VA_ARGS__)
+#define LOG_TRACE(fmt, ...)           \
+  febundle::core::Logger::Self().Log( \
+      febundle::core::LogLevel::Trace, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define LOG_DEBUG(fmt, ...)                                                    \
-  febundle::core::Logger::Self().Log(febundle::core::LogLevel::Debug,          \
-                                     std::source_location::current(), fmt,     \
-                                     ##__VA_ARGS__)
+#define LOG_DEBUG(fmt, ...)           \
+  febundle::core::Logger::Self().Log( \
+      febundle::core::LogLevel::Debug, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define LOG_INFO(fmt, ...)                                                     \
-  febundle::core::Logger::Self().Log(febundle::core::LogLevel::Info,           \
-                                     std::source_location::current(), fmt,     \
-                                     ##__VA_ARGS__)
+#define LOG_INFO(fmt, ...)            \
+  febundle::core::Logger::Self().Log( \
+      febundle::core::LogLevel::Info, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define LOG_WARN(fmt, ...)                                                     \
-  febundle::core::Logger::Self().Log(febundle::core::LogLevel::Warn,           \
-                                     std::source_location::current(), fmt,     \
-                                     ##__VA_ARGS__)
+#define LOG_WARN(fmt, ...)            \
+  febundle::core::Logger::Self().Log( \
+      febundle::core::LogLevel::Warn, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define LOG_ERROR(fmt, ...)                                                    \
-  febundle::core::Logger::Self().Log(febundle::core::LogLevel::Error,          \
-                                     std::source_location::current(), fmt,     \
-                                     ##__VA_ARGS__)
+#define LOG_ERROR(fmt, ...)           \
+  febundle::core::Logger::Self().Log( \
+      febundle::core::LogLevel::Error, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define LOG_FATAL(fmt, ...)                                                    \
-  febundle::core::Logger::Self().Log(febundle::core::LogLevel::Fatal,          \
-                                     std::source_location::current(), fmt,     \
-                                     ##__VA_ARGS__)
+#define LOG_FATAL(fmt, ...)           \
+  febundle::core::Logger::Self().Log( \
+      febundle::core::LogLevel::Fatal, std::source_location::current(), fmt, ##__VA_ARGS__)
 
 // File logging variants
-#define FLOG_TRACE(fmt, ...)                                                   \
-  febundle::core::Logger::Self().LogToFile(febundle::core::LogLevel::Trace,    \
-                                           std::source_location::current(),    \
-                                           fmt, ##__VA_ARGS__)
+#define FLOG_TRACE(fmt, ...)                \
+  febundle::core::Logger::Self().LogToFile( \
+      febundle::core::LogLevel::Trace, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define FLOG_DEBUG(fmt, ...)                                                   \
-  febundle::core::Logger::Self().LogToFile(febundle::core::LogLevel::Debug,    \
-                                           std::source_location::current(),    \
-                                           fmt, ##__VA_ARGS__)
+#define FLOG_DEBUG(fmt, ...)                \
+  febundle::core::Logger::Self().LogToFile( \
+      febundle::core::LogLevel::Debug, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define FLOG_INFO(fmt, ...)                                                    \
-  febundle::core::Logger::Self().LogToFile(febundle::core::LogLevel::Info,     \
-                                           std::source_location::current(),    \
-                                           fmt, ##__VA_ARGS__)
+#define FLOG_INFO(fmt, ...)                 \
+  febundle::core::Logger::Self().LogToFile( \
+      febundle::core::LogLevel::Info, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define FLOG_WARN(fmt, ...)                                                    \
-  febundle::core::Logger::Self().LogToFile(febundle::core::LogLevel::Warn,     \
-                                           std::source_location::current(),    \
-                                           fmt, ##__VA_ARGS__)
+#define FLOG_WARN(fmt, ...)                 \
+  febundle::core::Logger::Self().LogToFile( \
+      febundle::core::LogLevel::Warn, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define FLOG_ERROR(fmt, ...)                                                   \
-  febundle::core::Logger::Self().LogToFile(febundle::core::LogLevel::Error,    \
-                                           std::source_location::current(),    \
-                                           fmt, ##__VA_ARGS__)
+#define FLOG_ERROR(fmt, ...)                \
+  febundle::core::Logger::Self().LogToFile( \
+      febundle::core::LogLevel::Error, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define FLOG_FATAL(fmt, ...)                                                   \
-  febundle::core::Logger::Self().LogToFile(febundle::core::LogLevel::Fatal,    \
-                                           std::source_location::current(),    \
-                                           fmt, ##__VA_ARGS__)
+#define FLOG_FATAL(fmt, ...)                \
+  febundle::core::Logger::Self().LogToFile( \
+      febundle::core::LogLevel::Fatal, std::source_location::current(), fmt, ##__VA_ARGS__)
 
 // ========== RELEASE BUILD: only WARN / ERROR / FATAL ==========
 
 #else
   // Strip low-level logs entirely
-#define LOG_TRACE(...)                                                         \
-  do {                                                                         \
+#define LOG_TRACE(...) \
+  do {                 \
   } while (0)
-#define LOG_DEBUG(...)                                                         \
-  do {                                                                         \
+#define LOG_DEBUG(...) \
+  do {                 \
   } while (0)
-#define LOG_INFO(...)                                                          \
-  do {                                                                         \
+#define LOG_INFO(...) \
+  do {                \
   } while (0)
 
 // Keep these active
-#define LOG_WARN(fmt, ...)                                                     \
-  febundle::core::Logger::Self().Log(febundle::core::LogLevel::Warn,           \
-                                     std::source_location::current(), fmt,     \
-                                     ##__VA_ARGS__)
+#define LOG_WARN(fmt, ...)            \
+  febundle::core::Logger::Self().Log( \
+      febundle::core::LogLevel::Warn, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define LOG_ERROR(fmt, ...)                                                    \
-  febundle::core::Logger::Self().Log(febundle::core::LogLevel::Error,          \
-                                     std::source_location::current(), fmt,     \
-                                     ##__VA_ARGS__)
+#define LOG_ERROR(fmt, ...)           \
+  febundle::core::Logger::Self().Log( \
+      febundle::core::LogLevel::Error, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define LOG_FATAL(fmt, ...)                                                    \
-  febundle::core::Logger::Self().Log(febundle::core::LogLevel::Fatal,          \
-                                     std::source_location::current(), fmt,     \
-                                     ##__VA_ARGS__)
+#define LOG_FATAL(fmt, ...)           \
+  febundle::core::Logger::Self().Log( \
+      febundle::core::LogLevel::Fatal, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define FLOG_TRACE(...)                                                        \
-  do {                                                                         \
+#define FLOG_TRACE(...) \
+  do {                  \
   } while (0)
-#define FLOG_DEBUG(...)                                                        \
-  do {                                                                         \
+#define FLOG_DEBUG(...) \
+  do {                  \
   } while (0)
-#define FLOG_INFO(...)                                                         \
-  do {                                                                         \
+#define FLOG_INFO(...) \
+  do {                 \
   } while (0)
 
-#define FLOG_WARN(fmt, ...)                                                    \
-  febundle::core::Logger::Self().LogToFile(febundle::core::LogLevel::Warn,     \
-                                           std::source_location::current(),    \
-                                           fmt, ##__VA_ARGS__)
+#define FLOG_WARN(fmt, ...)                 \
+  febundle::core::Logger::Self().LogToFile( \
+      febundle::core::LogLevel::Warn, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define FLOG_ERROR(fmt, ...)                                                   \
-  febundle::core::Logger::Self().LogToFile(febundle::core::LogLevel::Error,    \
-                                           std::source_location::current(),    \
-                                           fmt, ##__VA_ARGS__)
+#define FLOG_ERROR(fmt, ...)                \
+  febundle::core::Logger::Self().LogToFile( \
+      febundle::core::LogLevel::Error, std::source_location::current(), fmt, ##__VA_ARGS__)
 
-#define FLOG_FATAL(fmt, ...)                                                   \
-  febundle::core::Logger::Self().LogToFile(febundle::core::LogLevel::Fatal,    \
-                                           std::source_location::current(),    \
-                                           fmt, ##__VA_ARGS__)
+#define FLOG_FATAL(fmt, ...)                \
+  febundle::core::Logger::Self().LogToFile( \
+      febundle::core::LogLevel::Fatal, std::source_location::current(), fmt, ##__VA_ARGS__)
 
 #endif
 #endif // _FLATEARTH_CORE_LOGGER_HPP

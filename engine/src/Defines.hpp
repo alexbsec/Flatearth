@@ -6,9 +6,9 @@
 #include <expected>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <string>
-#include <optional>
 
 // String alias
 using string = std::string;
@@ -18,7 +18,7 @@ using osstream = std::ostringstream;
 // Unsigned types
 using uint8 = uint8_t;
 using uint16 = uint16_t;
-using uint32 = uint32_t; 
+using uint32 = uint32_t;
 using uint64 = uint64_t;
 
 // Signed types
@@ -98,8 +98,7 @@ STATIC_ASSERT(sizeof(float64) == 8, "Expected float64 to be 8 bytes");
 #define _DEBUG FeTrue
 #endif
 
-#define FCLAMP(value, min, max)                                                \
-  (value <= min) ? min : (value >= max) ? max : value;
+#define FCLAMP(value, min, max) (value <= min) ? min : (value >= max) ? max : value;
 
 // Inlining
 #ifdef _MSC_VER
@@ -131,7 +130,6 @@ constexpr static float64 FE_F64EPS = 1.192092896e-7f;
 constexpr static float32 FE_F32MAX = 1e20f;
 constexpr static float32 FE_F32EPS = 1.192092896e-7f;
 
-
 template <typename T>
 using FePtr = std::unique_ptr<T, std::function<void(T*)>>;
 
@@ -146,8 +144,7 @@ using FeErr = std::unexpected<Err>;
 
 template <typename T>
 inline T* FeCast(void* ptr) {
-  static_assert(!std::is_array_v<T>,
-    "FeCast<T>: T must not be an array type");
+  static_assert(!std::is_array_v<T>, "FeCast<T>: T must not be an array type");
 #ifdef FE_DEBUG
   assert(ptr != nullptr);
 #endif
@@ -155,15 +152,14 @@ inline T* FeCast(void* ptr) {
 }
 
 template <typename T>
-inline T *FeCastPermissive(void *ptr) {
+inline T* FeCastPermissive(void* ptr) {
 #ifdef FE_DEBUG
   assert(ptr != nullptr);
 #endif
-  return reinterpret_cast<T *>(ptr);
+  return reinterpret_cast<T*>(ptr);
 }
 
-#define FECLAMP(value, min, max)                                                \
-  (value <= min) ? min : (value >= max) ? max : value;
+#define FECLAMP(value, min, max) (value <= min) ? min : (value >= max) ? max : value;
 
 template <typename T>
 using FeOptional = std::optional<T>;

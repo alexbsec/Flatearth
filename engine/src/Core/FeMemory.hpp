@@ -1,12 +1,10 @@
 #ifndef _FLATEARTH_ENGINE_CORE_FE_MEMORY_HPP
 #define _FLATEARTH_ENGINE_CORE_FE_MEMORY_HPP
 
-
-
 #include "Defines.hpp"
+
 #include <array>
 #include <functional>
-
 
 namespace flatearth::memory {
 
@@ -51,24 +49,24 @@ public:
   MemoryManager();
   ~MemoryManager();
 
-
-  void *RawAlloc(uint64 size, uint64 alignment, Tag tag);
-  void RawFree(void *block, uint64 size, Tag tag);
-  void FZeroMemory(void *block, uint64 size);
-  void CopyMemory(void *dst, const void *src, uint64 size);
+  void* RawAlloc(uint64 size, uint64 alignment, Tag tag);
+  void RawFree(void* block, uint64 size, Tag tag);
+  void FZeroMemory(void* block, uint64 size);
+  void CopyMemory(void* dst, const void* src, uint64 size);
 
   template <typename T, typename... Args>
-  inline FePtr<T> Allocate(Tag tag, Args &&...args) {
-    void *raw = RawAlloc(sizeof(T), alignof(T), tag);
+  inline FePtr<T> Allocate(Tag tag, Args&&... args) {
+    void* raw = RawAlloc(sizeof(T), alignof(T), tag);
 
     if (raw == nullptr) {
       return FePtr<T>(nullptr, nullptr);
     }
 
-    T *object = new (raw) T(std::forward<Args>(args)...);
+    T* object = new (raw) T(std::forward<Args>(args)...);
 
-    auto deleter = std::function<void(T *)>([this, tag](T *ptr) {
-      if (!ptr) return;
+    auto deleter = std::function<void(T*)>([this, tag](T* ptr) {
+      if (!ptr)
+        return;
       ptr->~T();
       RawFree(ptr, sizeof(T), tag);
     });
@@ -77,9 +75,9 @@ public:
   }
 
   template <typename Base, typename Derived, typename... Args>
-  inline FePtr<Base> Allocate(Tag tag, Args &&...args) {
+  inline FePtr<Base> Allocate(Tag tag, Args&&... args) {
     FePtr<Derived> concrete = Allocate<Derived>(tag, args...);
-    auto baseDeleter = [deleter = concrete.get_deleter()](Base *ptr) {
+    auto baseDeleter = [deleter = concrete.get_deleter()](Base* ptr) {
       deleter(FeCast<Derived>(ptr));
     };
 

@@ -8,20 +8,21 @@ namespace flatearth::renderer::vulkan {
 
 class FrameBufferManager {
 public:
-  explicit FrameBufferManager(memory::MemoryManager &memManager);
+  explicit FrameBufferManager(memory::MemoryManager& memManager);
   ~FrameBufferManager();
 
-  FeExpect<void, Error> CreateFrameBuffer(Context &ctx, Renderpass &renderpass,
-                                          FrameBuffer *pFrameBuffer,
-                                          uint32 width, uint32 height,
+  FeExpect<void, Error> CreateFrameBuffer(Context& ctx,
+                                          Renderpass& renderpass,
+                                          FrameBuffer* pFrameBuffer,
+                                          uint32 width,
+                                          uint32 height,
                                           uint32 attachmentCount,
-                                          VkImageView *pAttachments);
+                                          VkImageView* pAttachments);
 
-  FeExpect<void, Error> DestroyFrameBuffer(Context &ctx,
-                                           FrameBuffer *pFrameBuffer);
+  FeExpect<void, Error> DestroyFrameBuffer(Context& ctx, FrameBuffer* pFrameBuffer);
 
 private:
-  memory::MemoryManager &_memoryManager;
+  memory::MemoryManager& _memoryManager;
   uint32 _lastAttachmentCount{0};
 };
 

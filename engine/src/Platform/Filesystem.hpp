@@ -4,6 +4,7 @@
 #include "Core/FeMemory.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
+
 #include <filesystem>
 #include <span>
 
@@ -25,7 +26,7 @@ FEAPI inline constexpr bool HasFileMode(FileMode modes, FileMode mode) {
 }
 
 struct FileHandle {
-  void *nativeHandle{nullptr};
+  void* nativeHandle{nullptr};
   bool valid{false};
 
   explicit inline operator bool() const { return valid; }
@@ -33,26 +34,24 @@ struct FileHandle {
 
 class FileSystem {
 public:
-  FEAPI explicit FileSystem(memory::MemoryManager &memoryManager);
+  FEAPI explicit FileSystem(memory::MemoryManager& memoryManager);
   FEAPI ~FileSystem() = default;
 
-  FEAPI bool Exists(const stdfs::path &path) const;
-  FEAPI uint64 SizeOfFile(const stdfs::path &path) const;
+  FEAPI bool Exists(const stdfs::path& path) const;
+  FEAPI uint64 SizeOfFile(const stdfs::path& path) const;
 
   FEAPI FeExpect<FileHandle, Error>
-  OpenFile(const stdfs::path &path, FileMode mode, bool binary = FeTrue);
+  OpenFile(const stdfs::path& path, FileMode mode, bool binary = FeTrue);
 
-  FEAPI FeExpect<void, Error> CloseFile(FileHandle &handle);
+  FEAPI FeExpect<void, Error> CloseFile(FileHandle& handle);
 
-  FEAPI FeExpect<uint64, Error> ReadFromFile(FileHandle &handle,
-                                             std::span<std::byte> out);
-  FEAPI FeExpect<uint64, Error> WriteToFile(FileHandle &handle,
-                                            std::span<const std::byte> data);
+  FEAPI FeExpect<uint64, Error> ReadFromFile(FileHandle& handle, std::span<std::byte> out);
+  FEAPI FeExpect<uint64, Error> WriteToFile(FileHandle& handle, std::span<const std::byte> data);
 
-  FEAPI void SetRootDirectory(const stdfs::path &path);
+  FEAPI void SetRootDirectory(const stdfs::path& path);
 
 private:
-  memory::MemoryManager &_memoryManager;
+  memory::MemoryManager& _memoryManager;
   stdfs::path _rootDir{};
 };
 

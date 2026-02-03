@@ -3,26 +3,29 @@
 
 #include "Core/FeMemory.hpp"
 #include "VulkanTypes.hpp"
+
 #include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan {
 
 class CommandBufferManager {
 public:
-  explicit CommandBufferManager(memory::MemoryManager &memManager);
+  explicit CommandBufferManager(memory::MemoryManager& memManager);
   ~CommandBufferManager();
 
-  FeExpect<void, Error> CreateBuffers(Context &ctx);
-  FeExpect<void, Error> DestroyBuffers(Context &ctx);
-  void BeginBuffer(Context &ctx, CommandBuffer &cmdBuffer, bool isSingleUse,
-                   bool isRenderpassContinue, bool isSimultaneousUse);
-  void EndBuffer(Context &ctx, CommandBuffer &cmdBuffer);
-  void ResetBuffer(Context &ctx, CommandBuffer &cmdBuffer);
+  FeExpect<void, Error> CreateBuffers(Context& ctx);
+  FeExpect<void, Error> DestroyBuffers(Context& ctx);
+  void BeginBuffer(Context& ctx,
+                   CommandBuffer& cmdBuffer,
+                   bool isSingleUse,
+                   bool isRenderpassContinue,
+                   bool isSimultaneousUse);
+  void EndBuffer(Context& ctx, CommandBuffer& cmdBuffer);
+  void ResetBuffer(Context& ctx, CommandBuffer& cmdBuffer);
 
   template <class Fn>
-  inline FeExpect<void, Error> ImmediateSubmit(Context &ctx, VkCommandPool pool,
-                                               VkQueue queue, VkFence fence,
-                                               Fn &&recordFn) {
+  inline FeExpect<void, Error>
+  ImmediateSubmit(Context& ctx, VkCommandPool pool, VkQueue queue, VkFence fence, Fn&& recordFn) {
     // Allocate a temporary primary command buffer from the given pool
     CommandBuffer tmp{};
     {
@@ -34,7 +37,8 @@ public:
     }
 
     // Begin one-time submit recording
-    BeginBuffer(ctx, tmp,
+    BeginBuffer(ctx,
+                tmp,
                 /*isSingleUse=*/FeTrue,
                 /*isRenderpassContinue=*/FeFalse,
                 /*isSimultaneousUse=*/FeFalse);
@@ -47,8 +51,7 @@ public:
     EndBuffer(ctx, tmp);
 
     if (fence != VK_NULL_HANDLE) {
-      if (auto res =
-              VkCheck(vkResetFences(ctx.device.logicalDevice, 1, &fence));
+      if (auto res = VkCheck(vkResetFences(ctx.device.logicalDevice, 1, &fence));
           !res.has_value()) {
         FLOG_ERROR("ImmediateSubmit: failed to reset fence");
         auto _ = FreeBuffer(ctx, &tmp, pool);
@@ -62,8 +65,7 @@ public:
     submitInfo.pCommandBuffers = &tmp.handle;
 
     if (fence != VK_NULL_HANDLE) {
-      if (auto res = VkCheck(vkQueueSubmit(queue, 1, &submitInfo, fence));
-          !res.has_value()) {
+      if (auto res = VkCheck(vkQueueSubmit(queue, 1, &submitInfo, fence)); !res.has_value()) {
         FLOG_ERROR("ImmediateSubmit: vkQueueSubmit failed");
         auto _ = FreeBuffer(ctx, &tmp, pool);
         return FeErr{res.error()};
@@ -73,8 +75,8 @@ public:
     // Wait for completion (so resources used by recordFn are safe to
     // reuse/free)
     if (fence != VK_NULL_HANDLE) {
-      if (auto res = VkCheck(vkWaitForFences(ctx.device.logicalDevice, 1, &fence,
-                                             VK_TRUE, UINT64_MAX));
+      if (auto res =
+              VkCheck(vkWaitForFences(ctx.device.logicalDevice, 1, &fence, VK_TRUE, UINT64_MAX));
           !res.has_value()) {
         FLOG_ERROR("ImmediateSubmit: vkWaitForFences failed");
         auto _ = FreeBuffer(ctx, &tmp, pool);
@@ -95,13 +97,12 @@ public:
   }
 
 private:
-  FeExpect<void, Error> AllocateBuffer(Context &ctx, CommandBuffer *pCmdBuffer,
-                                       VkCommandPool pool, bool isPrimary);
-  FeExpect<void, Error> FreeBuffer(Context &ctx, CommandBuffer *pCmdBuffer,
-                                   VkCommandPool pool);
+  FeExpect<void, Error>
+  AllocateBuffer(Context& ctx, CommandBuffer* pCmdBuffer, VkCommandPool pool, bool isPrimary);
+  FeExpect<void, Error> FreeBuffer(Context& ctx, CommandBuffer* pCmdBuffer, VkCommandPool pool);
 
 private:
-  memory::MemoryManager &_memoryManager;
+  memory::MemoryManager& _memoryManager;
 };
 
 } // namespace flatearth::renderer::vulkan

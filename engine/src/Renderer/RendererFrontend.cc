@@ -1,4 +1,5 @@
 #include "Renderer/RendererFrontend.hpp"
+
 #include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
@@ -8,11 +9,12 @@
 
 namespace flatearth::renderer {
 
-FrontendRenderer::FrontendRenderer(ApplicationState *appState,
-                                   memory::MemoryManager &memManager,
-                                   platform::FileSystem &fs)
-    : _applicationName(appState->appConfig.name), _memoryManager(memManager),
-      _pAppState(appState), _filesystem(fs) {}
+FrontendRenderer::FrontendRenderer(ApplicationState* appState,
+                                   memory::MemoryManager& memManager,
+                                   platform::FileSystem& fs)
+    : _applicationName(appState->appConfig.name), _memoryManager(memManager), _pAppState(appState),
+      _filesystem(fs) {
+}
 
 FrontendRenderer::~FrontendRenderer() {
   FLOG_INFO("frontend renderer exited gracefully");
@@ -21,8 +23,7 @@ FrontendRenderer::~FrontendRenderer() {
 FeExpect<bool, Error> FrontendRenderer::Initialize() {
   auto backendsRes = MakeBackends();
   if (!backendsRes.has_value()) {
-    FLOG_ERROR("failed to scaffold renderer backends: {}",
-               backendsRes.error().message);
+    FLOG_ERROR("failed to scaffold renderer backends: {}", backendsRes.error().message);
     return FeErr{backendsRes.error()};
   }
 
@@ -30,8 +31,7 @@ FeExpect<bool, Error> FrontendRenderer::Initialize() {
   uint32 vulkanIndex = static_cast<uint32>(BackendType::Vulkan);
   if (_pBackends[vulkanIndex] == nullptr) {
     FLOG_FATAL("no valid backend found");
-    return FeErr{Error("no backend was set in frontend renderer",
-                       ErrorType::NoBackendRenderer)};
+    return FeErr{Error("no backend was set in frontend renderer", ErrorType::NoBackendRenderer)};
   }
 
   _pActiveBackend = _pBackends[vulkanIndex].get();
@@ -75,7 +75,7 @@ FeExpect<bool, Error> FrontendRenderer::EndFrame(float32 deltaTime) {
   return FeTrue;
 }
 
-FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
+FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket* pRenderPacket) {
   if (pRenderPacket == nullptr) {
     FLOG_WARN("nullptr renderpacket passed");
     return FeFalse;
@@ -125,9 +125,8 @@ FeExpect<void, Error> FrontendRenderer::OnResize(uint32 width, uint32 height) {
 
 FeExpect<void, Error> FrontendRenderer::MakeBackends() {
   uint32 vulkanIndex = static_cast<uint32>(BackendType::Vulkan);
-  _pBackends[vulkanIndex] =
-      _memoryManager.Allocate<IRendererBackend, vulkan::VulkanBackend>(
-          memory::Tag::Renderer, _memoryManager, _filesystem);
+  _pBackends[vulkanIndex] = _memoryManager.Allocate<IRendererBackend, vulkan::VulkanBackend>(
+      memory::Tag::Renderer, _memoryManager, _filesystem);
   return {};
 }
 

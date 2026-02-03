@@ -17,17 +17,17 @@ struct ApplicationConfig {
 };
 
 struct ApplicationState {
-  Game &gameInstance; 
+  Game& gameInstance;
   bool isRunning;
   bool isSuspended;
   int32 width;
   int32 height;
   float64 lastTime;
-  platform::PlatformState *platformState;
+  platform::PlatformState* platformState;
   ApplicationConfig appConfig;
   clock::Clock clock;
 
-  ApplicationState(Game &game) : gameInstance(game) {}
+  ApplicationState(Game& game) : gameInstance(game) {}
 };
 
 } // namespace flatearth

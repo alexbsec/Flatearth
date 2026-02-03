@@ -22,21 +22,25 @@ struct PlatformState {
   FePtr<InternalState> internalState;
 };
 
-void GetRequiredExtNames(containers::DArray<const char *> *namesDArray);
+void GetRequiredExtNames(containers::DArray<const char*>* namesDArray);
 
-FeExpect<void, Error> CreateVulkanSurface(PlatformState *platState,
-                                          renderer::vulkan::Context &ctx);
+FeExpect<void, Error> CreateVulkanSurface(PlatformState* platState, renderer::vulkan::Context& ctx);
 
 class Platform {
 public:
-  FEAPI explicit Platform(const string &applicationName, int32 x, int32 y, int32 width,
-           int32 height, memory::MemoryManager &memManeger,
-           input::InputManager &inputManager, event::EventManager &eventManager);
+  FEAPI explicit Platform(const string& applicationName,
+                          int32 x,
+                          int32 y,
+                          int32 width,
+                          int32 height,
+                          memory::MemoryManager& memManeger,
+                          input::InputManager& inputManager,
+                          event::EventManager& eventManager);
   ~Platform();
 
   FEAPI FeExpect<void, Error> Initialize();
   FEAPI FeExpect<bool, Error> PollEvents();
-  FEAPI PlatformState *State();
+  FEAPI PlatformState* State();
 
 #if FEPLATFORM_WINDOWS
   static LRESULT CALLBACK Win32ProcessMessage(HWND hwnd, uint32 msg, WPARAM wParam, LPARAM lParam);
@@ -49,9 +53,9 @@ private:
   PlatformState _platState;
   int32 _xPos, _yPos, _width, _height;
   string _applicationName;
-  memory::MemoryManager &_memoryManager;
-  input::InputManager &_inputManager;
-  event::EventManager &_eventManager;
+  memory::MemoryManager& _memoryManager;
+  input::InputManager& _inputManager;
+  event::EventManager& _eventManager;
 };
 
 } // namespace flatearth::platform

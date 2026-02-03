@@ -1,15 +1,17 @@
 #include "VulkanSwapchainManager.hpp"
+
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
+
 #include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan {
 
-FeExpect<void, Error>
-QuerySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface,
-                      SwapchainSupportInfo &outSwapchainInfo,
-                      memory::MemoryManager &memManager) {
+FeExpect<void, Error> QuerySwapchainSupport(VkPhysicalDevice device,
+                                            VkSurfaceKHR surface,
+                                            SwapchainSupportInfo& outSwapchainInfo,
+                                            memory::MemoryManager& memManager) {
   FeExpect<void, Error> res;
   // Surface capabilities
   if (res = VkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
@@ -31,20 +33,18 @@ QuerySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface,
     if (outSwapchainInfo.formatCount > outSwapchainInfo.formatsCapacity) {
       if (outSwapchainInfo.pFormats) {
         memManager.RawFree(outSwapchainInfo.pFormats,
-                           sizeof(VkSurfaceFormatKHR) *
-                               outSwapchainInfo.formatsCapacity,
+                           sizeof(VkSurfaceFormatKHR) * outSwapchainInfo.formatsCapacity,
                            memory::Tag::Renderer);
       }
-      outSwapchainInfo.pFormats =
-          FeCast<VkSurfaceFormatKHR>(memManager.RawAlloc(
-              sizeof(VkSurfaceFormatKHR) * outSwapchainInfo.formatCount,
-              alignof(VkSurfaceFormatKHR), memory::Tag::Renderer));
+      outSwapchainInfo.pFormats = FeCast<VkSurfaceFormatKHR>(
+          memManager.RawAlloc(sizeof(VkSurfaceFormatKHR) * outSwapchainInfo.formatCount,
+                              alignof(VkSurfaceFormatKHR),
+                              memory::Tag::Renderer));
       outSwapchainInfo.formatsCapacity = outSwapchainInfo.formatCount;
     }
 
     if (res = VkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(
-            device, surface, &outSwapchainInfo.formatCount,
-            outSwapchainInfo.pFormats));
+            device, surface, &outSwapchainInfo.formatCount, outSwapchainInfo.pFormats));
         !res.has_value()) {
       FLOG_ERROR("failed to get phyiscal device surface formats");
       return FeErr{res.error()};
@@ -60,24 +60,21 @@ QuerySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface,
   }
 
   if (outSwapchainInfo.presentModeCount != 0) {
-    if (outSwapchainInfo.presentModeCount >
-        outSwapchainInfo.presentModesCapacity) {
+    if (outSwapchainInfo.presentModeCount > outSwapchainInfo.presentModesCapacity) {
       if (outSwapchainInfo.pPresentMode) {
         memManager.RawFree(outSwapchainInfo.pPresentMode,
-                           sizeof(VkPresentModeKHR) *
-                               outSwapchainInfo.presentModesCapacity,
+                           sizeof(VkPresentModeKHR) * outSwapchainInfo.presentModesCapacity,
                            memory::Tag::Renderer);
       }
-      outSwapchainInfo.pPresentMode =
-          FeCast<VkPresentModeKHR>(memManager.RawAlloc(
-              sizeof(VkPresentModeKHR) * outSwapchainInfo.presentModeCount,
-              alignof(VkPresentModeKHR), memory::Tag::Renderer));
+      outSwapchainInfo.pPresentMode = FeCast<VkPresentModeKHR>(
+          memManager.RawAlloc(sizeof(VkPresentModeKHR) * outSwapchainInfo.presentModeCount,
+                              alignof(VkPresentModeKHR),
+                              memory::Tag::Renderer));
       outSwapchainInfo.presentModesCapacity = outSwapchainInfo.presentModeCount;
     }
 
     if (res = VkCheck(vkGetPhysicalDeviceSurfacePresentModesKHR(
-            device, surface, &outSwapchainInfo.presentModeCount,
-            outSwapchainInfo.pPresentMode));
+            device, surface, &outSwapchainInfo.presentModeCount, outSwapchainInfo.pPresentMode));
         !res.has_value()) {
       FLOG_ERROR("failed to get physical device surface present mode");
       return FeErr{res.error()};
@@ -87,21 +84,19 @@ QuerySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface,
   return {};
 }
 
-SwapchainManager::SwapchainManager(memory::MemoryManager &memManager,
-                                   ImageManager &imgManager)
-    : _memoryManager(memManager), _imageManager(imgManager),
-      _frameBufferManager(memManager) {}
+SwapchainManager::SwapchainManager(memory::MemoryManager& memManager, ImageManager& imgManager)
+    : _memoryManager(memManager), _imageManager(imgManager), _frameBufferManager(memManager) {
+}
 
-FeExpect<void, Error> SwapchainManager::CreateSwapchain(Context &ctx,
-                                                        Swapchain *pSwapchain,
+FeExpect<void, Error> SwapchainManager::CreateSwapchain(Context& ctx,
+                                                        Swapchain* pSwapchain,
                                                         uint32 width,
                                                         uint32 height) {
   return CreateLogic(ctx, pSwapchain, width, height);
 }
 
-FeExpect<bool, Error> SwapchainManager::RecreateSwapchain(Context &ctx,
-                                                          uint32 &width,
-                                                          uint32 &height) {
+FeExpect<bool, Error>
+SwapchainManager::RecreateSwapchain(Context& ctx, uint32& width, uint32& height) {
   if (ctx.recreatingSwapchain) {
     FLOG_WARN("called when already recreating swapchain");
     return FeFalse;
@@ -116,9 +111,8 @@ FeExpect<bool, Error> SwapchainManager::RecreateSwapchain(Context &ctx,
     ctx.imagesInFlight[i] = nullptr;
   }
 
-  auto queryRes =
-      QuerySwapchainSupport(ctx.device.physicalDevice, ctx.surface,
-                            ctx.device.swapchainSupportInfo, _memoryManager);
+  auto queryRes = QuerySwapchainSupport(
+      ctx.device.physicalDevice, ctx.surface, ctx.device.swapchainSupportInfo, _memoryManager);
   if (!queryRes.has_value()) {
     FLOG_ERROR("failed to query swapchain support");
     return FeErr{queryRes.error()};
@@ -160,24 +154,28 @@ FeExpect<bool, Error> SwapchainManager::RecreateSwapchain(Context &ctx,
   return {};
 }
 
-FeExpect<void, Error>
-SwapchainManager::DestroySwapchain(Context &ctx, Swapchain *pSwapchain) {
+FeExpect<void, Error> SwapchainManager::DestroySwapchain(Context& ctx, Swapchain* pSwapchain) {
   return DestroyLogic(ctx, pSwapchain);
 }
 
-FeExpect<bool, Error> SwapchainManager::AcquireNextImage(
-    Context &ctx, Swapchain &swapchain, uint64 timeoutNs,
-    VkSemaphore imageAvailableSemaphore, VkFence fence, uint32 *outImageIndex) {
+FeExpect<bool, Error> SwapchainManager::AcquireNextImage(Context& ctx,
+                                                         Swapchain& swapchain,
+                                                         uint64 timeoutNs,
+                                                         VkSemaphore imageAvailableSemaphore,
+                                                         VkFence fence,
+                                                         uint32* outImageIndex) {
 
-  VkResult result = vkAcquireNextImageKHR(
-      ctx.device.logicalDevice, swapchain.handle, timeoutNs,
-      imageAvailableSemaphore, fence, outImageIndex);
+  VkResult result = vkAcquireNextImageKHR(ctx.device.logicalDevice,
+                                          swapchain.handle,
+                                          timeoutNs,
+                                          imageAvailableSemaphore,
+                                          fence,
+                                          outImageIndex);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
     // This errors happens when resizing goes wrong for example
     // We simply recreate the swapchain in this case
-    auto res = RecreateLogic(ctx, &swapchain, ctx.framebufferWidth,
-                             ctx.framebufferHeight);
+    auto res = RecreateLogic(ctx, &swapchain, ctx.framebufferWidth, ctx.framebufferHeight);
     if (!res.has_value()) {
       FLOG_ERROR("failed to recreate swapchain after VK_ERROR_OUT_OF_DATE_KHR");
       return FeErr{res.error()};
@@ -187,19 +185,20 @@ FeExpect<bool, Error> SwapchainManager::AcquireNextImage(
     // These are only Vulkan errors and we simply log a fatal error
     // for the engine
     FLOG_FATAL("failed to acquire swapchain image");
-    return FeErr{Error("failed to acquire next image from swapchain",
-                       ErrorType::RendererVulkanError)};
+    return FeErr{
+        Error("failed to acquire next image from swapchain", ErrorType::RendererVulkanError)};
   }
 
   // If hits here, it means everything is ok
   return FeTrue;
 }
 
-FeExpect<void, Error>
-SwapchainManager::PresentSwapchain(Context &ctx, Swapchain &swapchain,
-                                   VkQueue graphicsQueue, VkQueue presentQueue,
-                                   VkSemaphore renderCompleteSemaphore,
-                                   uint32 presentImageIndex) {
+FeExpect<void, Error> SwapchainManager::PresentSwapchain(Context& ctx,
+                                                         Swapchain& swapchain,
+                                                         VkQueue graphicsQueue,
+                                                         VkQueue presentQueue,
+                                                         VkSemaphore renderCompleteSemaphore,
+                                                         uint32 presentImageIndex) {
 
   // Return the image to the swapchain for presentation
   VkPresentInfoKHR presentInfo = {VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
@@ -214,8 +213,7 @@ SwapchainManager::PresentSwapchain(Context &ctx, Swapchain &swapchain,
   VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
     // Must recreate
-    auto res =
-        RecreateSwapchain(ctx, ctx.framebufferWidth, ctx.framebufferHeight);
+    auto res = RecreateSwapchain(ctx, ctx.framebufferWidth, ctx.framebufferHeight);
     if (!res.has_value()) {
       FLOG_ERROR("failed to recreate swapchain after present returned out of "
                  "date or suboptimal");
@@ -223,8 +221,7 @@ SwapchainManager::PresentSwapchain(Context &ctx, Swapchain &swapchain,
     }
   } else if (result != VK_SUCCESS) {
     FLOG_FATAL("Failed to present swapchain image");
-    return FeErr{Error("failed to present swapchain image",
-                       ErrorType::RendererVulkanError)};
+    return FeErr{Error("failed to present swapchain image", ErrorType::RendererVulkanError)};
   }
 
   // Increment and loop the index
@@ -233,9 +230,9 @@ SwapchainManager::PresentSwapchain(Context &ctx, Swapchain &swapchain,
   return {};
 }
 
-FeExpect<void, Error>
-SwapchainManager::RegenerateFrameBuffer(Context &ctx, Swapchain *pSwapchain,
-                                        Renderpass *pRenderpass) {
+FeExpect<void, Error> SwapchainManager::RegenerateFrameBuffer(Context& ctx,
+                                                              Swapchain* pSwapchain,
+                                                              Renderpass* pRenderpass) {
   if (pSwapchain == nullptr) {
     return FeErr{Error("cannot regenerate frame buffer with nullptr swapchain",
                        ErrorType::NullptrException)};
@@ -259,9 +256,13 @@ SwapchainManager::RegenerateFrameBuffer(Context &ctx, Swapchain *pSwapchain,
         pSwapchain->depthAttachment.view,
     };
 
-    auto createRes = _frameBufferManager.CreateFrameBuffer(
-        ctx, *pRenderpass, &ctx.swapchain.framebuffers[i], ctx.framebufferWidth,
-        ctx.framebufferHeight, attachmentCount, attachments);
+    auto createRes = _frameBufferManager.CreateFrameBuffer(ctx,
+                                                           *pRenderpass,
+                                                           &ctx.swapchain.framebuffers[i],
+                                                           ctx.framebufferWidth,
+                                                           ctx.framebufferHeight,
+                                                           attachmentCount,
+                                                           attachments);
 
     if (!createRes.has_value()) {
       FLOG_ERROR("failed to create framebuffer at index {}", i);
@@ -272,27 +273,22 @@ SwapchainManager::RegenerateFrameBuffer(Context &ctx, Swapchain *pSwapchain,
   return {};
 }
 
-FeExpect<void, Error> SwapchainManager::CreateLogic(Context &ctx,
-                                                    Swapchain *pSwapchain,
-                                                    uint32 width,
-                                                    uint32 height) {
+FeExpect<void, Error>
+SwapchainManager::CreateLogic(Context& ctx, Swapchain* pSwapchain, uint32 width, uint32 height) {
   if (pSwapchain == nullptr) {
     FLOG_ERROR("cannot create on nullptr swapchain");
-    return FeErr{
-        Error("swapchain creation failed because swapchain pointer was null",
-              ErrorType::NullptrException)};
+    return FeErr{Error("swapchain creation failed because swapchain pointer was null",
+                       ErrorType::NullptrException)};
   }
 
   if (width == 0 || height == 0) {
-    FLOG_FATAL("width or height is passed as zero. width={}, height={}", width,
-               height);
-    return FeErr{Error("cannot create swapchain with 0 width or height",
-                       ErrorType::RendererVulkanError)};
+    FLOG_FATAL("width or height is passed as zero. width={}, height={}", width, height);
+    return FeErr{
+        Error("cannot create swapchain with 0 width or height", ErrorType::RendererVulkanError)};
   }
 
-  auto queryRes =
-      QuerySwapchainSupport(ctx.device.physicalDevice, ctx.surface,
-                            ctx.device.swapchainSupportInfo, _memoryManager);
+  auto queryRes = QuerySwapchainSupport(
+      ctx.device.physicalDevice, ctx.surface, ctx.device.swapchainSupportInfo, _memoryManager);
   if (!queryRes.has_value()) {
     FLOG_ERROR("swapchain support query failed");
     return FeErr{queryRes.error()};
@@ -327,8 +323,7 @@ FeExpect<void, Error> SwapchainManager::CreateLogic(Context &ctx,
   }
 
   VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
-  for (uint32 i = 0; i < ctx.device.swapchainSupportInfo.presentModeCount;
-       i++) {
+  for (uint32 i = 0; i < ctx.device.swapchainSupportInfo.presentModeCount; i++) {
     VkPresentModeKHR mode = ctx.device.swapchainSupportInfo.pPresentMode[i];
     if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
       presentMode = mode;
@@ -337,25 +332,21 @@ FeExpect<void, Error> SwapchainManager::CreateLogic(Context &ctx,
   }
 
   VkExtent2D swapchainExtent = VkExtent2D{width, height};
-  if (ctx.device.swapchainSupportInfo.capabilities.currentExtent.width !=
-      UINT32_MAX) {
-    swapchainExtent =
-        ctx.device.swapchainSupportInfo.capabilities.currentExtent;
+  if (ctx.device.swapchainSupportInfo.capabilities.currentExtent.width != UINT32_MAX) {
+    swapchainExtent = ctx.device.swapchainSupportInfo.capabilities.currentExtent;
   }
 
   VkExtent2D min = ctx.device.swapchainSupportInfo.capabilities.minImageExtent;
   VkExtent2D max = ctx.device.swapchainSupportInfo.capabilities.maxImageExtent;
   swapchainExtent.width = FECLAMP(swapchainExtent.width, min.width, max.width);
-  swapchainExtent.height =
-      FECLAMP(swapchainExtent.height, min.height, max.height);
+  swapchainExtent.height = FECLAMP(swapchainExtent.height, min.height, max.height);
 
   pSwapchain->widthExtent = swapchainExtent.width;
   pSwapchain->heightExtent = swapchainExtent.height;
   ctx.framebufferHeight = pSwapchain->heightExtent;
   ctx.framebufferWidth = pSwapchain->widthExtent;
 
-  uint32 imageCount =
-      ctx.device.swapchainSupportInfo.capabilities.minImageCount + 1;
+  uint32 imageCount = ctx.device.swapchainSupportInfo.capabilities.minImageCount + 1;
   if (ctx.device.swapchainSupportInfo.capabilities.maxImageCount > 0 &&
       imageCount > ctx.device.swapchainSupportInfo.capabilities.maxImageCount) {
     imageCount = ctx.device.swapchainSupportInfo.capabilities.maxImageCount;
@@ -363,8 +354,7 @@ FeExpect<void, Error> SwapchainManager::CreateLogic(Context &ctx,
 
   pSwapchain->maxFrames = imageCount - 1;
 
-  VkSwapchainCreateInfoKHR createInfo = {
-      VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
+  VkSwapchainCreateInfoKHR createInfo = {VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
   createInfo.surface = ctx.surface;
   createInfo.minImageCount = imageCount;
   createInfo.imageFormat = pSwapchain->imageFormat.format;
@@ -385,16 +375,14 @@ FeExpect<void, Error> SwapchainManager::CreateLogic(Context &ctx,
     createInfo.pQueueFamilyIndices = nullptr;
   }
 
-  createInfo.preTransform =
-      ctx.device.swapchainSupportInfo.capabilities.currentTransform;
+  createInfo.preTransform = ctx.device.swapchainSupportInfo.capabilities.currentTransform;
   createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
   createInfo.presentMode = presentMode;
   createInfo.clipped = VK_TRUE;
   createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-  if (auto res =
-          VkCheck(vkCreateSwapchainKHR(ctx.device.logicalDevice, &createInfo,
-                                       ctx.pAllocator, &pSwapchain->handle));
+  if (auto res = VkCheck(vkCreateSwapchainKHR(
+          ctx.device.logicalDevice, &createInfo, ctx.pAllocator, &pSwapchain->handle));
       !res.has_value()) {
     FLOG_ERROR("failed to create vulkan swapchain");
     return FeErr{res.error()};
@@ -402,42 +390,38 @@ FeExpect<void, Error> SwapchainManager::CreateLogic(Context &ctx,
 
   ctx.currentFrame = 0;
   pSwapchain->imageCount = 0;
-  if (auto res = VkCheck(
-          vkGetSwapchainImagesKHR(ctx.device.logicalDevice, pSwapchain->handle,
-                                  &pSwapchain->imageCount, nullptr));
+  if (auto res = VkCheck(vkGetSwapchainImagesKHR(
+          ctx.device.logicalDevice, pSwapchain->handle, &pSwapchain->imageCount, nullptr));
       !res.has_value()) {
     FLOG_ERROR("failed to get swapchain image count");
     return FeErr{res.error()};
   }
 
   if (pSwapchain->pImages != nullptr) {
-    _memoryManager.RawFree(pSwapchain->pImages,
-                           sizeof(VkImage) * pSwapchain->imageCount,
-                           memory::Tag::Renderer);
+    _memoryManager.RawFree(
+        pSwapchain->pImages, sizeof(VkImage) * pSwapchain->imageCount, memory::Tag::Renderer);
   }
 
-  pSwapchain->pImages = FeCast<VkImage>(
-      _memoryManager.RawAlloc(sizeof(VkImage) * pSwapchain->imageCount,
-                              alignof(VkImage), memory::Tag::Renderer));
+  pSwapchain->pImages = FeCast<VkImage>(_memoryManager.RawAlloc(
+      sizeof(VkImage) * pSwapchain->imageCount, alignof(VkImage), memory::Tag::Renderer));
 
   pSwapchain->imagesCapacity = pSwapchain->imageCount;
 
   // Ensure capacity for views
   if (pSwapchain->pViews != nullptr) {
-    _memoryManager.RawFree(pSwapchain->pViews,
-                           sizeof(VkImageView) * pSwapchain->imageCount,
-                           memory::Tag::Renderer);
+    _memoryManager.RawFree(
+        pSwapchain->pViews, sizeof(VkImageView) * pSwapchain->imageCount, memory::Tag::Renderer);
   }
 
-  pSwapchain->pViews = FeCast<VkImageView>(
-      _memoryManager.RawAlloc(sizeof(VkImageView) * pSwapchain->imageCount,
-                              alignof(VkImageView), memory::Tag::Renderer));
+  pSwapchain->pViews = FeCast<VkImageView>(_memoryManager.RawAlloc(
+      sizeof(VkImageView) * pSwapchain->imageCount, alignof(VkImageView), memory::Tag::Renderer));
 
   pSwapchain->viewsCapacity = pSwapchain->imageCount;
 
-  if (auto res = VkCheck(vkGetSwapchainImagesKHR(
-          ctx.device.logicalDevice, pSwapchain->handle, &pSwapchain->imageCount,
-          pSwapchain->pImages));
+  if (auto res = VkCheck(vkGetSwapchainImagesKHR(ctx.device.logicalDevice,
+                                                 pSwapchain->handle,
+                                                 &pSwapchain->imageCount,
+                                                 pSwapchain->pImages));
       !res.has_value()) {
     FLOG_ERROR("failed to get swapchain images");
     return FeErr{res.error()};
@@ -455,9 +439,8 @@ FeExpect<void, Error> SwapchainManager::CreateLogic(Context &ctx,
     viewInfo.subresourceRange.baseArrayLayer = 0;
     viewInfo.subresourceRange.layerCount = 1;
 
-    if (auto res =
-            VkCheck(vkCreateImageView(ctx.device.logicalDevice, &viewInfo,
-                                      ctx.pAllocator, &pSwapchain->pViews[i]));
+    if (auto res = VkCheck(vkCreateImageView(
+            ctx.device.logicalDevice, &viewInfo, ctx.pAllocator, &pSwapchain->pViews[i]));
         !res.has_value()) {
       FLOG_ERROR("failed to create image view for index {}", i);
       return FeErr{res.error()};
@@ -470,11 +453,17 @@ FeExpect<void, Error> SwapchainManager::CreateLogic(Context &ctx,
   }
 
   // create image
-  auto imageRes = _imageManager.CreateImage(
-      ctx, pSwapchain->depthAttachment, VK_IMAGE_TYPE_2D, swapchainExtent.width,
-      swapchainExtent.height, ctx.device.depthFormat, VK_IMAGE_TILING_OPTIMAL,
-      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, FeTrue, VK_IMAGE_ASPECT_DEPTH_BIT);
+  auto imageRes = _imageManager.CreateImage(ctx,
+                                            pSwapchain->depthAttachment,
+                                            VK_IMAGE_TYPE_2D,
+                                            swapchainExtent.width,
+                                            swapchainExtent.height,
+                                            ctx.device.depthFormat,
+                                            VK_IMAGE_TILING_OPTIMAL,
+                                            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                                            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                            FeTrue,
+                                            VK_IMAGE_ASPECT_DEPTH_BIT);
   if (!imageRes.has_value()) {
     FLOG_ERROR("failed to create depth attachment image");
     return FeErr{imageRes.error()};
@@ -484,20 +473,17 @@ FeExpect<void, Error> SwapchainManager::CreateLogic(Context &ctx,
   return {};
 }
 
-FeExpect<void, Error> SwapchainManager::DestroyLogic(Context &ctx,
-                                                     Swapchain *pSwapchain) {
+FeExpect<void, Error> SwapchainManager::DestroyLogic(Context& ctx, Swapchain* pSwapchain) {
   if (pSwapchain == nullptr) {
     FLOG_ERROR("cannot destroy on nullptr swapchain");
-    return FeErr{
-        Error("swapchain destruction failed because swapchain pointer was null",
-              ErrorType::NullptrException)};
+    return FeErr{Error("swapchain destruction failed because swapchain pointer was null",
+                       ErrorType::NullptrException)};
   }
 
   vkDeviceWaitIdle(ctx.device.logicalDevice);
 
   for (uint32 i = 0; i < pSwapchain->imageCount; i++) {
-    auto delRes = _frameBufferManager.DestroyFrameBuffer(
-        ctx, &pSwapchain->framebuffers[i]);
+    auto delRes = _frameBufferManager.DestroyFrameBuffer(ctx, &pSwapchain->framebuffers[i]);
     if (!delRes.has_value()) {
       FLOG_ERROR("failed to delete frame buffer at index {}", i);
       return FeErr{delRes.error()};
@@ -513,27 +499,23 @@ FeExpect<void, Error> SwapchainManager::DestroyLogic(Context &ctx,
   }
 
   for (uint32 i = 0; i < pSwapchain->imageCount; i++) {
-    vkDestroyImageView(ctx.device.logicalDevice, pSwapchain->pViews[i],
-                       ctx.pAllocator);
+    vkDestroyImageView(ctx.device.logicalDevice, pSwapchain->pViews[i], ctx.pAllocator);
   }
 
   if (pSwapchain->pViews != nullptr) {
-    _memoryManager.RawFree(pSwapchain->pViews,
-                           sizeof(VkImageView) * pSwapchain->viewsCapacity,
-                           memory::Tag::Renderer);
+    _memoryManager.RawFree(
+        pSwapchain->pViews, sizeof(VkImageView) * pSwapchain->viewsCapacity, memory::Tag::Renderer);
     pSwapchain->pViews = nullptr;
   }
 
   if (pSwapchain->pImages != nullptr) {
-    _memoryManager.RawFree(pSwapchain->pImages,
-                           sizeof(VkImage) * pSwapchain->imagesCapacity,
-                           memory::Tag::Renderer);
+    _memoryManager.RawFree(
+        pSwapchain->pImages, sizeof(VkImage) * pSwapchain->imagesCapacity, memory::Tag::Renderer);
     pSwapchain->pImages = nullptr;
   }
 
   if (pSwapchain->handle != VK_NULL_HANDLE) {
-    vkDestroySwapchainKHR(ctx.device.logicalDevice, pSwapchain->handle,
-                          ctx.pAllocator);
+    vkDestroySwapchainKHR(ctx.device.logicalDevice, pSwapchain->handle, ctx.pAllocator);
     pSwapchain->handle = VK_NULL_HANDLE;
   }
 
@@ -542,10 +524,8 @@ FeExpect<void, Error> SwapchainManager::DestroyLogic(Context &ctx,
   return {};
 }
 
-FeExpect<void, Error> SwapchainManager::RecreateLogic(Context &ctx,
-                                                      Swapchain *pSwapchain,
-                                                      uint32 width,
-                                                      uint32 height) {
+FeExpect<void, Error>
+SwapchainManager::RecreateLogic(Context& ctx, Swapchain* pSwapchain, uint32 width, uint32 height) {
   auto destroyRes = DestroyLogic(ctx, pSwapchain);
   if (!destroyRes.has_value()) {
     FLOG_ERROR("failed to destroy swapchain in recreate process");
