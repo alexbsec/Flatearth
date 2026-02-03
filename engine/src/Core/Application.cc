@@ -11,7 +11,7 @@
 
 namespace flatearth {
 
-Engine::Engine(Game& game)
+Engine::Engine(Game &game)
     : _appState(game), _eventManager(_memoryManager), _inputManager(_eventManager),
       _frontendRenderer(&_appState, _memoryManager, _filesystem), _filesystem(_memoryManager) {
   _engineListener = _memoryManager.Allocate<event::IEventListener, EngineListener>(

@@ -6,7 +6,7 @@
 #include <Entrypoint.hpp>
 #include <cstdlib>
 
-bool CreateGame(flatearth::Game* outGame) {
+bool CreateGame(flatearth::Game *outGame) {
   using namespace flatearth::testbed;
   outGame->Update = GameTest::GameUpdate;
   outGame->Initialize = GameTest::GameInitialize;

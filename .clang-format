@@ -21,8 +21,8 @@ AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: false
 
 # ---- Pointers / references ----
-PointerAlignment: Left
-ReferenceAlignment: Pointer
+PointerAlignment: Right
+ReferenceAlignment: Right
 DerivePointerAlignment: false
 
 # ---- Spacing ----

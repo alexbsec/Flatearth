@@ -10,7 +10,7 @@ class Vec2D {
 public:
   inline constexpr Vec2D() : _x(0.0f), _y(0.0f) {}
   inline constexpr Vec2D(float32 x, float32 y) : _x(x), _y(y) {}
-  inline Vec2D(const Vec2D& other) noexcept : _x(other._x), _y(other._y) {}
+  inline Vec2D(const Vec2D &other) noexcept : _x(other._x), _y(other._y) {}
 
   // Static factories (do not depend on instance)
   FEINLINE constexpr Vec2D Zero() { return Vec2D(0.0f, 0.0f); }
@@ -20,11 +20,11 @@ public:
   FEINLINE constexpr Vec2D Down() { return Vec2D(0.0f, -1.0f); }
   FEINLINE constexpr Vec2D Left() { return Vec2D(-1.0f, 0.0f); }
 
-  inline constexpr Vec2D operator+(const Vec2D& other) const noexcept {
+  inline constexpr Vec2D operator+(const Vec2D &other) const noexcept {
     return Vec2D(_x + other._x, _y + other._y);
   }
 
-  inline constexpr Vec2D operator-(const Vec2D& other) const noexcept {
+  inline constexpr Vec2D operator-(const Vec2D &other) const noexcept {
     return Vec2D(_x - other._x, _y - other._y);
   }
 
@@ -32,7 +32,7 @@ public:
     return Vec2D(_x * scalar, _y * scalar);
   }
 
-  inline constexpr Vec2D operator*(const Vec2D& other) const noexcept {
+  inline constexpr Vec2D operator*(const Vec2D &other) const noexcept {
     return Vec2D(_x * other._x, _y * other._y);
   }
 
@@ -43,19 +43,19 @@ public:
     return Vec2D(_x / scalar, _y / scalar);
   }
 
-  inline constexpr Vec2D& operator+=(const Vec2D& other) noexcept {
+  inline constexpr Vec2D &operator+=(const Vec2D &other) noexcept {
     _x += other._x;
     _y += other._y;
     return *this;
   }
 
-  inline constexpr Vec2D& operator-=(const Vec2D& other) noexcept {
+  inline constexpr Vec2D &operator-=(const Vec2D &other) noexcept {
     _x -= other._x;
     _y -= other._y;
     return *this;
   }
 
-  inline constexpr Vec2D& operator*=(float32 scalar) noexcept {
+  inline constexpr Vec2D &operator*=(float32 scalar) noexcept {
     _x *= scalar;
     _y *= scalar;
     return *this;
@@ -76,11 +76,11 @@ public:
 
   inline constexpr float32 LengthSqrd() const noexcept { return _x * _x + _y * _y; }
 
-  inline constexpr float32 Dot(const Vec2D& other) const noexcept {
+  inline constexpr float32 Dot(const Vec2D &other) const noexcept {
     return _x * other._x + _y * other._y;
   }
 
-  inline bool Equals(const Vec2D& other, float64 epsilon = FE_F64EPS) const noexcept {
+  inline bool Equals(const Vec2D &other, float64 epsilon = FE_F64EPS) const noexcept {
     return (Abs(_x - other._x) <= epsilon) && (Abs(_y - other._y) <= epsilon);
   }
 

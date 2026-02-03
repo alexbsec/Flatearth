@@ -9,7 +9,7 @@
 
 namespace flatearth::renderer::vulkan::shaders {
 
-VulkanShader::VulkanShader(memory::MemoryManager& memManager, BufferManager& bufferManager)
+VulkanShader::VulkanShader(memory::MemoryManager &memManager, BufferManager &bufferManager)
     : _memoryManager(memManager), _bufferManager(bufferManager) {
 }
 
@@ -17,7 +17,7 @@ VulkanShader::~VulkanShader() {
   FLOG_INFO("vulkan shader successfully destroyed");
 }
 
-FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context& ctx, ObjectShader* pObjShader) {
+FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
   if (pObjShader == nullptr) {
     FLOG_ERROR("cannot create shader object on nullptr object shader");
     return FeErr{Error("object shader is nullptr", ErrorType::NullptrException)};
@@ -218,7 +218,7 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context& ctx, ObjectShade
   return FeTrue;
 }
 
-void VulkanShader::DestroyObjectShader(Context& ctx, ObjectShader* pObjShader) {
+void VulkanShader::DestroyObjectShader(Context &ctx, ObjectShader *pObjShader) {
   if (!pObjShader)
     return;
 
@@ -248,14 +248,14 @@ void VulkanShader::DestroyObjectShader(Context& ctx, ObjectShader* pObjShader) {
   }
 }
 
-void VulkanShader::UseShader(Context& ctx, ObjectShader& objShader) {
+void VulkanShader::UseShader(Context &ctx, ObjectShader &objShader) {
   uint32 imageIndex = ctx.imageIndex;
   VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   _pipelineManager.BindPipeline(
       ctx.graphicsCommandBuffer[imageIndex], bindPoint, objShader.pipeline);
 }
 
-FeExpect<void, Error> VulkanShader::UpdateGlobalState(Context& ctx, ObjectShader& objShader) {
+FeExpect<void, Error> VulkanShader::UpdateGlobalState(Context &ctx, ObjectShader &objShader) {
   constexpr uint32 cRange = sizeof(GlobalUniformObject);
   constexpr uint64 cOffset = 0;
 
@@ -267,6 +267,18 @@ FeExpect<void, Error> VulkanShader::UpdateGlobalState(Context& ctx, ObjectShader
   }
 
   return {};
+}
+
+void VulkanShader::UpdateObject(Context &ctx, ObjectShader &objShader, math::Mat4D model) {
+  uint32 imageIndex = ctx.imageIndex;
+  VkCommandBuffer cmdBuffer = ctx.graphicsCommandBuffer[imageIndex].handle;
+
+  vkCmdPushConstants(cmdBuffer,
+                     objShader.pipeline.layout,
+                     VK_SHADER_STAGE_VERTEX_BIT,
+                     0,
+                     sizeof(math::Mat4D),
+                     &model);
 }
 
 } // namespace flatearth::renderer::vulkan::shaders

@@ -5,19 +5,22 @@
 #include "Core/Logger.hpp"
 #include "Math/MathTypes.hpp"
 #include "Platform/Platform.hpp"
+#include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
 
 #include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan {
 
+void EnsureGPUMatrixLayout(math::Mat4D &inProj, math::Mat4D &inView);
+
 VKAPI_ATTR VkBool32 VKAPI_CALL
 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
               uint32 messageTypes,
-              const VkDebugUtilsMessengerCallbackDataEXT* callbackData,
-              void* userData);
+              const VkDebugUtilsMessengerCallbackDataEXT *callbackData,
+              void *userData);
 
-VulkanBackend::VulkanBackend(memory::MemoryManager& memManager, platform::FileSystem& fs)
+VulkanBackend::VulkanBackend(memory::MemoryManager &memManager, platform::FileSystem &fs)
     : _memoryManager(memManager), _deviceManager(memManager),
       _swapchainManager(memManager, _imageManager), _renderpassManager(memManager),
       _cmdBufferManager(memManager), _bufferManager(_cmdBufferManager),
@@ -82,7 +85,7 @@ VulkanBackend::~VulkanBackend() {
   FLOG_INFO("Vulkan backend exited gracefully");
 }
 
-FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState* appState) {
+FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   // TODO: custom allocator
   _ctx.pAllocator = nullptr;
   _cachedFrameBufferWidth = appState->width;
@@ -103,7 +106,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState* appState) {
   VkInstanceCreateInfo createInfo = {VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
   createInfo.pApplicationInfo = &appInfo;
 
-  containers::DArray<const char*> requiredExtensions(_memoryManager);
+  containers::DArray<const char *> requiredExtensions(_memoryManager);
   requiredExtensions.Push(VK_KHR_SURFACE_EXTENSION_NAME);
   platform::GetRequiredExtNames(&requiredExtensions);
 
@@ -119,7 +122,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState* appState) {
   createInfo.enabledExtensionCount = requiredExtensions.Length();
   createInfo.ppEnabledExtensionNames = requiredExtensions.Data();
 
-  containers::DArray<const char*> requiredValidationLayerNames(_memoryManager);
+  containers::DArray<const char *> requiredValidationLayerNames(_memoryManager);
   uint32 requiredValidationLayerCount = 0;
 
 #if defined(_DEBUG)
@@ -313,7 +316,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState* appState) {
   // be nullptr when not in use. Actual fences are not owned by this array
   _ctx.imagesInFlight.Reserve(_ctx.swapchain.imageCount);
   for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
-    _memoryManager.FZeroMemory(&_ctx.imagesInFlight[i], sizeof(Fence*));
+    _memoryManager.FZeroMemory(&_ctx.imagesInFlight[i], sizeof(Fence *));
     _ctx.imagesInFlight[i] = nullptr;
   }
 
@@ -393,7 +396,7 @@ FeExpect<bool, Error> VulkanBackend::OnResize(uint32 width, uint32 height) {
 }
 
 FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
-  Device& device = _ctx.device;
+  Device &device = _ctx.device;
 
   // check if recreating swapchain is happening
   if (_ctx.recreatingSwapchain) {
@@ -455,7 +458,7 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
     return FeFalse;
   }
 
-  CommandBuffer& cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
+  CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
   _cmdBufferManager.ResetBuffer(_ctx, cmdBuffer);
   _cmdBufferManager.BeginBuffer(_ctx, cmdBuffer, FeFalse, FeFalse, FeFalse);
 
@@ -504,7 +507,7 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
                          0,
                          1,
                          &_ctx.objectVertexBuffer.handle,
-                         static_cast<VkDeviceSize*>(offsets.data()));
+                         static_cast<VkDeviceSize *>(offsets.data()));
 
   vkCmdBindIndexBuffer(cmdBuffer.handle, _ctx.objectIndexBuffer.handle, 0, VK_INDEX_TYPE_UINT32);
 
@@ -513,8 +516,8 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
 }
 
 FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
-  Device& device = _ctx.device;
-  CommandBuffer& cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
+  Device &device = _ctx.device;
+  CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
 
   _renderpassManager.EndRenderpass(_ctx, &cmdBuffer, &_ctx.mainRenderpass);
   _cmdBufferManager.EndBuffer(_ctx, cmdBuffer);
@@ -578,14 +581,14 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
   return FeTrue;
 }
 
-FeExpect<bool, Error> VulkanBackend::DrawFrame(const RenderPacket& renderPacket) {
+FeExpect<bool, Error> VulkanBackend::DrawFrame(const RenderPacket &renderPacket) {
   if (_ctx.recreatingSwapchain) {
     return FeFalse;
   }
 
   (void)renderPacket;
 
-  CommandBuffer& cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
+  CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
 
   _vulkanShader.UseShader(_ctx, _ctx.objectShader);
 
@@ -603,7 +606,8 @@ FeExpect<void, Error> VulkanBackend::UpdateGlobalState(math::Mat4D projection,
                                                        math::Mat4D view,
                                                        math::Vec3D viewPosition,
                                                        int32 mode) {
-  CommandBuffer& cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
+  EnsureGPUMatrixLayout(projection, view);
+  CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
   _vulkanShader.UseShader(_ctx, _ctx.objectShader);
 
   _ctx.objectShader.globalUBO.projection = projection;
@@ -621,7 +625,7 @@ FeExpect<void, Error> VulkanBackend::UpdateGlobalState(math::Mat4D projection,
 
 // PRIVATE MEMBERS
 
-FeExpect<void, Error> VulkanBackend::CreateFence(Fence* pFence, bool signaled) {
+FeExpect<void, Error> VulkanBackend::CreateFence(Fence *pFence, bool signaled) {
   if (pFence == nullptr) {
     FLOG_ERROR("cannot create fence on a nullptr fence");
     return FeErr{Error("attempt to create a fence on a nullptr", ErrorType::NullptrException)};
@@ -642,7 +646,7 @@ FeExpect<void, Error> VulkanBackend::CreateFence(Fence* pFence, bool signaled) {
   return {};
 }
 
-FeExpect<void, Error> VulkanBackend::DestroyFence(Fence* pFence) {
+FeExpect<void, Error> VulkanBackend::DestroyFence(Fence *pFence) {
   if (pFence == nullptr) {
     FLOG_ERROR("cannot destroy fence on a nullptr fence");
     return FeErr{Error("attempt to destroy a fence on a nullptr", ErrorType::NullptrException)};
@@ -657,7 +661,7 @@ FeExpect<void, Error> VulkanBackend::DestroyFence(Fence* pFence) {
   return {};
 }
 
-FeExpect<bool, Error> VulkanBackend::AwaitFence(Fence* pFence, uint64 timeoutNs) {
+FeExpect<bool, Error> VulkanBackend::AwaitFence(Fence *pFence, uint64 timeoutNs) {
   if (pFence == nullptr) {
     FLOG_ERROR("cannot await fence on a nullptr fence");
     return FeErr{Error("attempt to await a fence on a nullptr", ErrorType::NullptrException)};
@@ -694,7 +698,7 @@ FeExpect<bool, Error> VulkanBackend::AwaitFence(Fence* pFence, uint64 timeoutNs)
   return FeFalse;
 }
 
-FeExpect<void, Error> VulkanBackend::ResetFence(Fence* pFence) {
+FeExpect<void, Error> VulkanBackend::ResetFence(Fence *pFence) {
   if (pFence == nullptr) {
     FLOG_ERROR("cannot reset fence on a nullptr fence");
     return FeErr{Error("attempt to reset a fence on a nullptr", ErrorType::NullptrException)};
@@ -748,8 +752,8 @@ FeExpect<void, Error> VulkanBackend::UploadDataRange(VkCommandPool pool,
                                                      VkQueue queue,
                                                      uint64 offset,
                                                      uint64 size,
-                                                     VulkanBuffer& buffer,
-                                                     void* pData) {
+                                                     VulkanBuffer &buffer,
+                                                     void *pData) {
   VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
   VkMemoryPropertyFlags memoryFlags =
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
@@ -779,11 +783,20 @@ FeExpect<void, Error> VulkanBackend::UploadDataRange(VkCommandPool pool,
   return {};
 }
 
+void VulkanBackend::UpdateObject(math::Mat4D model) {
+  _vulkanShader.UpdateObject(_ctx, _ctx.objectShader, model);
+}
+
+void EnsureGPUMatrixLayout(math::Mat4D &inProj, math::Mat4D &inView) {
+  inProj = inProj.ToGPUMatrix();
+  inView = inView.ToGPUMatrix();
+}
+
 VKAPI_ATTR VkBool32 VKAPI_CALL
 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
               uint32 messageTypes,
-              const VkDebugUtilsMessengerCallbackDataEXT* callbackData,
-              void* userData) {
+              const VkDebugUtilsMessengerCallbackDataEXT *callbackData,
+              void *userData) {
   switch (messageSeverity) {
     default:
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:

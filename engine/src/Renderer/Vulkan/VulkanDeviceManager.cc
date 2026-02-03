@@ -11,7 +11,7 @@ namespace flatearth::renderer::vulkan {
 
 static constexpr uint32 scMaxQueueTypes = 4;
 
-FeExpect<void, Error> DetectDeviceDepthFormat(Device& device) {
+FeExpect<void, Error> DetectDeviceDepthFormat(Device &device) {
   const uint64 candidateCount = 3;
   VkFormat candidates[candidateCount] = {
       VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT};
@@ -34,10 +34,10 @@ FeExpect<void, Error> DetectDeviceDepthFormat(Device& device) {
                      ErrorType::RendererVulkanError)};
 }
 
-DeviceManager::DeviceManager(memory::MemoryManager& memManager) : _memoryManager(memManager) {
+DeviceManager::DeviceManager(memory::MemoryManager &memManager) : _memoryManager(memManager) {
 }
 
-FeExpect<void, Error> DeviceManager::CreateDevice(Context& ctx) {
+FeExpect<void, Error> DeviceManager::CreateDevice(Context &ctx) {
   if (!SelectPhysicalDevice(ctx)) {
     return FeErr{
         Error("failed to select physical device", ErrorType::RendererSelectPhysicalDevice)};
@@ -106,7 +106,7 @@ FeExpect<void, Error> DeviceManager::CreateDevice(Context& ctx) {
   deviceCreateInfo.pQueueCreateInfos = queueCreateInfo.Data();
   deviceCreateInfo.pEnabledFeatures = &deviceFeats;
   deviceCreateInfo.enabledExtensionCount = 1;
-  const char* extNames = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+  const char *extNames = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
   deviceCreateInfo.ppEnabledExtensionNames = &extNames;
   deviceCreateInfo.enabledLayerCount = 0;
   deviceCreateInfo.ppEnabledLayerNames = nullptr;
@@ -142,7 +142,7 @@ FeExpect<void, Error> DeviceManager::CreateDevice(Context& ctx) {
   return {};
 }
 
-FeExpect<void, Error> DeviceManager::DestroyDevice(Context& ctx) {
+FeExpect<void, Error> DeviceManager::DestroyDevice(Context &ctx) {
   // If we have a device, we must ensure nothing is in-flight before teardown.
   if (ctx.device.logicalDevice != VK_NULL_HANDLE) {
     // REQUIRED: make sure all queues are done before destroying pools/device.
@@ -193,7 +193,7 @@ FeExpect<void, Error> DeviceManager::DestroyDevice(Context& ctx) {
   return {};
 }
 
-bool DeviceManager::SelectPhysicalDevice(Context& ctx) {
+bool DeviceManager::SelectPhysicalDevice(Context &ctx) {
   uint32 physicalDeviceCount = 0;
   if (auto res = VkCheck(vkEnumeratePhysicalDevices(ctx.instance, &physicalDeviceCount, nullptr));
       !res.has_value()) {
@@ -310,11 +310,11 @@ bool DeviceManager::SelectPhysicalDevice(Context& ctx) {
 
 bool DeviceManager::PhysicalDeviceMeetsRequirements(VkPhysicalDevice device,
                                                     VkSurfaceKHR surface,
-                                                    const VkPhysicalDeviceProperties* properties,
-                                                    const VkPhysicalDeviceFeatures* features,
-                                                    const PhysicalDeviceRequirements* requirements,
-                                                    PhysicalDeviceQueueFamilyInfo* outQueueInfo,
-                                                    SwapchainSupportInfo* outSwapchainInfo) {
+                                                    const VkPhysicalDeviceProperties *properties,
+                                                    const VkPhysicalDeviceFeatures *features,
+                                                    const PhysicalDeviceRequirements *requirements,
+                                                    PhysicalDeviceQueueFamilyInfo *outQueueInfo,
+                                                    SwapchainSupportInfo *outSwapchainInfo) {
 
   // Reset outputs
   outQueueInfo->graphicsFamilyIndex = -1;
@@ -336,7 +336,7 @@ bool DeviceManager::PhysicalDeviceMeetsRequirements(VkPhysicalDevice device,
     return FeFalse;
   }
 
-  VkQueueFamilyProperties* queueFamilies = FeCast<VkQueueFamilyProperties>(
+  VkQueueFamilyProperties *queueFamilies = FeCast<VkQueueFamilyProperties>(
       _memoryManager.RawAlloc(sizeof(VkQueueFamilyProperties) * queueFamilyCount,
                               alignof(VkQueueFamilyProperties),
                               memory::Tag::Renderer));
@@ -477,7 +477,7 @@ bool DeviceManager::PhysicalDeviceMeetsRequirements(VkPhysicalDevice device,
       return FeFalse;
     }
 
-    VkExtensionProperties* exts = FeCast<VkExtensionProperties>(
+    VkExtensionProperties *exts = FeCast<VkExtensionProperties>(
         _memoryManager.RawAlloc(sizeof(VkExtensionProperties) * extCount,
                                 alignof(VkExtensionProperties),
                                 memory::Tag::Renderer));
@@ -493,7 +493,7 @@ bool DeviceManager::PhysicalDeviceMeetsRequirements(VkPhysicalDevice device,
 
     // Check required extension names exist
     for (uint32 req = 0; req < requirements->deviceExtNames.Length(); ++req) {
-      const char* needed = requirements->deviceExtNames[req];
+      const char *needed = requirements->deviceExtNames[req];
       bool found = FeFalse;
 
       for (uint32 i = 0; i < written; ++i) {

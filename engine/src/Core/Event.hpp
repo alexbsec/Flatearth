@@ -52,7 +52,7 @@ struct EventContext {
   EventPayload payload{};
 
   template <typename T>
-  inline void Set(EventLayout l, const T& val) {
+  inline void Set(EventLayout l, const T &val) {
     layout = l;
     static_assert(sizeof(T) <= 16);
     std::memset(payload.storage, 0, 16);
@@ -77,18 +77,18 @@ class IEventListener {
 public:
   virtual FeExpect<void, Error> Initialize() = 0;
 
-  virtual FeExpect<bool, Error> OnResize(const EventDispatchContext& ctx,
-                                         const EventContext& eventCtx) = 0;
-  virtual FeExpect<bool, Error> OnKey(const EventDispatchContext& ctx,
-                                      const EventContext& eventCtx) = 0;
-  virtual FeExpect<bool, Error> OnEvent(const EventDispatchContext& ctx,
-                                        const EventContext& eventCtx) = 0;
+  virtual FeExpect<bool, Error> OnResize(const EventDispatchContext &ctx,
+                                         const EventContext &eventCtx) = 0;
+  virtual FeExpect<bool, Error> OnKey(const EventDispatchContext &ctx,
+                                      const EventContext &eventCtx) = 0;
+  virtual FeExpect<bool, Error> OnEvent(const EventDispatchContext &ctx,
+                                        const EventContext &eventCtx) = 0;
 
-  virtual FeExpect<bool, Error> OnButton(const EventDispatchContext& ctx,
-                                         const EventContext& eventCtx) = 0;
+  virtual FeExpect<bool, Error> OnButton(const EventDispatchContext &ctx,
+                                         const EventContext &eventCtx) = 0;
 
-  virtual FeExpect<bool, Error> OnMouseMove(const EventDispatchContext& ctx,
-                                            const EventContext& eventCtx) = 0;
+  virtual FeExpect<bool, Error> OnMouseMove(const EventDispatchContext &ctx,
+                                            const EventContext &eventCtx) = 0;
 
 protected:
   virtual ~IEventListener() = default;
@@ -99,35 +99,35 @@ class ListenerAdapter : public IEventListener {
 public:
   FeExpect<void, Error> Initialize() override { return {}; }
 
-  FeExpect<bool, Error> OnResize(const EventDispatchContext& ctx,
-                                 const EventContext& eventCtx) override {
+  FeExpect<bool, Error> OnResize(const EventDispatchContext &ctx,
+                                 const EventContext &eventCtx) override {
     return FeFalse;
   }
 
-  FeExpect<bool, Error> OnKey(const EventDispatchContext& ctx,
-                              const EventContext& eventCtx) override {
+  FeExpect<bool, Error> OnKey(const EventDispatchContext &ctx,
+                              const EventContext &eventCtx) override {
     return FeFalse;
   }
 
-  FeExpect<bool, Error> OnEvent(const EventDispatchContext& ctx,
-                                const EventContext& eventCtx) override {
+  FeExpect<bool, Error> OnEvent(const EventDispatchContext &ctx,
+                                const EventContext &eventCtx) override {
     return FeFalse;
   }
 
-  FeExpect<bool, Error> OnButton(const EventDispatchContext& ctx,
-                                 const EventContext& eventCtx) override {
+  FeExpect<bool, Error> OnButton(const EventDispatchContext &ctx,
+                                 const EventContext &eventCtx) override {
     return FeFalse;
   }
 
-  FeExpect<bool, Error> OnMouseMove(const EventDispatchContext& ctx,
-                                    const EventContext& eventCtx) override {
+  FeExpect<bool, Error> OnMouseMove(const EventDispatchContext &ctx,
+                                    const EventContext &eventCtx) override {
     return FeFalse;
   }
 };
 
 struct RegisteredEvent {
   uint64 id;
-  IEventListener* listener;
+  IEventListener *listener;
 };
 
 struct EventCodeEntry {
@@ -142,7 +142,7 @@ struct EventSystemState {
 // All calls must occur on the owning thread.
 class EventManager {
 public:
-  FEAPI explicit EventManager(memory::MemoryManager& memManager);
+  FEAPI explicit EventManager(memory::MemoryManager &memManager);
   FEAPI ~EventManager();
 
   /**
@@ -156,7 +156,7 @@ public:
    * @returns True if the event was successfully registered, false otherwise,
    * return Error struct on error
    */
-  FEAPI FeExpect<uint64, Error> RegisterEvent(SystemEventCode code, IEventListener* listener);
+  FEAPI FeExpect<uint64, Error> RegisterEvent(SystemEventCode code, IEventListener *listener);
 
   /**
    * Unregisters a callback for the specified event code.
@@ -169,7 +169,7 @@ public:
    * @returns True if the event was successfully unregistered, false otherwise,
    * returns Error struct on error.
    */
-  FEAPI FeExpect<bool, Error> UnregisterEvent(SystemEventCode code, IEventListener* listener);
+  FEAPI FeExpect<bool, Error> UnregisterEvent(SystemEventCode code, IEventListener *listener);
 
   /**
    * Fires an event to all listeners registered for the specified code.
@@ -183,7 +183,7 @@ public:
    * returns Error struct on error.
    */
   FEAPI FeExpect<bool, Error>
-  FireEvent(SystemEventCode code, void* sender, const EventContext& eventCtx);
+  FireEvent(SystemEventCode code, void *sender, const EventContext &eventCtx);
 
   /**
    * Broadcasts an event to all listeners registered for the specified event
@@ -214,19 +214,19 @@ public:
    * @note Modifying event registrations during broadcast is undefined behavior.
    */
   FEAPI FeExpect<bool, Error>
-  Broadcast(SystemEventCode code, void* sender, const EventContext& eventCtx);
+  Broadcast(SystemEventCode code, void *sender, const EventContext &eventCtx);
 
   uint64 CountEvents(SystemEventCode code) const;
 
 private:
   FeExpect<bool, Error> DecideAndDispatch(SystemEventCode code,
-                                          IEventListener* listener,
-                                          const EventDispatchContext& ctx,
-                                          const EventContext& eventCtx);
+                                          IEventListener *listener,
+                                          const EventDispatchContext &ctx,
+                                          const EventContext &eventCtx);
 
 private:
   EventSystemState _state;
-  memory::MemoryManager& _memoryManager;
+  memory::MemoryManager &_memoryManager;
   uint64 _currentId{0};
 };
 

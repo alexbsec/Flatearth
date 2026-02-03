@@ -5,15 +5,15 @@
 
 namespace flatearth::renderer::vulkan {
 
-BufferManager::BufferManager(CommandBufferManager& cmdBufferMgr) : _cmdBufferManager(cmdBufferMgr) {
+BufferManager::BufferManager(CommandBufferManager &cmdBufferMgr) : _cmdBufferManager(cmdBufferMgr) {
 }
 
-FeExpect<void, Error> BufferManager::CreateVulkanBuffer(Context& ctx,
+FeExpect<void, Error> BufferManager::CreateVulkanBuffer(Context &ctx,
                                                         uint64 size,
                                                         VkBufferUsageFlags usage,
                                                         uint32 memoryPropertyFlags,
                                                         bool bindOnCreate,
-                                                        VulkanBuffer* pBuffer) {
+                                                        VulkanBuffer *pBuffer) {
   if (pBuffer == nullptr) {
     FLOG_ERROR("cannot create Vulkan buffer on nullptr");
     return FeErr{Error("vulkan buffer is nullptr", ErrorType::NullptrException)};
@@ -72,7 +72,7 @@ FeExpect<void, Error> BufferManager::CreateVulkanBuffer(Context& ctx,
   return {};
 }
 
-void BufferManager::DestroyVulkanBuffer(Context& ctx, VulkanBuffer* pBuffer) {
+void BufferManager::DestroyVulkanBuffer(Context &ctx, VulkanBuffer *pBuffer) {
   if (pBuffer == nullptr) {
     return;
   }
@@ -94,7 +94,7 @@ void BufferManager::DestroyVulkanBuffer(Context& ctx, VulkanBuffer* pBuffer) {
 }
 
 FeExpect<void, Error> BufferManager::ResizeBuffer(
-    Context& ctx, uint64 newSize, VulkanBuffer& buffer, VkQueue queue, VkCommandPool pool) {
+    Context &ctx, uint64 newSize, VulkanBuffer &buffer, VkQueue queue, VkCommandPool pool) {
   VkBufferCreateInfo bufferInfo = {VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
   bufferInfo.size = newSize;
   bufferInfo.usage = buffer.usage;
@@ -154,7 +154,7 @@ FeExpect<void, Error> BufferManager::ResizeBuffer(
   return {};
 }
 
-FeExpect<void, Error> BufferManager::BindBuffer(Context& ctx, VulkanBuffer& buffer, uint64 offset) {
+FeExpect<void, Error> BufferManager::BindBuffer(Context &ctx, VulkanBuffer &buffer, uint64 offset) {
   if (auto res = VkCheck(
           vkBindBufferMemory(ctx.device.logicalDevice, buffer.handle, buffer.memory, offset));
       !res.has_value()) {
@@ -165,9 +165,9 @@ FeExpect<void, Error> BufferManager::BindBuffer(Context& ctx, VulkanBuffer& buff
   return {};
 }
 
-FeExpect<void*, Error> BufferManager::LockMemory(
-    Context& ctx, VulkanBuffer& buffer, uint64 offset, uint64 size, uint32 flags) {
-  void* data;
+FeExpect<void *, Error> BufferManager::LockMemory(
+    Context &ctx, VulkanBuffer &buffer, uint64 offset, uint64 size, uint32 flags) {
+  void *data;
   if (auto res =
           VkCheck(vkMapMemory(ctx.device.logicalDevice, buffer.memory, offset, size, flags, &data));
       !res.has_value()) {
@@ -178,17 +178,17 @@ FeExpect<void*, Error> BufferManager::LockMemory(
   return data;
 }
 
-void BufferManager::UnlockMemory(Context& ctx, VulkanBuffer& buffer) {
+void BufferManager::UnlockMemory(Context &ctx, VulkanBuffer &buffer) {
   vkUnmapMemory(ctx.device.logicalDevice, buffer.memory);
 }
 
-FeExpect<void, Error> BufferManager::LoadData(Context& ctx,
-                                              VulkanBuffer& buffer,
+FeExpect<void, Error> BufferManager::LoadData(Context &ctx,
+                                              VulkanBuffer &buffer,
                                               uint64 offset,
                                               uint64 size,
                                               uint32 flags,
-                                              const void* data) {
-  void* dataPtr;
+                                              const void *data) {
+  void *dataPtr;
   if (auto res = VkCheck(
           vkMapMemory(ctx.device.logicalDevice, buffer.memory, offset, size, flags, &dataPtr));
       !res.has_value()) {
@@ -201,7 +201,7 @@ FeExpect<void, Error> BufferManager::LoadData(Context& ctx,
   return {};
 }
 
-FeExpect<void, Error> BufferManager::CopyBufferTo(Context& ctx,
+FeExpect<void, Error> BufferManager::CopyBufferTo(Context &ctx,
                                                   VkCommandPool pool,
                                                   VkFence fence,
                                                   VkQueue queue,

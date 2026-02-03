@@ -4,7 +4,7 @@
 
 namespace flatearth::input {
 
-InputManager::InputManager(event::EventManager& eventManager) : _eventManager(eventManager) {
+InputManager::InputManager(event::EventManager &eventManager) : _eventManager(eventManager) {
 }
 
 void InputManager::Update(float64 deltaTime) {

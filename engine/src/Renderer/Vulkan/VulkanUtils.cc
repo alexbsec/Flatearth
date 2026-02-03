@@ -5,9 +5,9 @@
 
 namespace flatearth::renderer::vulkan {
 
-void ShaderModuleCleanup(Context& ctx,
+void ShaderModuleCleanup(Context &ctx,
                          platform::FileHandle fileHandle,
-                         uint32* pWords,
+                         uint32 *pWords,
                          uint64 fileSize) {
   if (pWords != nullptr) {
     ctx.memoryManager.RawFree(pWords, fileSize, memory::Tag::Renderer);
@@ -19,12 +19,12 @@ void ShaderModuleCleanup(Context& ctx,
   }
 }
 
-FeExpect<bool, Error> CreateShaderModule(Context& ctx,
-                                         const string& name,
-                                         const string& typeStr,
+FeExpect<bool, Error> CreateShaderModule(Context &ctx,
+                                         const string &name,
+                                         const string &typeStr,
                                          VkShaderStageFlagBits stageFlag,
                                          uint32 stageIndex,
-                                         ShaderStage* pShaderStage) {
+                                         ShaderStage *pShaderStage) {
   const std::filesystem::path cFileName =
       std::filesystem::path(std::format("bin/assets/shaders/{}.{}.spv", name, typeStr));
 
@@ -48,7 +48,7 @@ FeExpect<bool, Error> CreateShaderModule(Context& ctx,
   }
 
   uint32 wordCount = static_cast<uint32>(fileSize / 4);
-  uint32* words = static_cast<uint32*>(
+  uint32 *words = static_cast<uint32 *>(
       ctx.memoryManager.RawAlloc(fileSize, alignof(uint32), memory::Tag::Renderer));
   if (words == nullptr) {
     FLOG_ERROR("failed to allocate words for reading");
@@ -57,7 +57,7 @@ FeExpect<bool, Error> CreateShaderModule(Context& ctx,
   }
 
   std::span<std::byte> bytes{
-      reinterpret_cast<std::byte*>(words),
+      reinterpret_cast<std::byte *>(words),
       fileSize,
   };
 

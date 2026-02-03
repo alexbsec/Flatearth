@@ -3,6 +3,7 @@
 
 #include "Core/ApplicationConfig.hpp"
 #include "Defines.hpp"
+#include "Renderer/RendererTypes.hpp"
 
 namespace flatearth::renderer {
 
@@ -21,15 +22,16 @@ struct RenderPacket {
 
 class IRendererBackend {
 public:
-  virtual FeExpect<bool, Error> Initialize(ApplicationState* appState) = 0;
+  virtual FeExpect<bool, Error> Initialize(ApplicationState *appState) = 0;
   virtual FeExpect<bool, Error> OnResize(uint32 width, uint32 height) = 0;
   virtual FeExpect<bool, Error> BeginFrame(float32 deltaTime) = 0;
   virtual FeExpect<bool, Error> EndFrame(float32 deltaTime) = 0;
-  virtual FeExpect<bool, Error> DrawFrame(const RenderPacket& renderPacket) = 0;
+  virtual FeExpect<bool, Error> DrawFrame(const RenderPacket &renderPacket) = 0;
   virtual FeExpect<void, Error> UpdateGlobalState(math::Mat4D projection,
                                                   math::Mat4D view,
                                                   math::Vec3D viewPosition,
                                                   int32 mode) = 0;
+  virtual void UpdateObject(math::Mat4D model) = 0;
 
 protected:
   virtual ~IRendererBackend() = default;

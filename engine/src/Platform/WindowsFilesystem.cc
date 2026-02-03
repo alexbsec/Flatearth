@@ -13,7 +13,7 @@ stdfs::path WorkDirectory() {
   return stdfs::current_path();
 }
 
-static HANDLE GetHandle(FileHandle& handle) {
+static HANDLE GetHandle(FileHandle &handle) {
   return reinterpret_cast<HANDLE>(handle.nativeHandle);
 }
 
@@ -35,15 +35,15 @@ static std::string Win32LastErrorToString(DWORD err) {
   return out;
 }
 
-FileSystem::FileSystem(memory::MemoryManager& memManager)
+FileSystem::FileSystem(memory::MemoryManager &memManager)
     : _memoryManager(memManager), _rootDir(WorkDirectory()) {
 }
 
-bool FileSystem::Exists(const stdfs::path& path) const {
+bool FileSystem::Exists(const stdfs::path &path) const {
   return stdfs::exists(_rootDir / path);
 }
 
-uint64 FileSystem::SizeOfFile(const stdfs::path& path) const {
+uint64 FileSystem::SizeOfFile(const stdfs::path &path) const {
   std::error_code ec;
   const auto sz = stdfs::file_size(_rootDir / path, ec);
   if (ec) {
@@ -54,7 +54,7 @@ uint64 FileSystem::SizeOfFile(const stdfs::path& path) const {
 }
 
 FeExpect<FileHandle, Error>
-FileSystem::OpenFile(const stdfs::path& path, FileMode mode, bool binary) {
+FileSystem::OpenFile(const stdfs::path &path, FileMode mode, bool binary) {
   (void)binary;
 
   DWORD access = 0;
@@ -96,12 +96,12 @@ FileSystem::OpenFile(const stdfs::path& path, FileMode mode, bool binary) {
 
   FLOG_INFO("file loaded at path: {}", absolutePath.string());
   return FileHandle{
-      .nativeHandle = reinterpret_cast<void*>(handle),
+      .nativeHandle = reinterpret_cast<void *>(handle),
       .valid = FeTrue,
   };
 }
 
-FeExpect<void, Error> FileSystem::CloseFile(FileHandle& handle) {
+FeExpect<void, Error> FileSystem::CloseFile(FileHandle &handle) {
   if (!handle.valid || handle.nativeHandle == nullptr) {
     FLOG_ERROR("cannot close invalid file handle");
     return FeErr{Error("invalid file handle", ErrorType::InvalidFileHandle)};
@@ -124,7 +124,7 @@ FeExpect<void, Error> FileSystem::CloseFile(FileHandle& handle) {
   return {};
 }
 
-FeExpect<uint64, Error> FileSystem::ReadFromFile(FileHandle& handle, std::span<std::byte> out) {
+FeExpect<uint64, Error> FileSystem::ReadFromFile(FileHandle &handle, std::span<std::byte> out) {
   if (!handle.valid || handle.nativeHandle == nullptr) {
     FLOG_ERROR("could not proceed becaus file handle is not valid or is nullptr");
     return FeErr{Error("invalid file handle", ErrorType::InvalidFileHandle)};
@@ -147,7 +147,7 @@ FeExpect<uint64, Error> FileSystem::ReadFromFile(FileHandle& handle, std::span<s
 
     DWORD bytesRead = 0;
     BOOL ok = ReadFile(
-        winHandle, reinterpret_cast<void*>(out.data() + offset), cChunk, &bytesRead, nullptr);
+        winHandle, reinterpret_cast<void *>(out.data() + offset), cChunk, &bytesRead, nullptr);
 
     if (!ok) {
       FLOG_ERROR("could not read chunk from file");
@@ -168,7 +168,7 @@ FeExpect<uint64, Error> FileSystem::ReadFromFile(FileHandle& handle, std::span<s
   return offset;
 }
 
-FeExpect<uint64, Error> FileSystem::WriteToFile(FileHandle& handle,
+FeExpect<uint64, Error> FileSystem::WriteToFile(FileHandle &handle,
                                                 std::span<const std::byte> data) {
   if (!handle.valid || handle.nativeHandle == nullptr) {
     FLOG_ERROR("could not proceed becaus file handle is not valid or is nullptr");
@@ -192,7 +192,7 @@ FeExpect<uint64, Error> FileSystem::WriteToFile(FileHandle& handle,
 
     DWORD bytesWritten = 0;
     BOOL ok = WriteFile(winHandle,
-                        reinterpret_cast<const void*>(data.data() + offset),
+                        reinterpret_cast<const void *>(data.data() + offset),
                         cChunk,
                         &bytesWritten,
                         nullptr);
@@ -211,7 +211,7 @@ FeExpect<uint64, Error> FileSystem::WriteToFile(FileHandle& handle,
   return offset;
 }
 
-void FileSystem::SetRootDirectory(const stdfs::path& path) {
+void FileSystem::SetRootDirectory(const stdfs::path &path) {
   _rootDir = path;
 }
 

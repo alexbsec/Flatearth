@@ -6,14 +6,14 @@
 
 namespace flatearth::event {
 
-EventManager::EventManager(memory::MemoryManager& memManager) : _memoryManager(memManager) {
+EventManager::EventManager(memory::MemoryManager &memManager) : _memoryManager(memManager) {
 }
 
 EventManager::~EventManager() {
 }
 
 FeExpect<uint64, Error> EventManager::RegisterEvent(SystemEventCode code,
-                                                    IEventListener* listener) {
+                                                    IEventListener *listener) {
   using containers::DArray;
 
   // on registration, whoever registered must guarantee ownership of listener
@@ -30,7 +30,7 @@ FeExpect<uint64, Error> EventManager::RegisterEvent(SystemEventCode code,
         _memoryManager.Allocate<DArray<RegisteredEvent>>(memory::Tag::DArray, _memoryManager);
   }
 
-  DArray<RegisteredEvent>& events = *_state.registered[numberCode].pEvents;
+  DArray<RegisteredEvent> &events = *_state.registered[numberCode].pEvents;
   uint64 registeredCount = events.Length();
   for (uint64 i = 0; i < registeredCount; i++) {
     if (events[i].listener == listener) {
@@ -50,7 +50,7 @@ FeExpect<uint64, Error> EventManager::RegisterEvent(SystemEventCode code,
 }
 
 FeExpect<bool, Error> EventManager::UnregisterEvent(SystemEventCode code,
-                                                    IEventListener* listener) {
+                                                    IEventListener *listener) {
   using containers::DArray;
   if (listener == nullptr) {
     // defensiveness
@@ -63,10 +63,10 @@ FeExpect<bool, Error> EventManager::UnregisterEvent(SystemEventCode code,
     return FeFalse;
   }
 
-  DArray<RegisteredEvent>& events = *_state.registered[numberCode].pEvents;
+  DArray<RegisteredEvent> &events = *_state.registered[numberCode].pEvents;
   uint64 count = events.Length();
   for (uint64 i = 0; i < count; i++) {
-    RegisteredEvent& eventRef = events[i];
+    RegisteredEvent &eventRef = events[i];
     if (eventRef.listener != listener) {
       continue;
     }
@@ -83,16 +83,16 @@ FeExpect<bool, Error> EventManager::UnregisterEvent(SystemEventCode code,
 }
 
 FeExpect<bool, Error>
-EventManager::FireEvent(SystemEventCode code, void* sender, const EventContext& eventCtx) {
+EventManager::FireEvent(SystemEventCode code, void *sender, const EventContext &eventCtx) {
   using containers::DArray;
   uint8 numberCode = ToUnderlying(code);
-  DArray<RegisteredEvent>* pEvents = _state.registered[numberCode].pEvents.get();
+  DArray<RegisteredEvent> *pEvents = _state.registered[numberCode].pEvents.get();
   if (pEvents == nullptr) {
     return FeFalse;
   }
 
   for (uint64 i = 0; i < pEvents->Length(); i++) {
-    RegisteredEvent& event = (*pEvents)[i];
+    RegisteredEvent &event = (*pEvents)[i];
 
     EventDispatchContext dispatchCtx{
         .code = code,
@@ -115,10 +115,10 @@ EventManager::FireEvent(SystemEventCode code, void* sender, const EventContext& 
 }
 
 FeExpect<bool, Error>
-EventManager::Broadcast(SystemEventCode code, void* sender, const EventContext& eventCtx) {
+EventManager::Broadcast(SystemEventCode code, void *sender, const EventContext &eventCtx) {
   using containers::DArray;
   uint8 numberCode = ToUnderlying(code);
-  DArray<RegisteredEvent>* pEvents = _state.registered[numberCode].pEvents.get();
+  DArray<RegisteredEvent> *pEvents = _state.registered[numberCode].pEvents.get();
   if (pEvents == nullptr) {
     return FeFalse;
   }
@@ -127,7 +127,7 @@ EventManager::Broadcast(SystemEventCode code, void* sender, const EventContext& 
   uint64 ignoreCount = 0;
   uint64 errCount = 0;
   for (uint64 i = 0; i < pEvents->Length(); i++) {
-    RegisteredEvent& event = (*pEvents)[i];
+    RegisteredEvent &event = (*pEvents)[i];
 
     EventDispatchContext dispatchCtx{
         .code = code,
@@ -166,9 +166,9 @@ uint64 EventManager::CountEvents(SystemEventCode code) const {
 }
 
 FeExpect<bool, Error> EventManager::DecideAndDispatch(SystemEventCode code,
-                                                      IEventListener* listener,
-                                                      const EventDispatchContext& ctx,
-                                                      const EventContext& eventCtx) {
+                                                      IEventListener *listener,
+                                                      const EventDispatchContext &ctx,
+                                                      const EventContext &eventCtx) {
 
   FeExpect<bool, Error> res;
   switch (code) {

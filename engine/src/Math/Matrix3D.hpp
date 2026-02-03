@@ -14,7 +14,7 @@ public:
       : _x00(1.0f), _x01(0.0f), _x02(0.0f), _x10(0.0f), _x11(1.0f), _x12(0.0f), _x20(0.0f),
         _x21(0.0f), _x22(1.0f) {}
 
-  constexpr Mat3D(const Mat3D& other) noexcept
+  constexpr Mat3D(const Mat3D &other) noexcept
       : _x00(other._x00), _x01(other._x01), _x02(other._x02), _x10(other._x10), _x11(other._x11),
         _x12(other._x12), _x20(other._x20), _x21(other._x21), _x22(other._x22) {}
 
@@ -55,9 +55,9 @@ public:
     return t * r * s;
   }
 
-  constexpr Mat3D& operator=(const Mat3D& other) noexcept = default;
+  constexpr Mat3D &operator=(const Mat3D &other) noexcept = default;
 
-  inline constexpr Mat3D operator*(const Mat3D& other) const noexcept {
+  inline constexpr Mat3D operator*(const Mat3D &other) const noexcept {
     Mat3D result;
     result._x00 = _x00 * other._x00 + _x01 * other._x10 + _x02 * other._x20;
     result._x01 = _x00 * other._x01 + _x01 * other._x11 + _x02 * other._x21;
@@ -74,7 +74,7 @@ public:
     return result;
   }
 
-  inline constexpr Mat3D& operator*=(const Mat3D& other) noexcept {
+  inline constexpr Mat3D &operator*=(const Mat3D &other) noexcept {
     *this = *this * other;
     return *this;
   }
@@ -125,19 +125,19 @@ public:
            _x02 * (_x10 * _x21 - _x11 * _x20);
   }
 
-  inline Vec2D TransformPoint(const Vec2D& point) const noexcept {
+  inline Vec2D TransformPoint(const Vec2D &point) const noexcept {
     float32 x = _x00 * point.x() + _x01 * point.y() + _x02;
     float32 y = _x10 * point.x() + _x11 * point.y() + _x12;
     return Vec2D(x, y);
   }
 
-  inline Vec2D TransformVector(const Vec2D& vector) const noexcept {
+  inline Vec2D TransformVector(const Vec2D &vector) const noexcept {
     float32 x = _x00 * vector.x() + _x01 * vector.y();
     float32 y = _x10 * vector.x() + _x11 * vector.y();
     return Vec2D(x, y);
   }
 
-  inline constexpr bool Equals(const Mat3D& other, float32 epsilon = FE_F32EPS) const noexcept {
+  inline constexpr bool Equals(const Mat3D &other, float32 epsilon = FE_F32EPS) const noexcept {
     return (Abs(_x00 - other._x00) <= epsilon) && (Abs(_x01 - other._x01) <= epsilon) &&
            (Abs(_x02 - other._x02) <= epsilon) &&
 

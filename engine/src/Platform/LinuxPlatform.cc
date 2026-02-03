@@ -27,10 +27,10 @@
 namespace flatearth::platform {
 
 struct InternalState {
-  Display* display;
-  xcb_connection_t* connection;
+  Display *display;
+  xcb_connection_t *connection;
   xcb_window_t window;
-  xcb_screen_t* screen;
+  xcb_screen_t *screen;
   xcb_atom_t wmProtocols;
   xcb_atom_t wmDeleteWin;
   VkSurfaceKHR surface;
@@ -46,19 +46,19 @@ struct InternalState {
   }
 };
 
-void GetRequiredExtNames(containers::DArray<const char*>* namesDArray) {
+void GetRequiredExtNames(containers::DArray<const char *> *namesDArray) {
   namesDArray->Push("VK_KHR_xcb_surface");
 }
 
-FeExpect<void, Error> CreateVulkanSurface(PlatformState* platState,
-                                          renderer::vulkan::Context& ctx) {
+FeExpect<void, Error> CreateVulkanSurface(PlatformState *platState,
+                                          renderer::vulkan::Context &ctx) {
   if (platState == nullptr) {
     FLOG_ERROR("platState is nullptr, aborting");
     return FeErr{Error("cannot create Vulkan surface on nullptr platformState",
                        ErrorType::NullptrException)};
   }
 
-  auto& pInternalState = platState->internalState;
+  auto &pInternalState = platState->internalState;
   VkXcbSurfaceCreateInfoKHR createInfo = {VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR};
   createInfo.connection = pInternalState->connection;
   createInfo.window = pInternalState->window;
@@ -81,14 +81,14 @@ const string cNullInternalStateError = "platform internal state is nullptr";
 const string cXCBConnectionError = "XCB failed to connect";
 const string cXCBFlushError = "XCB failed to flush";
 
-Platform::Platform(const string& applicationName,
+Platform::Platform(const string &applicationName,
                    int32 x,
                    int32 y,
                    int32 width,
                    int32 height,
-                   memory::MemoryManager& memManager,
-                   input::InputManager& inputManager,
-                   event::EventManager& eventManager)
+                   memory::MemoryManager &memManager,
+                   input::InputManager &inputManager,
+                   event::EventManager &eventManager)
     : _xPos(x), _yPos(y), _width(width), _height(height), _applicationName(applicationName),
       _memoryManager(memManager), _inputManager(inputManager), _eventManager(eventManager) {
   _platState.internalState = _memoryManager.Allocate<InternalState>(memory::Tag::Platform);
@@ -102,7 +102,7 @@ FeExpect<void, Error> Platform::Initialize() {
     return FeErr<Error>(cNullInternalStateError);
   }
 
-  auto& pInternalState = _platState.internalState;
+  auto &pInternalState = _platState.internalState;
 
   pInternalState->display = XOpenDisplay(nullptr);
   if (!pInternalState->display) {
@@ -118,7 +118,7 @@ FeExpect<void, Error> Platform::Initialize() {
     return FeErr<Error>(cXCBConnectionError);
   }
 
-  const struct xcb_setup_t* setup = xcb_get_setup(pInternalState->connection);
+  const struct xcb_setup_t *setup = xcb_get_setup(pInternalState->connection);
 
   xcb_screen_iterator_t screenIterator = xcb_setup_roots_iterator(setup);
   int32 screenP = 0;
@@ -175,10 +175,10 @@ FeExpect<void, Error> Platform::Initialize() {
   xcb_intern_atom_cookie_t wmProtocolsCookie = xcb_intern_atom(
       pInternalState->connection, 0, cProtocolsString.length(), cProtocolsString.c_str());
 
-  xcb_intern_atom_reply_t* wmDeleteReply =
+  xcb_intern_atom_reply_t *wmDeleteReply =
       xcb_intern_atom_reply(pInternalState->connection, wmDeleteCookie, nullptr);
 
-  xcb_intern_atom_reply_t* wmProtocolsReply =
+  xcb_intern_atom_reply_t *wmProtocolsReply =
       xcb_intern_atom_reply(pInternalState->connection, wmProtocolsCookie, nullptr);
 
   pInternalState->wmDeleteWin = wmDeleteReply->atom;
@@ -211,9 +211,9 @@ FeExpect<bool, Error> Platform::PollEvents() {
     return FeErr<Error>(cNullInternalStateError);
   }
 
-  auto& pInternalState = _platState.internalState;
-  xcb_generic_event_t* event;
-  xcb_client_message_event_t* cm;
+  auto &pInternalState = _platState.internalState;
+  xcb_generic_event_t *event;
+  xcb_client_message_event_t *cm;
 
   bool quitFlag = FeFalse;
   while ((event = xcb_poll_for_event(pInternalState->connection)) != nullptr) {
@@ -224,7 +224,7 @@ FeExpect<bool, Error> Platform::PollEvents() {
     switch (event->response_type & 0x7f) {
       case XCB_KEY_PRESS:
       case XCB_KEY_RELEASE: {
-        xcb_key_press_event_t* keyEvent = (xcb_key_press_event_t*)event;
+        xcb_key_press_event_t *keyEvent = (xcb_key_press_event_t *)event;
         bool pressed = event->response_type == XCB_KEY_PRESS;
         xcb_keycode_t code = keyEvent->detail;
         int32 level = (keyEvent->state & XCB_MOD_MASK_SHIFT) ? 1 : 0;
@@ -242,7 +242,7 @@ FeExpect<bool, Error> Platform::PollEvents() {
       } break;
       case XCB_BUTTON_PRESS:
       case XCB_BUTTON_RELEASE: {
-        xcb_button_press_event_t* buttonEvent = (xcb_button_press_event_t*)event;
+        xcb_button_press_event_t *buttonEvent = (xcb_button_press_event_t *)event;
         bool pressed = event->response_type == XCB_BUTTON_PRESS;
         input::Button button = input::Button::MaxButtons;
         switch (buttonEvent->detail) {
@@ -272,7 +272,7 @@ FeExpect<bool, Error> Platform::PollEvents() {
         }
       } break;
       case XCB_MOTION_NOTIFY: {
-        xcb_motion_notify_event_t* moveEvent = (xcb_motion_notify_event_t*)event;
+        xcb_motion_notify_event_t *moveEvent = (xcb_motion_notify_event_t *)event;
         auto moveRes = _inputManager.ProcessMouseMove(moveEvent->event_x, moveEvent->event_y);
         if (!moveRes.has_value()) {
           FLOG_ERROR("input manager failed to process mouse move");
@@ -284,7 +284,7 @@ FeExpect<bool, Error> Platform::PollEvents() {
         }
       } break;
       case XCB_CONFIGURE_NOTIFY: {
-        xcb_configure_notify_event_t* configureEvent = (xcb_configure_notify_event_t*)event;
+        xcb_configure_notify_event_t *configureEvent = (xcb_configure_notify_event_t *)event;
         event::EventContext eventCtx{};
         event::Uint32x4 resizePayload{
             configureEvent->width,
@@ -298,7 +298,7 @@ FeExpect<bool, Error> Platform::PollEvents() {
         }
       } break;
       case XCB_CLIENT_MESSAGE: {
-        auto* cm = (xcb_client_message_event_t*)event;
+        auto *cm = (xcb_client_message_event_t *)event;
         if (cm->data.data32[0] == pInternalState->wmDeleteWin) {
           quitFlag = FeTrue;
         }
@@ -313,7 +313,7 @@ FeExpect<bool, Error> Platform::PollEvents() {
   return !quitFlag;
 }
 
-PlatformState* Platform::State() {
+PlatformState *Platform::State() {
   return &_platState;
 }
 

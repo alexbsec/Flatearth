@@ -10,22 +10,22 @@ namespace flatearth::renderer::vulkan {
 
 class CommandBufferManager {
 public:
-  explicit CommandBufferManager(memory::MemoryManager& memManager);
+  explicit CommandBufferManager(memory::MemoryManager &memManager);
   ~CommandBufferManager();
 
-  FeExpect<void, Error> CreateBuffers(Context& ctx);
-  FeExpect<void, Error> DestroyBuffers(Context& ctx);
-  void BeginBuffer(Context& ctx,
-                   CommandBuffer& cmdBuffer,
+  FeExpect<void, Error> CreateBuffers(Context &ctx);
+  FeExpect<void, Error> DestroyBuffers(Context &ctx);
+  void BeginBuffer(Context &ctx,
+                   CommandBuffer &cmdBuffer,
                    bool isSingleUse,
                    bool isRenderpassContinue,
                    bool isSimultaneousUse);
-  void EndBuffer(Context& ctx, CommandBuffer& cmdBuffer);
-  void ResetBuffer(Context& ctx, CommandBuffer& cmdBuffer);
+  void EndBuffer(Context &ctx, CommandBuffer &cmdBuffer);
+  void ResetBuffer(Context &ctx, CommandBuffer &cmdBuffer);
 
   template <class Fn>
   inline FeExpect<void, Error>
-  ImmediateSubmit(Context& ctx, VkCommandPool pool, VkQueue queue, VkFence fence, Fn&& recordFn) {
+  ImmediateSubmit(Context &ctx, VkCommandPool pool, VkQueue queue, VkFence fence, Fn &&recordFn) {
     // Allocate a temporary primary command buffer from the given pool
     CommandBuffer tmp{};
     {
@@ -98,11 +98,11 @@ public:
 
 private:
   FeExpect<void, Error>
-  AllocateBuffer(Context& ctx, CommandBuffer* pCmdBuffer, VkCommandPool pool, bool isPrimary);
-  FeExpect<void, Error> FreeBuffer(Context& ctx, CommandBuffer* pCmdBuffer, VkCommandPool pool);
+  AllocateBuffer(Context &ctx, CommandBuffer *pCmdBuffer, VkCommandPool pool, bool isPrimary);
+  FeExpect<void, Error> FreeBuffer(Context &ctx, CommandBuffer *pCmdBuffer, VkCommandPool pool);
 
 private:
-  memory::MemoryManager& _memoryManager;
+  memory::MemoryManager &_memoryManager;
 };
 
 } // namespace flatearth::renderer::vulkan

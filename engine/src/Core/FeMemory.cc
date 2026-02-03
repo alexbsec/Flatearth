@@ -7,7 +7,7 @@
 namespace flatearth::memory {
 
 static inline uint64 NormalizeAlignment(uint64 alignment) {
-  const uint64 minAlign = static_cast<uint64>(sizeof(void*)); // 8 on x64
+  const uint64 minAlign = static_cast<uint64>(sizeof(void *)); // 8 on x64
   if (alignment < minAlign)
     alignment = minAlign;
 
@@ -21,7 +21,7 @@ static inline uint64 NormalizeAlignment(uint64 alignment) {
   return alignment;
 }
 
-static const char* TagToString(flatearth::memory::Tag tag);
+static const char *TagToString(flatearth::memory::Tag tag);
 
 struct MemFmt {
   uint64 bytes;
@@ -47,8 +47,8 @@ MemoryManager::~MemoryManager() {
   FLOG_INFO("memory manager exited gracefully");
 }
 
-void* MemoryManager::RawAlloc(uint64 size, uint64 alignment, Tag tag) {
-  void* block = nullptr;
+void *MemoryManager::RawAlloc(uint64 size, uint64 alignment, Tag tag) {
+  void *block = nullptr;
 
 #if defined(_MSC_VER)
   block = _aligned_malloc(size, alignment);
@@ -82,7 +82,7 @@ void* MemoryManager::RawAlloc(uint64 size, uint64 alignment, Tag tag) {
   return block;
 }
 
-void MemoryManager::RawFree(void* block, uint64 size, Tag tag) {
+void MemoryManager::RawFree(void *block, uint64 size, Tag tag) {
   if (!block)
     return;
 
@@ -105,7 +105,7 @@ void MemoryManager::RawFree(void* block, uint64 size, Tag tag) {
 #endif
 }
 
-void MemoryManager::FZeroMemory(void* block, uint64 size) {
+void MemoryManager::FZeroMemory(void *block, uint64 size) {
   if (block == nullptr || size == 0) {
     return;
   }
@@ -113,7 +113,7 @@ void MemoryManager::FZeroMemory(void* block, uint64 size) {
   std::memset(block, 0, size);
 }
 
-void MemoryManager::CopyMemory(void* dst, const void* src, uint64 size) {
+void MemoryManager::CopyMemory(void *dst, const void *src, uint64 size) {
   if (src == nullptr || dst == nullptr || size == 0) {
     return;
   }
@@ -147,7 +147,7 @@ void MemoryManager::MemoryUsage() {
   std::println("==================================");
 }
 
-const char* TagToString(flatearth::memory::Tag tag) {
+const char *TagToString(flatearth::memory::Tag tag) {
   using flatearth::memory::Tag;
   switch (tag) {
     case Tag::Unknown:

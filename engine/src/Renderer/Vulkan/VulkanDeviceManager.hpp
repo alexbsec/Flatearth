@@ -12,11 +12,11 @@ struct PhysicalDeviceRequirements {
   bool present;
   bool compute;
   bool transfer;
-  containers::DArray<const char*> deviceExtNames;
+  containers::DArray<const char *> deviceExtNames;
   bool samplerAnisotropy;
   bool discreteGPU;
 
-  explicit PhysicalDeviceRequirements(memory::MemoryManager& memManager)
+  explicit PhysicalDeviceRequirements(memory::MemoryManager &memManager)
       : deviceExtNames(memManager) {}
 };
 
@@ -29,23 +29,23 @@ struct PhysicalDeviceQueueFamilyInfo {
 
 class DeviceManager {
 public:
-  explicit DeviceManager(memory::MemoryManager& memManager);
-  FeExpect<void, Error> CreateDevice(Context& ctx);
-  FeExpect<void, Error> DestroyDevice(Context& ctx);
-  FeExpect<void, Error> DetectDeviceDepthFormat(Device& device);
+  explicit DeviceManager(memory::MemoryManager &memManager);
+  FeExpect<void, Error> CreateDevice(Context &ctx);
+  FeExpect<void, Error> DestroyDevice(Context &ctx);
+  FeExpect<void, Error> DetectDeviceDepthFormat(Device &device);
 
 private:
-  bool SelectPhysicalDevice(Context& ctx);
+  bool SelectPhysicalDevice(Context &ctx);
   bool PhysicalDeviceMeetsRequirements(VkPhysicalDevice device,
                                        VkSurfaceKHR surface,
-                                       const VkPhysicalDeviceProperties* properties,
-                                       const VkPhysicalDeviceFeatures* features,
-                                       const PhysicalDeviceRequirements* requirements,
-                                       PhysicalDeviceQueueFamilyInfo* outQueueInfo,
-                                       SwapchainSupportInfo* outSwapchainInfo);
+                                       const VkPhysicalDeviceProperties *properties,
+                                       const VkPhysicalDeviceFeatures *features,
+                                       const PhysicalDeviceRequirements *requirements,
+                                       PhysicalDeviceQueueFamilyInfo *outQueueInfo,
+                                       SwapchainSupportInfo *outSwapchainInfo);
 
 private:
-  memory::MemoryManager& _memoryManager;
+  memory::MemoryManager &_memoryManager;
 };
 
 } // namespace flatearth::renderer::vulkan

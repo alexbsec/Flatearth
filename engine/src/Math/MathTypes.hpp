@@ -5,6 +5,16 @@
 
 namespace flatearth::math {
 
+enum class MatrixLayout : uint8 { RowMajor, ColumnMajor };
+
+constexpr MatrixLayout CPUMatrixLayout() {
+  return MatrixLayout::RowMajor;
+}
+
+constexpr MatrixLayout GPUMatrixLayout() {
+  return MatrixLayout::ColumnMajor;
+}
+
 struct Vertex3D {
   Vec3D position;
 };

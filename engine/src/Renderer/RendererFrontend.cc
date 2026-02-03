@@ -3,15 +3,17 @@
 #include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
+#include "Math/FeMath.hpp"
+#include "Math/Matrix4D.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererInterface.hpp"
 #include "Renderer/Vulkan/VulkanBackend.hpp"
 
 namespace flatearth::renderer {
 
-FrontendRenderer::FrontendRenderer(ApplicationState* appState,
-                                   memory::MemoryManager& memManager,
-                                   platform::FileSystem& fs)
+FrontendRenderer::FrontendRenderer(ApplicationState *appState,
+                                   memory::MemoryManager &memManager,
+                                   platform::FileSystem &fs)
     : _applicationName(appState->appConfig.name), _memoryManager(memManager), _pAppState(appState),
       _filesystem(fs) {
 }
@@ -75,7 +77,7 @@ FeExpect<bool, Error> FrontendRenderer::EndFrame(float32 deltaTime) {
   return FeTrue;
 }
 
-FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket* pRenderPacket) {
+FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
   if (pRenderPacket == nullptr) {
     FLOG_WARN("nullptr renderpacket passed");
     return FeFalse;
@@ -92,8 +94,13 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket* pRenderPacket) {
     return FeTrue;
   }
 
-  auto updateRes = _pActiveBackend->UpdateGlobalState(
-      math::Mat4D::Identity(), math::Mat4D::Identity(), math::Vec3D::Zero(), 0);
+  math::Mat4D projection =
+      math::Mat4D::Perspective(math::DegToRad(45.0f), 1280 / 720.f, 0.1f, 1000.f);
+  math::Mat4D view = math::Mat4D::Translation(0.0f, 0.0f, -30.0f);
+
+  math::Mat4D model = math::Mat4D::Translation(0.0f, 0.0f, 0.0f);
+  _pActiveBackend->UpdateObject(model);
+  auto updateRes = _pActiveBackend->UpdateGlobalState(projection, view, math::Vec3D::Zero(), 0);
   if (!updateRes.has_value()) {
     FLOG_ERROR("failed to update global state on frontend renderer");
     return FeErr{updateRes.error()};

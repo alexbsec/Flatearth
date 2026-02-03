@@ -8,8 +8,8 @@ namespace flatearth::renderer::vulkan {
 
 class ImageManager {
 public:
-  FeExpect<void, Error> CreateImage(Context& ctx,
-                                    Image& image,
+  FeExpect<void, Error> CreateImage(Context &ctx,
+                                    Image &image,
                                     VkImageType imageType,
                                     uint32 width,
                                     uint32 height,
@@ -21,9 +21,9 @@ public:
                                     VkImageAspectFlags aspectFlags);
 
   FeExpect<void, Error>
-  CreateImageView(Context& ctx, Image& image, VkFormat format, VkImageAspectFlags aspectFlags);
+  CreateImageView(Context &ctx, Image &image, VkFormat format, VkImageAspectFlags aspectFlags);
 
-  FeExpect<void, Error> DestroyImage(Context& ctx, Image& image);
+  FeExpect<void, Error> DestroyImage(Context &ctx, Image &image);
 };
 
 } // namespace flatearth::renderer::vulkan

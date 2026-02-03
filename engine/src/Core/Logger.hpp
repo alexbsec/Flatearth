@@ -18,13 +18,13 @@
 
 namespace febundle::core {
 
-inline const char* COLOR_GREY = "\x1b[90m";
-inline const char* COLOR_BLUE = "\x1b[34m";
-inline const char* COLOR_GREEN = "\x1b[32m";
-inline const char* COLOR_YELLOW = "\x1b[33m";
-inline const char* COLOR_RED = "\x1b[31m";
-inline const char* COLOR_FATAL = "\x1b[41;97m";
-inline const char* COLOR_RESET = "\x1b[0m";
+inline const char *COLOR_GREY = "\x1b[90m";
+inline const char *COLOR_BLUE = "\x1b[34m";
+inline const char *COLOR_GREEN = "\x1b[32m";
+inline const char *COLOR_YELLOW = "\x1b[33m";
+inline const char *COLOR_RED = "\x1b[31m";
+inline const char *COLOR_FATAL = "\x1b[41;97m";
+inline const char *COLOR_RESET = "\x1b[0m";
 
 enum class LogLevel {
   Trace = 0,
@@ -45,14 +45,14 @@ struct LogMessage {
 
 class Logger {
 public:
-  inline static Logger& Self() {
+  inline static Logger &Self() {
     static Logger instance;
     return instance;
   }
 
   inline void SetLevel(LogLevel lvl) { _level = lvl; }
 
-  inline void SetLogfilePath(const std::filesystem::path& path) { _logPath = path; }
+  inline void SetLogfilePath(const std::filesystem::path &path) { _logPath = path; }
 
   inline void FileLogging(bool enable) {
     if (enable) {
@@ -76,7 +76,7 @@ public:
   inline void LogToFile(LogLevel level,
                         std::source_location where,
                         std::string_view fmt,
-                        const Args&... args) noexcept {
+                        const Args &...args) noexcept {
     if (!_logToFile) {
       Log(LogLevel::Warn,
           std::source_location::current(),
@@ -101,7 +101,7 @@ public:
   void Log(LogLevel level,
            std::source_location where,
            std::string_view fmt,
-           const Args&... args) noexcept {
+           const Args &...args) noexcept {
     if (level < _level) {
       return;
     }
@@ -167,21 +167,21 @@ private:
     }
   }
 
-  Logger(const Logger&) = delete;
-  Logger& operator=(const Logger&) = delete;
+  Logger(const Logger &) = delete;
+  Logger &operator=(const Logger &) = delete;
 
   template <typename... Args>
   inline string format(LogLevel level,
                        std::source_location where,
                        std::string_view fmt,
-                       const Args&... args) noexcept {
+                       const Args &...args) noexcept {
     std::lock_guard<std::mutex> guard(_mutex);
     auto payload = std::vformat(fmt, std::make_format_args(args...));
-    const char* color = LevelColour(level);
-    const char* reset = COLOR_RESET;
-    const char* lvlStr = toString(level);
-    const char* full = where.file_name();
-    const char* p = std::strstr(full, "src/");
+    const char *color = LevelColour(level);
+    const char *reset = COLOR_RESET;
+    const char *lvlStr = toString(level);
+    const char *full = where.file_name();
+    const char *p = std::strstr(full, "src/");
     if (p == nullptr) {
       auto slash = std::strrchr(full, '/');
       p = slash ? slash + 1 : full;
@@ -204,7 +204,7 @@ private:
     _cv.notify_one();
   }
 
-  inline constexpr const char* toString(LogLevel lvl) const {
+  inline constexpr const char *toString(LogLevel lvl) const {
     switch (lvl) {
       case LogLevel::Trace:
         return "TRACE";
@@ -226,7 +226,7 @@ private:
     return "UNKNOWN";
   }
 
-  inline constexpr const char* LevelColour(LogLevel lvl) {
+  inline constexpr const char *LevelColour(LogLevel lvl) {
     switch (lvl) {
       case LogLevel::Trace:
         return COLOR_GREEN;

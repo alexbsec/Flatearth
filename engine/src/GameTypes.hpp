@@ -13,17 +13,17 @@ const string cGameName = "Flatearth Engine Demo";
 
 struct Game {
 public:
-  std::function<bool(struct Game* gameInstance)> Initialize;
-  std::function<bool(struct Game* gameInstance, float32 deltaTime)> Update;
-  std::function<bool(struct Game* gameInstance, float32 deltaTime)> Render;
-  std::function<bool(struct Game* gameInstance, uint32 width, uint32 height)> OnResize;
+  std::function<bool(struct Game *gameInstance)> Initialize;
+  std::function<bool(struct Game *gameInstance, float32 deltaTime)> Update;
+  std::function<bool(struct Game *gameInstance, float32 deltaTime)> Render;
+  std::function<bool(struct Game *gameInstance, uint32 width, uint32 height)> OnResize;
 
   Game()
       : Initialize(nullptr), Update(nullptr), Render(nullptr), OnResize(nullptr),
         gameName(cGameName), windowStartWidth(scDefaultStartWidth),
         windowStartHeight(scDefaultStartHeight) {}
 
-  Game(const string& name)
+  Game(const string &name)
       : Initialize(nullptr), Update(nullptr), Render(nullptr), OnResize(nullptr), gameName(name),
         windowStartWidth(scDefaultStartWidth), windowStartHeight(scDefaultStartHeight) {}
 

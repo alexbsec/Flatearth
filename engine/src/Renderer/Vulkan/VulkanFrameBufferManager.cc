@@ -7,7 +7,7 @@
 
 namespace flatearth::renderer::vulkan {
 
-FrameBufferManager::FrameBufferManager(memory::MemoryManager& memManager)
+FrameBufferManager::FrameBufferManager(memory::MemoryManager &memManager)
     : _memoryManager(memManager) {
 }
 
@@ -15,13 +15,13 @@ FrameBufferManager::~FrameBufferManager() {
   FLOG_INFO("frame buffer exitted gracefully");
 }
 
-FeExpect<void, Error> FrameBufferManager::CreateFrameBuffer(Context& ctx,
-                                                            Renderpass& renderpass,
-                                                            FrameBuffer* pFrameBuffer,
+FeExpect<void, Error> FrameBufferManager::CreateFrameBuffer(Context &ctx,
+                                                            Renderpass &renderpass,
+                                                            FrameBuffer *pFrameBuffer,
                                                             uint32 width,
                                                             uint32 height,
                                                             uint32 attachmentCount,
-                                                            VkImageView* pAttachments) {
+                                                            VkImageView *pAttachments) {
   if (pFrameBuffer == nullptr) {
     FLOG_ERROR("cannot create on nullptr framebuffer");
     return FeErr{Error("attempt to create framebuffer on nullptr", ErrorType::NullptrException)};
@@ -58,8 +58,8 @@ FeExpect<void, Error> FrameBufferManager::CreateFrameBuffer(Context& ctx,
   return {};
 }
 
-FeExpect<void, Error> FrameBufferManager::DestroyFrameBuffer(Context& ctx,
-                                                             FrameBuffer* pFrameBuffer) {
+FeExpect<void, Error> FrameBufferManager::DestroyFrameBuffer(Context &ctx,
+                                                             FrameBuffer *pFrameBuffer) {
   vkDeviceWaitIdle(ctx.device.logicalDevice);
 
   vkDestroyFramebuffer(ctx.device.logicalDevice, pFrameBuffer->handle, ctx.pAllocator);

@@ -11,21 +11,21 @@ namespace flatearth::containers {
 
 template <typename T>
 struct Hash {
-  uint64 operator()(const T& val) const { return std::hash<T>{}(val); }
+  uint64 operator()(const T &val) const { return std::hash<T>{}(val); }
 };
 
 template <typename T>
 struct HashEqual {
-  bool operator()(const T& a, const T& b) const { return a == b; }
+  bool operator()(const T &a, const T &b) const { return a == b; }
 };
 
 template <typename T, typename H = Hash<T>, typename Eq = HashEqual<T>>
 class HashSet {
 public:
-  explicit HashSet(memory::MemoryManager& memManager, uint64 bucketCount = 64)
+  explicit HashSet(memory::MemoryManager &memManager, uint64 bucketCount = 64)
       : _memoryManager(memManager), _bucketCount(bucketCount) {
     assert(bucketCount > 0);
-    _ppBuckets = FeCast<FePtr<Node<T>>*>(_memoryManager.RawAlloc(
+    _ppBuckets = FeCast<FePtr<Node<T>> *>(_memoryManager.RawAlloc(
         sizeof(FePtr<Node<T>>) * _bucketCount, alignof(FePtr<Node<T>>), memory::Tag::HashSet));
 
     // initialize to null
@@ -41,14 +41,14 @@ public:
     }
   }
 
-  inline FeExpect<bool, Error> Insert(const T& value) {
+  inline FeExpect<bool, Error> Insert(const T &value) {
     H hashFn{};
     Eq eqFn{};
 
     const uint64 index = hashFn(value) % _bucketCount;
-    FePtr<Node<T>>& head = _ppBuckets[index];
+    FePtr<Node<T>> &head = _ppBuckets[index];
 
-    for (Node<T>* node = head.get(); node != nullptr; node = node->pNext.get()) {
+    for (Node<T> *node = head.get(); node != nullptr; node = node->pNext.get()) {
       if (eqFn(node->data, value)) {
         // already exists
         return FeFalse;
@@ -67,15 +67,15 @@ public:
     return FeTrue;
   }
 
-  inline bool Remove(const T& value) {
+  inline bool Remove(const T &value) {
     H hashFn{};
     Eq eqFn{};
 
     const uint64 index = hashFn(value) % _bucketCount;
-    FePtr<Node<T>>* owner = &_ppBuckets[index];
+    FePtr<Node<T>> *owner = &_ppBuckets[index];
 
     while (owner->get() != nullptr) {
-      Node<T>* node = owner->get();
+      Node<T> *node = owner->get();
 
       if (eqFn(node->data, value)) {
         *owner = std::move(node->pNext);
@@ -89,13 +89,13 @@ public:
     return FeFalse;
   }
 
-  inline bool Has(const T& value) const {
+  inline bool Has(const T &value) const {
     H hashFn{};
     Eq eqFn{};
 
     const uint64 index = hashFn(value) % _bucketCount;
 
-    for (Node<T>* node = _ppBuckets[index].get(); node != nullptr; node = node->pNext.get()) {
+    for (Node<T> *node = _ppBuckets[index].get(); node != nullptr; node = node->pNext.get()) {
       if (eqFn(node->data, value)) {
         return FeTrue;
       }
@@ -109,8 +109,8 @@ public:
   inline bool Empty() const { return _size == 0; }
 
 private:
-  FePtr<Node<T>>* _ppBuckets{nullptr};
-  memory::MemoryManager& _memoryManager;
+  FePtr<Node<T>> *_ppBuckets{nullptr};
+  memory::MemoryManager &_memoryManager;
   uint64 _bucketCount;
   uint64 _size{0};
 };

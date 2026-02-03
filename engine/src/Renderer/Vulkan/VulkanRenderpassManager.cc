@@ -4,7 +4,7 @@
 
 namespace flatearth::renderer::vulkan {
 
-RenderpassManager::RenderpassManager(memory::MemoryManager& memManager)
+RenderpassManager::RenderpassManager(memory::MemoryManager &memManager)
     : _memoryManager(memManager) {
 }
 
@@ -12,8 +12,8 @@ RenderpassManager::~RenderpassManager() {
   FLOG_INFO("renderpass exited gracefully");
 }
 
-FeExpect<void, Error> RenderpassManager::CreateRenderpass(Context& ctx,
-                                                          Renderpass* pRenderpass,
+FeExpect<void, Error> RenderpassManager::CreateRenderpass(Context &ctx,
+                                                          Renderpass *pRenderpass,
                                                           float32 x,
                                                           float32 y,
                                                           float32 width,
@@ -131,7 +131,7 @@ FeExpect<void, Error> RenderpassManager::CreateRenderpass(Context& ctx,
   return {};
 }
 
-FeExpect<void, Error> RenderpassManager::DestroyRenderpass(Context& ctx, Renderpass* pRenderpass) {
+FeExpect<void, Error> RenderpassManager::DestroyRenderpass(Context &ctx, Renderpass *pRenderpass) {
 
   if (pRenderpass != nullptr && pRenderpass->handle != nullptr) {
     vkDestroyRenderPass(ctx.device.logicalDevice, pRenderpass->handle, ctx.pAllocator);
@@ -141,9 +141,9 @@ FeExpect<void, Error> RenderpassManager::DestroyRenderpass(Context& ctx, Renderp
   return {};
 }
 
-void RenderpassManager::BeginRenderpass(Context& ctx,
-                                        CommandBuffer* pCmdBuffer,
-                                        Renderpass* pRenderpass,
+void RenderpassManager::BeginRenderpass(Context &ctx,
+                                        CommandBuffer *pCmdBuffer,
+                                        Renderpass *pRenderpass,
                                         VkFramebuffer frameBuffer) {
 
   VkRenderPassBeginInfo beginInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
@@ -171,9 +171,9 @@ void RenderpassManager::BeginRenderpass(Context& ctx,
   pCmdBuffer->state = CmdBufferState::InRenderpass;
 }
 
-void RenderpassManager::EndRenderpass(Context& ctx,
-                                      CommandBuffer* pCmdBuffer,
-                                      Renderpass* pRenderpass) {
+void RenderpassManager::EndRenderpass(Context &ctx,
+                                      CommandBuffer *pCmdBuffer,
+                                      Renderpass *pRenderpass) {
   vkCmdEndRenderPass(pCmdBuffer->handle);
   pCmdBuffer->state = CmdBufferState::Recording;
 }

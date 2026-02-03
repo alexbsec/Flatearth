@@ -6,12 +6,12 @@
 
 namespace flatearth::renderer::vulkan {
 
-FeExpect<bool, Error> CreateShaderModule(Context& ctx,
-                                         const string& name,
-                                         const string& typeStr,
+FeExpect<bool, Error> CreateShaderModule(Context &ctx,
+                                         const string &name,
+                                         const string &typeStr,
                                          VkShaderStageFlagBits stageFlag,
                                          uint32 stageIndex,
-                                         ShaderStage* pShaderStage);
+                                         ShaderStage *pShaderStage);
 
 }
 

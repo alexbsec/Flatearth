@@ -131,7 +131,7 @@ constexpr static float32 FE_F32MAX = 1e20f;
 constexpr static float32 FE_F32EPS = 1.192092896e-7f;
 
 template <typename T>
-using FePtr = std::unique_ptr<T, std::function<void(T*)>>;
+using FePtr = std::unique_ptr<T, std::function<void(T *)>>;
 
 template <typename T, typename D>
 using FeCustomDeleterPtr = std::unique_ptr<T, D>;
@@ -143,20 +143,20 @@ template <typename Err>
 using FeErr = std::unexpected<Err>;
 
 template <typename T>
-inline T* FeCast(void* ptr) {
+inline T *FeCast(void *ptr) {
   static_assert(!std::is_array_v<T>, "FeCast<T>: T must not be an array type");
 #ifdef FE_DEBUG
   assert(ptr != nullptr);
 #endif
-  return static_cast<T*>(ptr);
+  return static_cast<T *>(ptr);
 }
 
 template <typename T>
-inline T* FeCastPermissive(void* ptr) {
+inline T *FeCastPermissive(void *ptr) {
 #ifdef FE_DEBUG
   assert(ptr != nullptr);
 #endif
-  return reinterpret_cast<T*>(ptr);
+  return reinterpret_cast<T *>(ptr);
 }
 
 #define FECLAMP(value, min, max) (value <= min) ? min : (value >= max) ? max : value;

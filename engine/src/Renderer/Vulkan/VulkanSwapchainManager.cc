@@ -10,8 +10,8 @@ namespace flatearth::renderer::vulkan {
 
 FeExpect<void, Error> QuerySwapchainSupport(VkPhysicalDevice device,
                                             VkSurfaceKHR surface,
-                                            SwapchainSupportInfo& outSwapchainInfo,
-                                            memory::MemoryManager& memManager) {
+                                            SwapchainSupportInfo &outSwapchainInfo,
+                                            memory::MemoryManager &memManager) {
   FeExpect<void, Error> res;
   // Surface capabilities
   if (res = VkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
@@ -84,19 +84,19 @@ FeExpect<void, Error> QuerySwapchainSupport(VkPhysicalDevice device,
   return {};
 }
 
-SwapchainManager::SwapchainManager(memory::MemoryManager& memManager, ImageManager& imgManager)
+SwapchainManager::SwapchainManager(memory::MemoryManager &memManager, ImageManager &imgManager)
     : _memoryManager(memManager), _imageManager(imgManager), _frameBufferManager(memManager) {
 }
 
-FeExpect<void, Error> SwapchainManager::CreateSwapchain(Context& ctx,
-                                                        Swapchain* pSwapchain,
+FeExpect<void, Error> SwapchainManager::CreateSwapchain(Context &ctx,
+                                                        Swapchain *pSwapchain,
                                                         uint32 width,
                                                         uint32 height) {
   return CreateLogic(ctx, pSwapchain, width, height);
 }
 
 FeExpect<bool, Error>
-SwapchainManager::RecreateSwapchain(Context& ctx, uint32& width, uint32& height) {
+SwapchainManager::RecreateSwapchain(Context &ctx, uint32 &width, uint32 &height) {
   if (ctx.recreatingSwapchain) {
     FLOG_WARN("called when already recreating swapchain");
     return FeFalse;
@@ -154,16 +154,16 @@ SwapchainManager::RecreateSwapchain(Context& ctx, uint32& width, uint32& height)
   return {};
 }
 
-FeExpect<void, Error> SwapchainManager::DestroySwapchain(Context& ctx, Swapchain* pSwapchain) {
+FeExpect<void, Error> SwapchainManager::DestroySwapchain(Context &ctx, Swapchain *pSwapchain) {
   return DestroyLogic(ctx, pSwapchain);
 }
 
-FeExpect<bool, Error> SwapchainManager::AcquireNextImage(Context& ctx,
-                                                         Swapchain& swapchain,
+FeExpect<bool, Error> SwapchainManager::AcquireNextImage(Context &ctx,
+                                                         Swapchain &swapchain,
                                                          uint64 timeoutNs,
                                                          VkSemaphore imageAvailableSemaphore,
                                                          VkFence fence,
-                                                         uint32* outImageIndex) {
+                                                         uint32 *outImageIndex) {
 
   VkResult result = vkAcquireNextImageKHR(ctx.device.logicalDevice,
                                           swapchain.handle,
@@ -193,8 +193,8 @@ FeExpect<bool, Error> SwapchainManager::AcquireNextImage(Context& ctx,
   return FeTrue;
 }
 
-FeExpect<void, Error> SwapchainManager::PresentSwapchain(Context& ctx,
-                                                         Swapchain& swapchain,
+FeExpect<void, Error> SwapchainManager::PresentSwapchain(Context &ctx,
+                                                         Swapchain &swapchain,
                                                          VkQueue graphicsQueue,
                                                          VkQueue presentQueue,
                                                          VkSemaphore renderCompleteSemaphore,
@@ -230,9 +230,9 @@ FeExpect<void, Error> SwapchainManager::PresentSwapchain(Context& ctx,
   return {};
 }
 
-FeExpect<void, Error> SwapchainManager::RegenerateFrameBuffer(Context& ctx,
-                                                              Swapchain* pSwapchain,
-                                                              Renderpass* pRenderpass) {
+FeExpect<void, Error> SwapchainManager::RegenerateFrameBuffer(Context &ctx,
+                                                              Swapchain *pSwapchain,
+                                                              Renderpass *pRenderpass) {
   if (pSwapchain == nullptr) {
     return FeErr{Error("cannot regenerate frame buffer with nullptr swapchain",
                        ErrorType::NullptrException)};
@@ -274,7 +274,7 @@ FeExpect<void, Error> SwapchainManager::RegenerateFrameBuffer(Context& ctx,
 }
 
 FeExpect<void, Error>
-SwapchainManager::CreateLogic(Context& ctx, Swapchain* pSwapchain, uint32 width, uint32 height) {
+SwapchainManager::CreateLogic(Context &ctx, Swapchain *pSwapchain, uint32 width, uint32 height) {
   if (pSwapchain == nullptr) {
     FLOG_ERROR("cannot create on nullptr swapchain");
     return FeErr{Error("swapchain creation failed because swapchain pointer was null",
@@ -473,7 +473,7 @@ SwapchainManager::CreateLogic(Context& ctx, Swapchain* pSwapchain, uint32 width,
   return {};
 }
 
-FeExpect<void, Error> SwapchainManager::DestroyLogic(Context& ctx, Swapchain* pSwapchain) {
+FeExpect<void, Error> SwapchainManager::DestroyLogic(Context &ctx, Swapchain *pSwapchain) {
   if (pSwapchain == nullptr) {
     FLOG_ERROR("cannot destroy on nullptr swapchain");
     return FeErr{Error("swapchain destruction failed because swapchain pointer was null",
@@ -525,7 +525,7 @@ FeExpect<void, Error> SwapchainManager::DestroyLogic(Context& ctx, Swapchain* pS
 }
 
 FeExpect<void, Error>
-SwapchainManager::RecreateLogic(Context& ctx, Swapchain* pSwapchain, uint32 width, uint32 height) {
+SwapchainManager::RecreateLogic(Context &ctx, Swapchain *pSwapchain, uint32 width, uint32 height) {
   auto destroyRes = DestroyLogic(ctx, pSwapchain);
   if (!destroyRes.has_value()) {
     FLOG_ERROR("failed to destroy swapchain in recreate process");

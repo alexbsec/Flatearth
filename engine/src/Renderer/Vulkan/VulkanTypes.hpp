@@ -88,11 +88,11 @@ struct VulkanBuffer {
 struct SwapchainSupportInfo {
   VkSurfaceCapabilitiesKHR capabilities{};
   uint32 formatCount{0};
-  VkSurfaceFormatKHR* pFormats{nullptr};
+  VkSurfaceFormatKHR *pFormats{nullptr};
   uint32 formatsCapacity{0};
 
   uint32 presentModeCount{0};
-  VkPresentModeKHR* pPresentMode{nullptr};
+  VkPresentModeKHR *pPresentMode{nullptr};
   uint32 presentModesCapacity{0};
 };
 
@@ -139,16 +139,16 @@ struct Renderpass {
 struct FrameBuffer {
   VkFramebuffer handle;
   uint32 attachmentCount;
-  VkImageView* pAttachments{nullptr};
-  Renderpass* pRenderpass{nullptr};
+  VkImageView *pAttachments{nullptr};
+  Renderpass *pRenderpass{nullptr};
 };
 
 struct Swapchain {
   VkSwapchainKHR handle;
   VkSurfaceFormatKHR imageFormat;
   uint8 maxFrames{3};
-  VkImage* pImages{nullptr};
-  VkImageView* pViews{nullptr};
+  VkImage *pImages{nullptr};
+  VkImageView *pViews{nullptr};
   Image depthAttachment;
   uint32 imageCount;
   uint32 viewsCapacity;
@@ -156,7 +156,7 @@ struct Swapchain {
   uint32 widthExtent{0}, heightExtent{0};
   containers::DArray<FrameBuffer> framebuffers;
 
-  explicit Swapchain(memory::MemoryManager& memManager) : framebuffers(memManager) {}
+  explicit Swapchain(memory::MemoryManager &memManager) : framebuffers(memManager) {}
 };
 
 enum class CmdBufferState {
@@ -202,7 +202,7 @@ struct ObjectShader {
   GlobalUniformObject globalUBO;
   VulkanBuffer globalUniformBuffer;
 
-  ObjectShader(memory::MemoryManager& memManager) : globalDescriptorSets(memManager) {}
+  ObjectShader(memory::MemoryManager &memManager) : globalDescriptorSets(memManager) {}
 };
 
 struct Context {
@@ -212,7 +212,7 @@ struct Context {
   uint32 currentFrame{0};
   uint32 imageIndex{0};
   VkInstance instance;
-  VkAllocationCallbacks* pAllocator;
+  VkAllocationCallbacks *pAllocator;
   VkSurfaceKHR surface;
   Device device;
   Swapchain swapchain;
@@ -223,10 +223,10 @@ struct Context {
 
   uint32 inFlightFenceCount;
   containers::DArray<Fence> inFlightFences;
-  containers::DArray<Fence*> imagesInFlight;
+  containers::DArray<Fence *> imagesInFlight;
 
-  memory::MemoryManager& memoryManager;
-  platform::FileSystem& filesystem;
+  memory::MemoryManager &memoryManager;
+  platform::FileSystem &filesystem;
 
   ObjectShader objectShader;
 
@@ -237,7 +237,7 @@ struct Context {
 
   bool recreatingSwapchain{false};
 
-  explicit Context(memory::MemoryManager& memManager, platform::FileSystem& fs)
+  explicit Context(memory::MemoryManager &memManager, platform::FileSystem &fs)
       : swapchain(memManager), graphicsCommandBuffer(memManager),
         imageAvailableSemaphores(memManager), queueCompleteSemaphores(memManager),
         inFlightFences(memManager), imagesInFlight(memManager), memoryManager(memManager),
@@ -261,7 +261,7 @@ struct Context {
 #endif
 };
 
-FeExpect<void, Error> DetectDeviceDepthFormat(Device& device);
+FeExpect<void, Error> DetectDeviceDepthFormat(Device &device);
 
 } // namespace flatearth::renderer::vulkan
 

@@ -4,8 +4,8 @@
 
 namespace flatearth::renderer::vulkan {
 
-FeExpect<void, Error> ImageManager::CreateImage(Context& ctx,
-                                                Image& image,
+FeExpect<void, Error> ImageManager::CreateImage(Context &ctx,
+                                                Image &image,
                                                 VkImageType imageType,
                                                 uint32 width,
                                                 uint32 height,
@@ -83,8 +83,8 @@ FeExpect<void, Error> ImageManager::CreateImage(Context& ctx,
   return {};
 }
 
-FeExpect<void, Error> ImageManager::CreateImageView(Context& ctx,
-                                                    Image& image,
+FeExpect<void, Error> ImageManager::CreateImageView(Context &ctx,
+                                                    Image &image,
                                                     VkFormat format,
                                                     VkImageAspectFlags aspectFlags) {
   VkImageViewCreateInfo viewCreateInfo = {VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
@@ -112,7 +112,7 @@ FeExpect<void, Error> ImageManager::CreateImageView(Context& ctx,
   return {};
 }
 
-FeExpect<void, Error> ImageManager::DestroyImage(Context& ctx, Image& image) {
+FeExpect<void, Error> ImageManager::DestroyImage(Context &ctx, Image &image) {
   if (image.view != nullptr) {
     vkDestroyImageView(ctx.device.logicalDevice, image.view, ctx.pAllocator);
     image.view = nullptr;

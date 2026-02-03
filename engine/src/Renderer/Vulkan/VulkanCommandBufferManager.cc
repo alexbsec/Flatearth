@@ -7,7 +7,7 @@
 
 namespace flatearth::renderer::vulkan {
 
-CommandBufferManager::CommandBufferManager(memory::MemoryManager& memManager)
+CommandBufferManager::CommandBufferManager(memory::MemoryManager &memManager)
     : _memoryManager(memManager) {
 }
 
@@ -15,7 +15,7 @@ CommandBufferManager::~CommandBufferManager() {
   FLOG_INFO("command buffer exitted successfully");
 }
 
-FeExpect<void, Error> CommandBufferManager::CreateBuffers(Context& ctx) {
+FeExpect<void, Error> CommandBufferManager::CreateBuffers(Context &ctx) {
   if (ctx.graphicsCommandBuffer.Empty()) {
     ctx.graphicsCommandBuffer.Reserve(ctx.swapchain.imageCount);
     for (uint32 i = 0; i < ctx.swapchain.imageCount; i++) {
@@ -43,7 +43,7 @@ FeExpect<void, Error> CommandBufferManager::CreateBuffers(Context& ctx) {
   return {};
 }
 
-FeExpect<void, Error> CommandBufferManager::DestroyBuffers(Context& ctx) {
+FeExpect<void, Error> CommandBufferManager::DestroyBuffers(Context &ctx) {
   if (ctx.graphicsCommandBuffer.Empty()) {
     FLOG_DEBUG("no buffer to destroy");
     return {};
@@ -64,8 +64,8 @@ FeExpect<void, Error> CommandBufferManager::DestroyBuffers(Context& ctx) {
   return {};
 }
 
-FeExpect<void, Error> CommandBufferManager::AllocateBuffer(Context& ctx,
-                                                           CommandBuffer* pCmdBuffer,
+FeExpect<void, Error> CommandBufferManager::AllocateBuffer(Context &ctx,
+                                                           CommandBuffer *pCmdBuffer,
                                                            VkCommandPool pool,
                                                            bool isPrimary) {
   // just to make sure
@@ -89,14 +89,14 @@ FeExpect<void, Error> CommandBufferManager::AllocateBuffer(Context& ctx,
 }
 
 FeExpect<void, Error>
-CommandBufferManager::FreeBuffer(Context& ctx, CommandBuffer* pCmdBuffer, VkCommandPool pool) {
+CommandBufferManager::FreeBuffer(Context &ctx, CommandBuffer *pCmdBuffer, VkCommandPool pool) {
   constexpr uint32 cCmdBufferCount = 1;
   vkFreeCommandBuffers(ctx.device.logicalDevice, pool, cCmdBufferCount, &pCmdBuffer->handle);
   return {};
 }
 
-void CommandBufferManager::BeginBuffer(Context& ctx,
-                                       CommandBuffer& cmdBuffer,
+void CommandBufferManager::BeginBuffer(Context &ctx,
+                                       CommandBuffer &cmdBuffer,
                                        bool isSingleUse,
                                        bool isRenderpassContinue,
                                        bool isSimultaneousUse) {
@@ -121,7 +121,7 @@ void CommandBufferManager::BeginBuffer(Context& ctx,
   cmdBuffer.state = CmdBufferState::Recording;
 }
 
-void CommandBufferManager::EndBuffer(Context& ctx, CommandBuffer& cmdBuffer) {
+void CommandBufferManager::EndBuffer(Context &ctx, CommandBuffer &cmdBuffer) {
   if (auto res = VkCheck(vkEndCommandBuffer(cmdBuffer.handle)); !res.has_value()) {
     FLOG_ERROR("failed to end command buffer");
     return;
@@ -129,7 +129,7 @@ void CommandBufferManager::EndBuffer(Context& ctx, CommandBuffer& cmdBuffer) {
   cmdBuffer.state = CmdBufferState::RecordingEnded;
 }
 
-void CommandBufferManager::ResetBuffer(Context& ctx, CommandBuffer& cmdBuffer) {
+void CommandBufferManager::ResetBuffer(Context &ctx, CommandBuffer &cmdBuffer) {
   cmdBuffer.state = CmdBufferState::Ready;
 }
 

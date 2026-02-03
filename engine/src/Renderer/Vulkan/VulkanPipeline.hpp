@@ -9,22 +9,22 @@ namespace flatearth::renderer::vulkan {
 
 class PipelineManager {
 public:
-  FeExpect<void, Error> CreateGraphicsPipeline(Context& ctx,
-                                               Renderpass* pRenderpass,
+  FeExpect<void, Error> CreateGraphicsPipeline(Context &ctx,
+                                               Renderpass *pRenderpass,
                                                uint32 attributeCount,
-                                               VkVertexInputAttributeDescription* pAttributes,
+                                               VkVertexInputAttributeDescription *pAttributes,
                                                uint32 descriptorSetLayoutCount,
-                                               VkDescriptorSetLayout* pDescriptorLayouts,
+                                               VkDescriptorSetLayout *pDescriptorLayouts,
                                                uint32 stageCount,
-                                               VkPipelineShaderStageCreateInfo* pStages,
+                                               VkPipelineShaderStageCreateInfo *pStages,
                                                VkViewport viewport,
                                                VkRect2D scissor,
                                                bool isWireframe,
-                                               Pipeline* pPipeline);
+                                               Pipeline *pPipeline);
 
-  void DestroyGraphicsPipeline(Context& ctx, Pipeline* pPipeline);
+  void DestroyGraphicsPipeline(Context &ctx, Pipeline *pPipeline);
 
-  void BindPipeline(CommandBuffer& cmdBuffer, VkPipelineBindPoint bindPoint, Pipeline& pipeline);
+  void BindPipeline(CommandBuffer &cmdBuffer, VkPipelineBindPoint bindPoint, Pipeline &pipeline);
 };
 
 } // namespace flatearth::renderer::vulkan

@@ -5,11 +5,11 @@
 
 namespace flatearth {
 
-const char* KeyToString(input::Keys key);
+const char *KeyToString(input::Keys key);
 
-EngineListener::EngineListener(event::EventManager& eventManager,
-                               ApplicationState& appState,
-                               renderer::FrontendRenderer& renderer)
+EngineListener::EngineListener(event::EventManager &eventManager,
+                               ApplicationState &appState,
+                               renderer::FrontendRenderer &renderer)
     : _eventManager(eventManager), _appState(appState), _frontendRenderer(renderer) {
 }
 
@@ -72,8 +72,8 @@ FeExpect<void, Error> EngineListener::Initialize() {
   return WireEvents();
 }
 
-FeExpect<bool, Error> EngineListener::OnResize(const event::EventDispatchContext& ctx,
-                                               const event::EventContext& eventCtx) {
+FeExpect<bool, Error> EngineListener::OnResize(const event::EventDispatchContext &ctx,
+                                               const event::EventContext &eventCtx) {
   if (ctx.code != event::SystemEventCode::WindowResized) {
     return FeFalse;
   }
@@ -115,8 +115,8 @@ FeExpect<bool, Error> EngineListener::OnResize(const event::EventDispatchContext
   return FeTrue;
 }
 
-FeExpect<bool, Error> EngineListener::OnKey(const event::EventDispatchContext& ctx,
-                                            const event::EventContext& eventCtx) {
+FeExpect<bool, Error> EngineListener::OnKey(const event::EventDispatchContext &ctx,
+                                            const event::EventContext &eventCtx) {
   using event::SystemEventCode;
   if (ctx.code != SystemEventCode::KeyPressed && ctx.code != SystemEventCode::KeyReleased) {
     return FeFalse;
@@ -126,8 +126,8 @@ FeExpect<bool, Error> EngineListener::OnKey(const event::EventDispatchContext& c
                                                  : OnKeyRelease(ctx, eventCtx);
 }
 
-FeExpect<bool, Error> EngineListener::OnEvent(const event::EventDispatchContext& ctx,
-                                              const event::EventContext& eventCtx) {
+FeExpect<bool, Error> EngineListener::OnEvent(const event::EventDispatchContext &ctx,
+                                              const event::EventContext &eventCtx) {
   if (ctx.code != event::SystemEventCode::ApplicationQuit) {
     return FeFalse;
   }
@@ -136,8 +136,8 @@ FeExpect<bool, Error> EngineListener::OnEvent(const event::EventDispatchContext&
   return FeTrue;
 }
 
-FeExpect<bool, Error> EngineListener::OnButton(const event::EventDispatchContext& ctx,
-                                               const event::EventContext& eventCtx) {
+FeExpect<bool, Error> EngineListener::OnButton(const event::EventDispatchContext &ctx,
+                                               const event::EventContext &eventCtx) {
   using event::SystemEventCode;
 
   if (ctx.code != SystemEventCode::ButtonPressed && ctx.code != SystemEventCode::ButtonReleased) {
@@ -148,8 +148,8 @@ FeExpect<bool, Error> EngineListener::OnButton(const event::EventDispatchContext
                                                     : OnButtonRelease(ctx, eventCtx);
 }
 
-FeExpect<bool, Error> EngineListener::OnMouseMove(const event::EventDispatchContext& ctx,
-                                                  const event::EventContext& eventCtx) {
+FeExpect<bool, Error> EngineListener::OnMouseMove(const event::EventDispatchContext &ctx,
+                                                  const event::EventContext &eventCtx) {
   using event::SystemEventCode;
   if (ctx.code != SystemEventCode::MouseMoved) {
     return FeFalse;
@@ -210,8 +210,8 @@ FeExpect<void, Error> EngineListener::WireEvents() {
   return {};
 }
 
-FeExpect<bool, Error> EngineListener::OnKeyPress(const event::EventDispatchContext& ctx,
-                                                 const event::EventContext& eventCtx) {
+FeExpect<bool, Error> EngineListener::OnKeyPress(const event::EventDispatchContext &ctx,
+                                                 const event::EventContext &eventCtx) {
   using event::SystemEventCode;
   using event::Uint16x8;
   Uint16x8 keyContext = eventCtx.Get<Uint16x8>();
@@ -229,8 +229,8 @@ FeExpect<bool, Error> EngineListener::OnKeyPress(const event::EventDispatchConte
   return FeTrue;
 }
 
-FeExpect<bool, Error> EngineListener::OnKeyRelease(const event::EventDispatchContext& ctx,
-                                                   const event::EventContext& eventCtx) {
+FeExpect<bool, Error> EngineListener::OnKeyRelease(const event::EventDispatchContext &ctx,
+                                                   const event::EventContext &eventCtx) {
   using event::SystemEventCode;
   using event::Uint16x8;
 
@@ -249,8 +249,8 @@ FeExpect<bool, Error> EngineListener::OnKeyRelease(const event::EventDispatchCon
   return FeTrue;
 }
 
-FeExpect<bool, Error> EngineListener::OnButtonPress(const event::EventDispatchContext& ctx,
-                                                    const event::EventContext& eventCtx) {
+FeExpect<bool, Error> EngineListener::OnButtonPress(const event::EventDispatchContext &ctx,
+                                                    const event::EventContext &eventCtx) {
   using event::SystemEventCode;
   using event::Uint16x8;
 
@@ -267,8 +267,8 @@ FeExpect<bool, Error> EngineListener::OnButtonPress(const event::EventDispatchCo
   return FeTrue;
 }
 
-FeExpect<bool, Error> EngineListener::OnButtonRelease(const event::EventDispatchContext& ctx,
-                                                      const event::EventContext& eventCtx) {
+FeExpect<bool, Error> EngineListener::OnButtonRelease(const event::EventDispatchContext &ctx,
+                                                      const event::EventContext &eventCtx) {
   using event::SystemEventCode;
   using event::Uint16x8;
 
@@ -285,7 +285,7 @@ FeExpect<bool, Error> EngineListener::OnButtonRelease(const event::EventDispatch
   return FeTrue;
 }
 
-const char* KeyToString(input::Keys key) {
+const char *KeyToString(input::Keys key) {
   using namespace input;
 
   switch (key) {

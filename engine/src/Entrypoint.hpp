@@ -3,6 +3,6 @@
 
 #include "GameTypes.hpp"
 
-extern bool CreateGame(flatearth::Game* outGame);
+extern bool CreateGame(flatearth::Game *outGame);
 
 #endif // _FLATEARTH_ENGINE_ENTRYPOINT_HPP

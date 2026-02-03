@@ -11,15 +11,15 @@ namespace flatearth::renderer {
 
 class FrontendRenderer {
 public:
-  explicit FrontendRenderer(ApplicationState* appState,
-                            memory::MemoryManager& memManager,
-                            platform::FileSystem& fs);
+  explicit FrontendRenderer(ApplicationState *appState,
+                            memory::MemoryManager &memManager,
+                            platform::FileSystem &fs);
   ~FrontendRenderer();
 
   FeExpect<bool, Error> Initialize();
   FeExpect<bool, Error> BeginFrame(float32 deltaTime);
   FeExpect<bool, Error> EndFrame(float32 deltaTime);
-  FeExpect<bool, Error> DrawFrame(RenderPacket* pRenderPacket);
+  FeExpect<bool, Error> DrawFrame(RenderPacket *pRenderPacket);
   FeExpect<void, Error> OnResize(uint32 width, uint32 height);
 
 private:
@@ -27,12 +27,12 @@ private:
 
 private:
   std::array<FePtr<IRendererBackend>, scMaxBackends> _pBackends;
-  IRendererBackend* _pActiveBackend;
+  IRendererBackend *_pActiveBackend;
 
-  memory::MemoryManager& _memoryManager;
-  ApplicationState* _pAppState;
+  memory::MemoryManager &_memoryManager;
+  ApplicationState *_pAppState;
   string _applicationName;
-  platform::FileSystem& _filesystem;
+  platform::FileSystem &_filesystem;
 };
 
 } // namespace flatearth::renderer

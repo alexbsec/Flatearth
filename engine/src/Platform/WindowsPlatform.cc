@@ -15,7 +15,7 @@ static LARGE_INTEGER sStartTime;
 
 namespace flatearth::platform {
 
-static const char* scSurface = "VK_KHR_win32_surface";
+static const char *scSurface = "VK_KHR_win32_surface";
 
 const string cNullInternalStateError = "platform internal state is nullptr";
 
@@ -25,13 +25,13 @@ struct InternalState {
   VkSurfaceKHR surface;
 };
 
-void GetRequiredExtNames(containers::DArray<const char*>* namesDArray) {
+void GetRequiredExtNames(containers::DArray<const char *> *namesDArray) {
   namesDArray->Push(scSurface);
 }
 
-FeExpect<void, Error> CreateVulkanSurface(PlatformState* platState,
-                                          renderer::vulkan::Context& context) {
-  auto& pInternalState = platState->internalState;
+FeExpect<void, Error> CreateVulkanSurface(PlatformState *platState,
+                                          renderer::vulkan::Context &context) {
+  auto &pInternalState = platState->internalState;
 
   VkWin32SurfaceCreateInfoKHR createInfo = {VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR};
   createInfo.hinstance = pInternalState->hInstance;
@@ -48,14 +48,14 @@ FeExpect<void, Error> CreateVulkanSurface(PlatformState* platState,
   return {};
 }
 
-Platform::Platform(const string& applicationName,
+Platform::Platform(const string &applicationName,
                    int32 x,
                    int32 y,
                    int32 width,
                    int32 height,
-                   memory::MemoryManager& memManager,
-                   input::InputManager& inputManager,
-                   event::EventManager& eventManager)
+                   memory::MemoryManager &memManager,
+                   input::InputManager &inputManager,
+                   event::EventManager &eventManager)
     : _xPos(x), _yPos(y), _width(width), _height(height), _applicationName(applicationName),
       _memoryManager(memManager), _inputManager(inputManager), _eventManager(eventManager) {
   _platState.internalState = _memoryManager.Allocate<InternalState>(memory::Tag::Platform);
@@ -69,7 +69,7 @@ FeExpect<void, Error> Platform::Initialize() {
     return FeErr{Error(cNullInternalStateError, ErrorType::NullptrException)};
   }
 
-  auto& pInternalState = _platState.internalState;
+  auto &pInternalState = _platState.internalState;
   pInternalState->hInstance = GetModuleHandleA(0);
   HICON icon = LoadIcon(pInternalState->hInstance, IDI_APPLICATION);
   WNDCLASSA wca;
@@ -144,7 +144,7 @@ FeExpect<void, Error> Platform::Initialize() {
   GetWindowRect(pInternalState->hwnd, &wr);
 
   FLOG_INFO("HWND={} visible={} iconic={} zoomed={} rect=({}, {}) {}x{}",
-            (void*)pInternalState->hwnd,
+            (void *)pInternalState->hwnd,
             (int)IsWindowVisible(pInternalState->hwnd),
             (int)IsIconic(pInternalState->hwnd),
             (int)IsZoomed(pInternalState->hwnd),
@@ -161,7 +161,7 @@ FeExpect<void, Error> Platform::Initialize() {
             (cr.bottom - cr.top));
 
   HMONITOR mon = MonitorFromWindow(pInternalState->hwnd, MONITOR_DEFAULTTONULL);
-  FLOG_INFO("monitor_from_window={}", (void*)mon);
+  FLOG_INFO("monitor_from_window={}", (void *)mon);
 
   LARGE_INTEGER freq;
   QueryPerformanceFrequency(&freq);
@@ -183,19 +183,19 @@ FeExpect<bool, Error> Platform::PollEvents() {
   return FeTrue;
 }
 
-PlatformState* Platform::State() {
+PlatformState *Platform::State() {
   return &_platState;
 }
 
 LRESULT CALLBACK Platform::Win32ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-  Platform* platform = nullptr;
+  Platform *platform = nullptr;
 
   if (msg == WM_NCCREATE) {
-    CREATESTRUCT* cs = reinterpret_cast<CREATESTRUCT*>(lParam);
-    platform = static_cast<Platform*>(cs->lpCreateParams);
+    CREATESTRUCT *cs = reinterpret_cast<CREATESTRUCT *>(lParam);
+    platform = static_cast<Platform *>(cs->lpCreateParams);
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)platform);
   } else {
-    platform = reinterpret_cast<Platform*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    platform = reinterpret_cast<Platform *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
   }
 
   if (platform != nullptr) {

@@ -8,18 +8,18 @@
 namespace flatearth::renderer::vulkan {
 
 FeExpect<void, Error>
-PipelineManager::CreateGraphicsPipeline(Context& ctx,
-                                        Renderpass* pRenderpass,
+PipelineManager::CreateGraphicsPipeline(Context &ctx,
+                                        Renderpass *pRenderpass,
                                         uint32 attributeCount,
-                                        VkVertexInputAttributeDescription* pAttributes,
+                                        VkVertexInputAttributeDescription *pAttributes,
                                         uint32 descriptorSetLayoutCount,
-                                        VkDescriptorSetLayout* pDescriptorLayouts,
+                                        VkDescriptorSetLayout *pDescriptorLayouts,
                                         uint32 stageCount,
-                                        VkPipelineShaderStageCreateInfo* pStages,
+                                        VkPipelineShaderStageCreateInfo *pStages,
                                         VkViewport viewport,
                                         VkRect2D scissor,
                                         bool isWireframe,
-                                        Pipeline* pPipeline) {
+                                        Pipeline *pPipeline) {
   if (pRenderpass == nullptr) {
     FLOG_ERROR("cannot create graphics pipeline with nullptr renderpass");
     return FeErr{Error("renderpass is nullptr", ErrorType::NullptrException)};
@@ -125,8 +125,15 @@ PipelineManager::CreateGraphicsPipeline(Context& ctx,
 
   // Pipeline layout
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+  // Push constants
+  VkPushConstantRange pushConstant;
+  pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  pushConstant.offset = sizeof(math::Mat4D) * 0;
+  pushConstant.size = sizeof(math::Mat4D) * 2;
+
   pipelineLayoutInfo.setLayoutCount = descriptorSetLayoutCount;
   pipelineLayoutInfo.pSetLayouts = pDescriptorLayouts;
+  pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
   auto res = VkCheck(vkCreatePipelineLayout(
       ctx.device.logicalDevice, &pipelineLayoutInfo, ctx.pAllocator, &pPipeline->layout));
   if (!res.has_value()) {
@@ -167,7 +174,7 @@ PipelineManager::CreateGraphicsPipeline(Context& ctx,
   return FeErr{Error("failed to create graphics pipeline", ErrorType::RendererVulkanError)};
 }
 
-void PipelineManager::DestroyGraphicsPipeline(Context& ctx, Pipeline* pPipeline) {
+void PipelineManager::DestroyGraphicsPipeline(Context &ctx, Pipeline *pPipeline) {
   if (pPipeline == nullptr) {
     return;
   }
@@ -183,9 +190,9 @@ void PipelineManager::DestroyGraphicsPipeline(Context& ctx, Pipeline* pPipeline)
   }
 }
 
-void PipelineManager::BindPipeline(CommandBuffer& cmdBuffer,
+void PipelineManager::BindPipeline(CommandBuffer &cmdBuffer,
                                    VkPipelineBindPoint bindPoint,
-                                   Pipeline& pipeline) {
+                                   Pipeline &pipeline) {
   vkCmdBindPipeline(cmdBuffer.handle, bindPoint, pipeline.handle);
 }
 

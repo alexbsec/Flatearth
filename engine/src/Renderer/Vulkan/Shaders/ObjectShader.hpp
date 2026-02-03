@@ -9,18 +9,21 @@ namespace flatearth::renderer::vulkan::shaders {
 
 class VulkanShader {
 public:
-  explicit VulkanShader(memory::MemoryManager& memManager, BufferManager& bufferManager);
+  explicit VulkanShader(memory::MemoryManager &memManager, BufferManager &bufferManager);
   ~VulkanShader();
 
-  FeExpect<bool, Error> CreateObjectShader(Context& ctx, ObjectShader* pObjShader);
-  void DestroyObjectShader(Context& ctx, ObjectShader* pObjShader);
+  FeExpect<bool, Error> CreateObjectShader(Context &ctx, ObjectShader *pObjShader);
+  void DestroyObjectShader(Context &ctx, ObjectShader *pObjShader);
 
-  void UseShader(Context& ctx, ObjectShader& objShader);
-  FeExpect<void, Error> UpdateGlobalState(Context& ctx, ObjectShader& objShader);
+  void UseShader(Context &ctx, ObjectShader &objShader);
+  FeExpect<void, Error> UpdateGlobalState(Context &ctx, ObjectShader &objShader);
+
+  // temp method
+  void UpdateObject(Context &ctx, ObjectShader &objShader, math::Mat4D model);
 
 private:
-  memory::MemoryManager& _memoryManager;
-  BufferManager& _bufferManager;
+  memory::MemoryManager &_memoryManager;
+  BufferManager &_bufferManager;
   PipelineManager _pipelineManager;
 };
 
