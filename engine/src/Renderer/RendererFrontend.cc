@@ -93,7 +93,8 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
     return FeTrue;
   }
 
-  math::Mat4D projection = math::Mat4D::Orthographic(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+  float32 aspect = static_cast<float32>(_pAppState->width) / _pAppState->height;
+  math::Mat4D projection = math::Mat4D::Orthographic(-aspect, aspect, -1.0f, 1.0f, -1.0f, 1.0f);
   math::Mat4D view = math::Mat4D::Identity();
 
   static float32 angle = 0.0f;
