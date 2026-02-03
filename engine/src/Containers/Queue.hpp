@@ -7,17 +7,15 @@
 
 namespace flatearth::containers {
 
-template <typename T> class Queue {
+template <typename T>
+class Queue {
 public:
-  explicit Queue(memory::MemoryManager &memManager)
-      : _memoryManager(memManager) {}
+  explicit Queue(memory::MemoryManager &memManager) : _memoryManager(memManager) {}
 
   inline FeExpect<void, Error> Put(const T &element) {
-    FePtr<Node<T>> node =
-        _memoryManager.Allocate<Node<T>>(memory::Tag::Queue, element);
+    FePtr<Node<T>> node = _memoryManager.Allocate<Node<T>>(memory::Tag::Queue, element);
     if (node == nullptr) {
-      return FeErr{Error("allocation for new Node<T> failed",
-                         ErrorType::NullptrException)};
+      return FeErr{Error("allocation for new Node<T> failed", ErrorType::NullptrException)};
     }
 
     _size++;
@@ -61,9 +59,7 @@ public:
     return &_pBack->data;
   }
 
-  inline bool Empty() const noexcept {
-    return _pFront == nullptr;
-  }
+  inline bool Empty() const noexcept { return _pFront == nullptr; }
 
 private:
   FePtr<Node<T>> _pFront{nullptr};

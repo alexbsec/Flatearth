@@ -2,6 +2,7 @@
 #define _FLATEARTH_ENGINE_MATH_FEMATH_HPP
 
 #include "Defines.hpp"
+
 #include <cmath>
 namespace flatearth::math {
 
@@ -47,6 +48,14 @@ inline float64 Cot(float64 radians) {
 
 inline float64 Abs(float64 value) {
   return std::abs(value);
+}
+
+inline constexpr float32 DegToRad(float32 deg) noexcept {
+  return deg * (FE_PI / 180.0f);
+}
+
+inline constexpr float32 RadToDeg(float32 rad) noexcept {
+  return rad * (180.0f / FE_PI);
 }
 
 } // namespace flatearth::math

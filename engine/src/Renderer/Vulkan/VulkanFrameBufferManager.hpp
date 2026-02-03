@@ -11,14 +11,15 @@ public:
   explicit FrameBufferManager(memory::MemoryManager &memManager);
   ~FrameBufferManager();
 
-  FeExpect<void, Error> CreateFrameBuffer(Context &ctx, Renderpass &renderpass,
+  FeExpect<void, Error> CreateFrameBuffer(Context &ctx,
+                                          Renderpass &renderpass,
                                           FrameBuffer *pFrameBuffer,
-                                          uint32 width, uint32 height,
+                                          uint32 width,
+                                          uint32 height,
                                           uint32 attachmentCount,
                                           VkImageView *pAttachments);
 
-  FeExpect<void, Error> DestroyFrameBuffer(Context &ctx,
-                                           FrameBuffer *pFrameBuffer);
+  FeExpect<void, Error> DestroyFrameBuffer(Context &ctx, FrameBuffer *pFrameBuffer);
 
 private:
   memory::MemoryManager &_memoryManager;

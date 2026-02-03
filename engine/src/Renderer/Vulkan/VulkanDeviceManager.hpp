@@ -16,8 +16,8 @@ struct PhysicalDeviceRequirements {
   bool samplerAnisotropy;
   bool discreteGPU;
 
-  explicit PhysicalDeviceRequirements(memory::MemoryManager &memManager) 
-    : deviceExtNames(memManager) {}
+  explicit PhysicalDeviceRequirements(memory::MemoryManager &memManager)
+      : deviceExtNames(memManager) {}
 };
 
 struct PhysicalDeviceQueueFamilyInfo {
@@ -26,7 +26,6 @@ struct PhysicalDeviceQueueFamilyInfo {
   uint32 computeFamilyIndex;
   uint32 transferFamilyIndex;
 };
-
 
 class DeviceManager {
 public:
@@ -37,18 +36,18 @@ public:
 
 private:
   bool SelectPhysicalDevice(Context &ctx);
-  bool PhysicalDeviceMeetsRequirements(
-      VkPhysicalDevice device, VkSurfaceKHR surface,
-      const VkPhysicalDeviceProperties *properties,
-      const VkPhysicalDeviceFeatures *features,
-      const PhysicalDeviceRequirements *requirements,
-      PhysicalDeviceQueueFamilyInfo *outQueueInfo,
-      SwapchainSupportInfo *outSwapchainInfo);
+  bool PhysicalDeviceMeetsRequirements(VkPhysicalDevice device,
+                                       VkSurfaceKHR surface,
+                                       const VkPhysicalDeviceProperties *properties,
+                                       const VkPhysicalDeviceFeatures *features,
+                                       const PhysicalDeviceRequirements *requirements,
+                                       PhysicalDeviceQueueFamilyInfo *outQueueInfo,
+                                       SwapchainSupportInfo *outSwapchainInfo);
 
 private:
   memory::MemoryManager &_memoryManager;
 };
 
-}
+} // namespace flatearth::renderer::vulkan
 
 #endif // _FLATEARTH_ENGINE_RENDERER_VULKAN_DEVICE_MANAGER_HPP

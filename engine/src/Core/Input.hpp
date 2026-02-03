@@ -13,8 +13,7 @@ enum class Button {
   MaxButtons,
 };
 
-constexpr uint64 cButtonCount =
-    static_cast<uint64>(Button::MaxButtons);
+constexpr uint64 cButtonCount = static_cast<uint64>(Button::MaxButtons);
 
 #define DEFINE_KEY(name, code) KEY_##name = code
 
@@ -191,6 +190,6 @@ private:
   event::EventManager &_eventManager;
 };
 
-}
+} // namespace flatearth::input
 
 #endif // _FLATEARTH_ENGINE_CORE_INPUT_HPP

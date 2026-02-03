@@ -4,15 +4,18 @@
 #include "Containers/LinkedList.hpp"
 #include "Core/FeMemory.hpp"
 #include "Error.hpp"
+
 #include <cassert>
 
 namespace flatearth::containers {
 
-template <typename T> struct Hash {
+template <typename T>
+struct Hash {
   uint64 operator()(const T &val) const { return std::hash<T>{}(val); }
 };
 
-template <typename T> struct HashEqual {
+template <typename T>
+struct HashEqual {
   bool operator()(const T &a, const T &b) const { return a == b; }
 };
 
@@ -22,9 +25,8 @@ public:
   explicit HashSet(memory::MemoryManager &memManager, uint64 bucketCount = 64)
       : _memoryManager(memManager), _bucketCount(bucketCount) {
     assert(bucketCount > 0);
-    _ppBuckets = FeCast<FePtr<Node<T>> *>(
-        _memoryManager.RawAlloc(sizeof(FePtr<Node<T>>) * _bucketCount,
-                                alignof(FePtr<Node<T>>), memory::Tag::HashSet));
+    _ppBuckets = FeCast<FePtr<Node<T>> *>(_memoryManager.RawAlloc(
+        sizeof(FePtr<Node<T>>) * _bucketCount, alignof(FePtr<Node<T>>), memory::Tag::HashSet));
 
     // initialize to null
     for (uint64 i = 0; i < _bucketCount; i++) {
@@ -34,8 +36,8 @@ public:
 
   ~HashSet() {
     if (_ppBuckets != nullptr) {
-      _memoryManager.RawFree(_ppBuckets, sizeof(FePtr<Node<T>>) * _bucketCount,
-                             memory::Tag::HashSet);
+      _memoryManager.RawFree(
+          _ppBuckets, sizeof(FePtr<Node<T>>) * _bucketCount, memory::Tag::HashSet);
     }
   }
 
@@ -46,20 +48,17 @@ public:
     const uint64 index = hashFn(value) % _bucketCount;
     FePtr<Node<T>> &head = _ppBuckets[index];
 
-    for (Node<T> *node = head.get(); node != nullptr;
-         node = node->pNext.get()) {
+    for (Node<T> *node = head.get(); node != nullptr; node = node->pNext.get()) {
       if (eqFn(node->data, value)) {
         // already exists
         return FeFalse;
       }
     }
 
-    FePtr<Node<T>> newNode =
-        _memoryManager.Allocate<Node<T>>(memory::Tag::HashSet, value);
+    FePtr<Node<T>> newNode = _memoryManager.Allocate<Node<T>>(memory::Tag::HashSet, value);
 
     if (newNode == nullptr) {
-      return FeErr{
-          Error("allocation of Node<T> failed", ErrorType::NullptrException)};
+      return FeErr{Error("allocation of Node<T> failed", ErrorType::NullptrException)};
     }
 
     newNode->pNext = std::move(head);
@@ -96,8 +95,7 @@ public:
 
     const uint64 index = hashFn(value) % _bucketCount;
 
-    for (Node<T> *node = _ppBuckets[index].get(); node != nullptr;
-         node = node->pNext.get()) {
+    for (Node<T> *node = _ppBuckets[index].get(); node != nullptr; node = node->pNext.get()) {
       if (eqFn(node->data, value)) {
         return FeTrue;
       }

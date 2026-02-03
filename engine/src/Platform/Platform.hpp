@@ -24,14 +24,18 @@ struct PlatformState {
 
 void GetRequiredExtNames(containers::DArray<const char *> *namesDArray);
 
-FeExpect<void, Error> CreateVulkanSurface(PlatformState *platState,
-                                          renderer::vulkan::Context &ctx);
+FeExpect<void, Error> CreateVulkanSurface(PlatformState *platState, renderer::vulkan::Context &ctx);
 
 class Platform {
 public:
-  FEAPI explicit Platform(const string &applicationName, int32 x, int32 y, int32 width,
-           int32 height, memory::MemoryManager &memManeger,
-           input::InputManager &inputManager, event::EventManager &eventManager);
+  FEAPI explicit Platform(const string &applicationName,
+                          int32 x,
+                          int32 y,
+                          int32 width,
+                          int32 height,
+                          memory::MemoryManager &memManeger,
+                          input::InputManager &inputManager,
+                          event::EventManager &eventManager);
   ~Platform();
 
   FEAPI FeExpect<void, Error> Initialize();

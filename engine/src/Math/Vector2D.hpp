@@ -38,8 +38,7 @@ public:
 
   inline const FeExpect<Vec2D, Error> operator/(float32 scalar) const {
     if (scalar == 0.0f) {
-      return FeErr{Error("scalar cannot be zero on divide operator",
-                         ErrorType::DivisionByZero)};
+      return FeErr{Error("scalar cannot be zero on divide operator", ErrorType::DivisionByZero)};
     }
     return Vec2D(_x / scalar, _y / scalar);
   }
@@ -64,8 +63,7 @@ public:
 
   inline FeExpect<Vec2D, Error> Normalize() noexcept {
     if (_x == 0.0f && _y == 0.0f) {
-      return FeErr{Error("cannot normalize a zero-length vector",
-                         ErrorType::DivisionByZero)};
+      return FeErr{Error("cannot normalize a zero-length vector", ErrorType::DivisionByZero)};
     }
 
     const float32 cLength = Length();
@@ -74,22 +72,16 @@ public:
     return *this;
   }
 
-  inline float32 Length() const noexcept {
-    return static_cast<float32>(Sqrt(_x * _x + _y * _y));
-  }
+  inline float32 Length() const noexcept { return static_cast<float32>(Sqrt(_x * _x + _y * _y)); }
 
-  inline constexpr float32 LengthSqrd() const noexcept {
-    return _x * _x + _y * _y;
-  }
+  inline constexpr float32 LengthSqrd() const noexcept { return _x * _x + _y * _y; }
 
   inline constexpr float32 Dot(const Vec2D &other) const noexcept {
     return _x * other._x + _y * other._y;
   }
 
-  inline bool Equals(const Vec2D &other,
-                     float64 epsilon = FE_F64EPS) const noexcept {
-    return (Abs(_x - other._x) <= epsilon) &&
-           (Abs(_y - other._y) <= epsilon);
+  inline bool Equals(const Vec2D &other, float64 epsilon = FE_F64EPS) const noexcept {
+    return (Abs(_x - other._x) <= epsilon) && (Abs(_y - other._y) <= epsilon);
   }
 
   inline constexpr float32 x() const noexcept { return _x; }

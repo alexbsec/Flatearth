@@ -5,7 +5,7 @@ namespace flatearth::testbed {
 bool GameTest::GameInitialize(flatearth::Game *gameInstance) {
   // FDEBUG("GameTest::GameInitialize() called");
   gameInstance->windowStartWidth = 1280;
-  gameInstance->windowStartHeight = 980;
+  gameInstance->windowStartHeight = 720;
   gameInstance->windowStartPosX = 100;
   gameInstance->windowStartPosY = 100;
   gameInstance->gameName = "Testbed";
@@ -20,9 +20,8 @@ bool GameTest::GameRender(flatearth::Game *gameInstance, float32 deltaTime) {
   return FeTrue;
 }
 
-bool GameTest::GameOnResize(flatearth::Game *gameInstance, uint32 width,
-                            uint32 height) {
+bool GameTest::GameOnResize(flatearth::Game *gameInstance, uint32 width, uint32 height) {
   return FeTrue;
 }
 
-} // namespace testsuite
+} // namespace flatearth::testbed

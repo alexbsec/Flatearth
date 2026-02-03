@@ -1,13 +1,16 @@
 #include "Event.hpp"
+
 #include "Core/Logger.hpp"
+
 #include <cassert>
 
 namespace flatearth::event {
 
-EventManager::EventManager(memory::MemoryManager &memManager)
-    : _memoryManager(memManager) {}
+EventManager::EventManager(memory::MemoryManager &memManager) : _memoryManager(memManager) {
+}
 
-EventManager::~EventManager() {}
+EventManager::~EventManager() {
+}
 
 FeExpect<uint64, Error> EventManager::RegisterEvent(SystemEventCode code,
                                                     IEventListener *listener) {
@@ -17,15 +20,14 @@ FeExpect<uint64, Error> EventManager::RegisterEvent(SystemEventCode code,
   // and its lifetime (dangling pointer possibility)
   if (listener == nullptr) {
     // defensiveness
-    return FeErr{Error("cannot register event with null IEventListener",
-                       ErrorType::NullptrException)};
+    return FeErr{
+        Error("cannot register event with null IEventListener", ErrorType::NullptrException)};
   }
 
   uint8 numberCode = ToUnderlying(code);
   if (_state.registered[numberCode].pEvents == nullptr) {
     _state.registered[numberCode].pEvents =
-        _memoryManager.Allocate<DArray<RegisteredEvent>>(
-            memory::Tag::DArray, _memoryManager);
+        _memoryManager.Allocate<DArray<RegisteredEvent>>(memory::Tag::DArray, _memoryManager);
   }
 
   DArray<RegisteredEvent> &events = *_state.registered[numberCode].pEvents;
@@ -35,7 +37,7 @@ FeExpect<uint64, Error> EventManager::RegisterEvent(SystemEventCode code,
       FLOG_WARN("listener for event {} is already registered", events[i].id);
       return FeFalse;
     }
-  } 
+  }
 
   uint64 eventId = _currentId++;
   RegisteredEvent newEvent{
@@ -52,8 +54,8 @@ FeExpect<bool, Error> EventManager::UnregisterEvent(SystemEventCode code,
   using containers::DArray;
   if (listener == nullptr) {
     // defensiveness
-    return FeErr{Error("cannot unregister event with null IEventListener",
-                       ErrorType::NullptrException)};
+    return FeErr{
+        Error("cannot unregister event with null IEventListener", ErrorType::NullptrException)};
   }
 
   uint8 numberCode = ToUnderlying(code);
@@ -80,13 +82,11 @@ FeExpect<bool, Error> EventManager::UnregisterEvent(SystemEventCode code,
   return FeFalse;
 }
 
-FeExpect<bool, Error> EventManager::FireEvent(SystemEventCode code,
-                                              void *sender,
-                                              const EventContext &eventCtx) {
+FeExpect<bool, Error>
+EventManager::FireEvent(SystemEventCode code, void *sender, const EventContext &eventCtx) {
   using containers::DArray;
   uint8 numberCode = ToUnderlying(code);
-  DArray<RegisteredEvent> *pEvents =
-      _state.registered[numberCode].pEvents.get();
+  DArray<RegisteredEvent> *pEvents = _state.registered[numberCode].pEvents.get();
   if (pEvents == nullptr) {
     return FeFalse;
   }
@@ -100,8 +100,7 @@ FeExpect<bool, Error> EventManager::FireEvent(SystemEventCode code,
         .listener = event.listener,
     };
 
-    FeExpect<bool, Error> res =
-        DecideAndDispatch(code, event.listener, dispatchCtx, eventCtx);
+    FeExpect<bool, Error> res = DecideAndDispatch(code, event.listener, dispatchCtx, eventCtx);
 
     if (!res.has_value()) {
       return FeErr{res.error()};
@@ -115,13 +114,11 @@ FeExpect<bool, Error> EventManager::FireEvent(SystemEventCode code,
   return FeFalse;
 }
 
-FeExpect<bool, Error> EventManager::Broadcast(SystemEventCode code,
-                                              void *sender,
-                                              const EventContext &eventCtx) {
+FeExpect<bool, Error>
+EventManager::Broadcast(SystemEventCode code, void *sender, const EventContext &eventCtx) {
   using containers::DArray;
   uint8 numberCode = ToUnderlying(code);
-  DArray<RegisteredEvent> *pEvents =
-      _state.registered[numberCode].pEvents.get();
+  DArray<RegisteredEvent> *pEvents = _state.registered[numberCode].pEvents.get();
   if (pEvents == nullptr) {
     return FeFalse;
   }
@@ -138,12 +135,10 @@ FeExpect<bool, Error> EventManager::Broadcast(SystemEventCode code,
         .listener = event.listener,
     };
 
-    FeExpect<bool, Error> res =
-        DecideAndDispatch(code, event.listener, dispatchCtx, eventCtx);
+    FeExpect<bool, Error> res = DecideAndDispatch(code, event.listener, dispatchCtx, eventCtx);
 
     if (!res.has_value()) {
-      FLOG_ERROR("callback for event {} return error: {}", event.id,
-                 res.error().message);
+      FLOG_ERROR("callback for event {} return error: {}", event.id, res.error().message);
       errCount++;
       continue;
     }
@@ -156,7 +151,9 @@ FeExpect<bool, Error> EventManager::Broadcast(SystemEventCode code,
   }
 
   FLOG_INFO("broadcast finished: {} consumed, {} ignored, {} errored",
-            consumeCount, ignoreCount, errCount);
+            consumeCount,
+            ignoreCount,
+            errCount);
 
   return consumeCount > 0;
 }
@@ -168,33 +165,33 @@ uint64 EventManager::CountEvents(SystemEventCode code) const {
              : _state.registered[numberCode].pEvents->Length();
 }
 
-FeExpect<bool, Error>
-EventManager::DecideAndDispatch(SystemEventCode code, IEventListener *listener,
-                                const EventDispatchContext &ctx,
-                                const EventContext &eventCtx) {
+FeExpect<bool, Error> EventManager::DecideAndDispatch(SystemEventCode code,
+                                                      IEventListener *listener,
+                                                      const EventDispatchContext &ctx,
+                                                      const EventContext &eventCtx) {
 
   FeExpect<bool, Error> res;
   switch (code) {
-  case SystemEventCode::WindowResized:
-    res = listener->OnResize(ctx, eventCtx);
-    break;
-  case SystemEventCode::KeyPressed:
-  case SystemEventCode::KeyReleased:
-    res = listener->OnKey(ctx, eventCtx);
-    break;
-  case SystemEventCode::ApplicationQuit:
-    res = listener->OnEvent(ctx, eventCtx);
-    break;
-  case SystemEventCode::ButtonPressed:
-  case SystemEventCode::ButtonReleased:
-    res = listener->OnButton(ctx, eventCtx);
-    break;
-  case SystemEventCode::MouseMoved:
-    res = listener->OnMouseMove(ctx, eventCtx);
-    break;
-  default:
-    FLOG_ERROR("event code {} is not considered", ToUnderlying(code));
-    return FeErr{Error("unbinded event code", ErrorType::Unknown)};
+    case SystemEventCode::WindowResized:
+      res = listener->OnResize(ctx, eventCtx);
+      break;
+    case SystemEventCode::KeyPressed:
+    case SystemEventCode::KeyReleased:
+      res = listener->OnKey(ctx, eventCtx);
+      break;
+    case SystemEventCode::ApplicationQuit:
+      res = listener->OnEvent(ctx, eventCtx);
+      break;
+    case SystemEventCode::ButtonPressed:
+    case SystemEventCode::ButtonReleased:
+      res = listener->OnButton(ctx, eventCtx);
+      break;
+    case SystemEventCode::MouseMoved:
+      res = listener->OnMouseMove(ctx, eventCtx);
+      break;
+    default:
+      FLOG_ERROR("event code {} is not considered", ToUnderlying(code));
+      return FeErr{Error("unbinded event code", ErrorType::Unknown)};
   }
 
   return res;

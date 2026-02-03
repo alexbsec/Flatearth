@@ -1,17 +1,21 @@
 #include "FeMemory.hpp"
+
 #include "Core/Logger.hpp"
+
 #include <cstring>
 
 namespace flatearth::memory {
 
 static inline uint64 NormalizeAlignment(uint64 alignment) {
-  const uint64 minAlign = static_cast<uint64>(sizeof(void*)); // 8 on x64
-  if (alignment < minAlign) alignment = minAlign;
+  const uint64 minAlign = static_cast<uint64>(sizeof(void *)); // 8 on x64
+  if (alignment < minAlign)
+    alignment = minAlign;
 
   // ensure power of two
   if ((alignment & (alignment - 1)) != 0) {
     uint64 p = 1;
-    while (p < alignment) p <<= 1;
+    while (p < alignment)
+      p <<= 1;
     alignment = p;
   }
   return alignment;
@@ -50,20 +54,24 @@ void *MemoryManager::RawAlloc(uint64 size, uint64 alignment, Tag tag) {
   block = _aligned_malloc(size, alignment);
 #else
   alignment = NormalizeAlignment(alignment);
-  const int rc = posix_memalign(&block,
-                               static_cast<size_t>(alignment),
-                               static_cast<size_t>(size));
+  const int rc = posix_memalign(&block, static_cast<size_t>(alignment), static_cast<size_t>(size));
   if (rc != 0) {
     block = nullptr;
     FLOG_ERROR("posix_memalign failed: rc={} ({}) size={} align={} tag={}",
-               rc, std::strerror(rc), size, alignment, static_cast<uint64>(tag));
+               rc,
+               std::strerror(rc),
+               size,
+               alignment,
+               static_cast<uint64>(tag));
   }
 #endif
 
   if (!block) {
 #if defined(_MSC_VER)
     FLOG_ERROR("failed to allocate aligned size {} (align {}) for tag {}",
-               size, alignment, static_cast<uint64>(tag));
+               size,
+               alignment,
+               static_cast<uint64>(tag));
 #endif
     return nullptr;
   }
@@ -75,7 +83,8 @@ void *MemoryManager::RawAlloc(uint64 size, uint64 alignment, Tag tag) {
 }
 
 void MemoryManager::RawFree(void *block, uint64 size, Tag tag) {
-  if (!block) return;
+  if (!block)
+    return;
 
   auto tagIndex = static_cast<uint64>(tag);
 
@@ -117,8 +126,8 @@ void MemoryManager::MemoryUsage() {
 
   auto total = FormatBytes(_memoryState.memoryBlock.totalAllocated);
 
-  std::println("Total Allocated : {} bytes ({:.2f} KB | {:.2f} MB)",
-           total.bytes, total.kb, total.mb);
+  std::println(
+      "Total Allocated : {} bytes ({:.2f} KB | {:.2f} MB)", total.bytes, total.kb, total.mb);
 
   std::println("Active Allocs   : {}", _memoryState.allocCount);
 
@@ -131,41 +140,57 @@ void MemoryManager::MemoryUsage() {
     auto fmt = FormatBytes(bytes);
     Tag tag = static_cast<Tag>(i);
 
-    std::println("  [{}] {} bytes ({:.2f} KB | {:.2f} MB)",
-             TagToString(tag),
-             fmt.bytes,
-             fmt.kb,
-             fmt.mb);
+    std::println(
+        "  [{}] {} bytes ({:.2f} KB | {:.2f} MB)", TagToString(tag), fmt.bytes, fmt.kb, fmt.mb);
   }
 
   std::println("==================================");
 }
 
-
 const char *TagToString(flatearth::memory::Tag tag) {
   using flatearth::memory::Tag;
   switch (tag) {
-  case Tag::Unknown:          return "Unknown";
-  case Tag::Array:            return "Array";
-  case Tag::DArray:           return "DArray";
-  case Tag::Dictionary:       return "Dictionary";
-  case Tag::Queue:            return "Queue";
-  case Tag::RingQueue:        return "RingQueue";
-  case Tag::BST:              return "BST";
-  case Tag::HashSet:          return "HashSet";
-  case Tag::Application:      return "Application";
-  case Tag::Job:              return "Job";
-  case Tag::Texture:          return "Texture";
-  case Tag::MaterialInstance: return "MaterialInstance";
-  case Tag::Renderer:         return "Renderer";
-  case Tag::Game:             return "Game";
-  case Tag::Platform:         return "Platform";
-  case Tag::Transform:        return "Transform";
-  case Tag::Entity:           return "Entity";
-  case Tag::EntityNode:       return "EntityNode";
-  case Tag::Scene:            return "Scene";
-  default:                    return "Invalid";
+    case Tag::Unknown:
+      return "Unknown";
+    case Tag::Array:
+      return "Array";
+    case Tag::DArray:
+      return "DArray";
+    case Tag::Dictionary:
+      return "Dictionary";
+    case Tag::Queue:
+      return "Queue";
+    case Tag::RingQueue:
+      return "RingQueue";
+    case Tag::BST:
+      return "BST";
+    case Tag::HashSet:
+      return "HashSet";
+    case Tag::Application:
+      return "Application";
+    case Tag::Job:
+      return "Job";
+    case Tag::Texture:
+      return "Texture";
+    case Tag::MaterialInstance:
+      return "MaterialInstance";
+    case Tag::Renderer:
+      return "Renderer";
+    case Tag::Game:
+      return "Game";
+    case Tag::Platform:
+      return "Platform";
+    case Tag::Transform:
+      return "Transform";
+    case Tag::Entity:
+      return "Entity";
+    case Tag::EntityNode:
+      return "EntityNode";
+    case Tag::Scene:
+      return "Scene";
+    default:
+      return "Invalid";
   }
 }
 
-}
+} // namespace flatearth::memory

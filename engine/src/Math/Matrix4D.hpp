@@ -3,7 +3,10 @@
 
 #include "Defines.hpp"
 #include "Math/FeMath.hpp"
+#include "Math/MathTypes.hpp"
 #include "Math/Vector3D.hpp"
+
+#include <features.h>
 
 namespace flatearth::math {
 
@@ -11,9 +14,8 @@ class Mat4D {
 public:
   // Identity
   constexpr Mat4D() noexcept
-      : _x00(1), _x01(0), _x02(0), _x03(0), _x10(0), _x11(1), _x12(0), _x13(0),
-        _x20(0), _x21(0), _x22(1), _x23(0), _x30(0), _x31(0), _x32(0), _x33(1) {
-  }
+      : _x00(1), _x01(0), _x02(0), _x03(0), _x10(0), _x11(1), _x12(0), _x13(0), _x20(0), _x21(0),
+        _x22(1), _x23(0), _x30(0), _x31(0), _x32(0), _x33(1) {}
 
   constexpr Mat4D(const Mat4D &) noexcept = default;
   constexpr Mat4D &operator=(const Mat4D &) noexcept = default;
@@ -37,6 +39,75 @@ public:
     m._x00 = sx;
     m._x11 = sy;
     m._x22 = sz;
+    return m;
+  }
+
+  FEINLINE constexpr Mat4D Orthographic(float32 left,
+                                        float32 right,
+                                        float32 bottom,
+                                        float32 top,
+                                        float32 nearClip,
+                                        float32 farClip) noexcept {
+    Mat4D mat;
+    const float32 rl = right - left;
+    const float32 tb = top - bottom;
+    const float32 fn = farClip - nearClip;
+
+    // Zero everything
+    mat._x00 = 2.0f / rl;
+    mat._x01 = 0;
+    mat._x02 = 0;
+    mat._x03 = -(right + left) / rl;
+    mat._x10 = 0;
+    mat._x11 = 2.0f / tb;
+    mat._x12 = 0;
+    mat._x13 = -(top + bottom) / tb;
+    mat._x20 = 0;
+    mat._x21 = 0;
+    mat._x22 = -2.0f / fn;
+    mat._x23 = -(farClip + nearClip) / fn;
+    mat._x30 = 0;
+    mat._x31 = 0;
+    mat._x32 = 0;
+    mat._x33 = 1;
+
+    return mat;
+  }
+
+  FEINLINE Mat4D Perspective(float32 fovRadians,
+                             float32 aspect,
+                             float32 nearClip,
+                             float32 farClip) {
+    Mat4D m;
+
+    const float32 tanHalfFov = Tan(fovRadians * 0.5f);
+
+    // Clear identity defaults
+    m._x00 = 0;
+    m._x01 = 0;
+    m._x02 = 0;
+    m._x03 = 0;
+    m._x10 = 0;
+    m._x11 = 0;
+    m._x12 = 0;
+    m._x13 = 0;
+    m._x20 = 0;
+    m._x21 = 0;
+    m._x22 = 0;
+    m._x23 = 0;
+    m._x30 = 0;
+    m._x31 = 0;
+    m._x32 = 0;
+    m._x33 = 0;
+
+    m._x00 = 1.0f / (aspect * tanHalfFov);
+    m._x11 = 1.0f / tanHalfFov;
+
+    m._x22 = farClip / (nearClip - farClip);
+    m._x23 = (farClip * nearClip) / (nearClip - farClip);
+    m._x32 = -1.0f;
+    m._x33 = 0.0f; // keep this explicitly
+
     return m;
   }
 
@@ -119,6 +190,29 @@ public:
     return result;
   }
 
+  math::Mat4D ToGPUMatrix() const noexcept { return Transposed(); }
+
+  Mat4D Transposed() const noexcept {
+    Mat4D t;
+    t._x00 = _x00;
+    t._x01 = _x10;
+    t._x02 = _x20;
+    t._x03 = _x30;
+    t._x10 = _x01;
+    t._x11 = _x11;
+    t._x12 = _x21;
+    t._x13 = _x31;
+    t._x20 = _x02;
+    t._x21 = _x12;
+    t._x22 = _x22;
+    t._x23 = _x32;
+    t._x30 = _x03;
+    t._x31 = _x13;
+    t._x32 = _x23;
+    t._x33 = _x33;
+    return t;
+  }
+
   inline constexpr Mat4D &operator*=(const Mat4D &o) noexcept {
     *this = *this * o;
     return *this;
@@ -143,8 +237,8 @@ public:
   }
 
 private:
-  float32 _x00, _x01, _x02, _x03, _x10, _x11, _x12, _x13, _x20, _x21, _x22,
-      _x23, _x30, _x31, _x32, _x33;
+  float32 _x00, _x01, _x02, _x03, _x10, _x11, _x12, _x13, _x20, _x21, _x22, _x23, _x30, _x31, _x32,
+      _x33;
 };
 
 } // namespace flatearth::math

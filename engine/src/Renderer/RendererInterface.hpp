@@ -3,6 +3,7 @@
 
 #include "Core/ApplicationConfig.hpp"
 #include "Defines.hpp"
+#include "Renderer/RendererTypes.hpp"
 
 namespace flatearth::renderer {
 
@@ -13,8 +14,7 @@ enum class BackendType {
   MaxBackends,
 };
 
-static constexpr int32 scMaxBackends =
-    static_cast<int32>(BackendType::MaxBackends);
+static constexpr int32 scMaxBackends = static_cast<int32>(BackendType::MaxBackends);
 
 struct RenderPacket {
   float32 deltaTime;
@@ -31,6 +31,7 @@ public:
                                                   math::Mat4D view,
                                                   math::Vec3D viewPosition,
                                                   int32 mode) = 0;
+  virtual void UpdateObject(math::Mat4D model) = 0;
 
 protected:
   virtual ~IRendererBackend() = default;

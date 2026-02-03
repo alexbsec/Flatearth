@@ -2,6 +2,7 @@
 #define _FLATEARTH_ENGINE_CLOCK_HPP
 
 #include "Defines.hpp"
+
 #include <chrono>
 
 namespace flatearth::clock {
@@ -12,9 +13,7 @@ inline static float64 GetAbsoluteTime() {
   using clock = std::chrono::steady_clock;
   using seconds = std::chrono::duration<double>;
 
-  return std::chrono::duration_cast<seconds>(
-    clock::now().time_since_epoch()
-  ).count();
+  return std::chrono::duration_cast<seconds>(clock::now().time_since_epoch()).count();
 }
 
 class Clock {
@@ -30,6 +29,6 @@ private:
   float64 _elapsed{0.0};
 };
 
-}
+} // namespace flatearth::clock
 
 #endif // _FLATEARTH_ENGINE_CLOCK_HPP

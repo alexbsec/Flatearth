@@ -3,13 +3,14 @@
 #if FEPLATFORM_LINUX
 
 #include "Core/Logger.hpp"
+
 #include <fcntl.h>
 #include <unistd.h>
 
 namespace flatearth::platform {
 
 stdfs::path WorkDirectory() {
-  return stdfs::current_path(); 
+  return stdfs::current_path();
 }
 
 int32 GetFileDescriptor(FileHandle &handle) {
@@ -17,7 +18,8 @@ int32 GetFileDescriptor(FileHandle &handle) {
 }
 
 FileSystem::FileSystem(memory::MemoryManager &memoryManager)
-    : _memoryManager(memoryManager), _rootDir(WorkDirectory()) {}
+    : _memoryManager(memoryManager), _rootDir(WorkDirectory()) {
+}
 
 bool FileSystem::Exists(const stdfs::path &path) const {
   return stdfs::exists(path);
@@ -27,12 +29,10 @@ uint64 FileSystem::SizeOfFile(const stdfs::path &path) const {
   return stdfs::file_size(path);
 }
 
-FeExpect<FileHandle, Error> FileSystem::OpenFile(const stdfs::path &path,
-                                           FileMode mode,
-                                           bool binary) {
+FeExpect<FileHandle, Error>
+FileSystem::OpenFile(const stdfs::path &path, FileMode mode, bool binary) {
   int32 flags = 0;
-  if (HasFileMode(mode, FileMode::Read) &&
-      HasFileMode(mode, FileMode::Write)) {
+  if (HasFileMode(mode, FileMode::Read) && HasFileMode(mode, FileMode::Write)) {
     flags = O_RDWR | O_CREAT;
   } else if (HasFileMode(mode, FileMode::Read)) {
     flags = O_RDONLY;
@@ -43,15 +43,15 @@ FeExpect<FileHandle, Error> FileSystem::OpenFile(const stdfs::path &path,
   }
 
   stdfs::path absolutePath = _rootDir / path;
- 
+
   int32 fd = open(absolutePath.c_str(), flags, S_IRUSR | S_IWUSR);
   if (fd < 0) {
     return FeErr{Error("failed to open file", ErrorType::FileOpenError)};
   }
 
   return FileHandle{
-    .nativeHandle = reinterpret_cast<void *>(static_cast<intptr_t>(fd)),
-    .valid = FeTrue,
+      .nativeHandle = reinterpret_cast<void *>(static_cast<intptr_t>(fd)),
+      .valid = FeTrue,
   };
 }
 
@@ -70,8 +70,7 @@ FeExpect<void, Error> FileSystem::CloseFile(FileHandle &handle) {
   return {};
 }
 
-FeExpect<uint64, Error> FileSystem::ReadFromFile(FileHandle &handle,
-                                             std::span<std::byte> out) {
+FeExpect<uint64, Error> FileSystem::ReadFromFile(FileHandle &handle, std::span<std::byte> out) {
   if (!handle.valid || handle.nativeHandle == nullptr) {
     return FeErr{Error("invalid file handle", ErrorType::InvalidFileHandle)};
   }
@@ -86,7 +85,7 @@ FeExpect<uint64, Error> FileSystem::ReadFromFile(FileHandle &handle,
 }
 
 FeExpect<uint64, Error> FileSystem::WriteToFile(FileHandle &handle,
-                                              std::span<const std::byte> data) {
+                                                std::span<const std::byte> data) {
   if (!handle.valid || handle.nativeHandle == nullptr) {
     return FeErr{Error("invalid file handle", ErrorType::InvalidFileHandle)};
   }
@@ -104,6 +103,6 @@ void FileSystem::SetRootDirectory(const stdfs::path &path) {
   _rootDir = path;
 }
 
-}
+} // namespace flatearth::platform
 
 #endif // FEPLATFORM_LINUX

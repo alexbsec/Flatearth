@@ -5,6 +5,7 @@
 #include "Core/FeMemory.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
+
 #include <cstddef>
 #include <cstring>
 namespace flatearth::event {
@@ -50,14 +51,16 @@ struct EventContext {
   EventLayout layout = EventLayout::Null;
   EventPayload payload{};
 
-  template <typename T> inline void Set(EventLayout l, const T &val) {
+  template <typename T>
+  inline void Set(EventLayout l, const T &val) {
     layout = l;
     static_assert(sizeof(T) <= 16);
     std::memset(payload.storage, 0, 16);
     std::memcpy(payload.storage, &val, sizeof(T));
   }
 
-  template <typename T> inline T Get() const {
+  template <typename T>
+  inline T Get() const {
     static_assert(sizeof(T) <= 16);
     T out{};
     std::memcpy(&out, payload.storage, sizeof(T));
@@ -94,13 +97,11 @@ protected:
 
 class ListenerAdapter : public IEventListener {
 public:
-  FeExpect<void, Error> Initialize() override {
-    return {};
-  }
+  FeExpect<void, Error> Initialize() override { return {}; }
 
   FeExpect<bool, Error> OnResize(const EventDispatchContext &ctx,
                                  const EventContext &eventCtx) override {
-    return FeFalse; 
+    return FeFalse;
   }
 
   FeExpect<bool, Error> OnKey(const EventDispatchContext &ctx,
@@ -155,8 +156,7 @@ public:
    * @returns True if the event was successfully registered, false otherwise,
    * return Error struct on error
    */
-  FEAPI FeExpect<uint64, Error> RegisterEvent(SystemEventCode code,
-                                              IEventListener *listener);
+  FEAPI FeExpect<uint64, Error> RegisterEvent(SystemEventCode code, IEventListener *listener);
 
   /**
    * Unregisters a callback for the specified event code.
@@ -169,8 +169,7 @@ public:
    * @returns True if the event was successfully unregistered, false otherwise,
    * returns Error struct on error.
    */
-  FEAPI FeExpect<bool, Error> UnregisterEvent(SystemEventCode code,
-                                              IEventListener *listener);
+  FEAPI FeExpect<bool, Error> UnregisterEvent(SystemEventCode code, IEventListener *listener);
 
   /**
    * Fires an event to all listeners registered for the specified code.
@@ -183,8 +182,8 @@ public:
    * @returns True if the event was handled by any listener, false otherwise,
    * returns Error struct on error.
    */
-  FEAPI FeExpect<bool, Error> FireEvent(SystemEventCode code, void *sender,
-                                        const EventContext &eventCtx);
+  FEAPI FeExpect<bool, Error>
+  FireEvent(SystemEventCode code, void *sender, const EventContext &eventCtx);
 
   /**
    * Broadcasts an event to all listeners registered for the specified event
@@ -214,8 +213,8 @@ public:
    * @note Errors returned by individual listeners do not abort the broadcast.
    * @note Modifying event registrations during broadcast is undefined behavior.
    */
-  FEAPI FeExpect<bool, Error> Broadcast(SystemEventCode code, void *sender,
-                                        const EventContext &eventCtx);
+  FEAPI FeExpect<bool, Error>
+  Broadcast(SystemEventCode code, void *sender, const EventContext &eventCtx);
 
   uint64 CountEvents(SystemEventCode code) const;
 

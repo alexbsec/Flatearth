@@ -5,6 +5,7 @@
 #include "Core/FeMemory.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererInterface.hpp"
+#include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/Shaders/ObjectShader.hpp"
 #include "Renderer/Vulkan/VulkanBuffer.hpp"
 #include "Renderer/Vulkan/VulkanCommandBufferManager.hpp"
@@ -17,8 +18,7 @@ namespace flatearth::renderer::vulkan {
 
 class VulkanBackend : public IRendererBackend {
 public:
-  explicit VulkanBackend(memory::MemoryManager &memManager,
-                         platform::FileSystem &fs);
+  explicit VulkanBackend(memory::MemoryManager &memManager, platform::FileSystem &fs);
   ~VulkanBackend();
 
   FeExpect<bool, Error> Initialize(ApplicationState *appState) override;
@@ -30,6 +30,7 @@ public:
                                           math::Mat4D view,
                                           math::Vec3D viewPosition,
                                           int32 mode) override;
+  void UpdateObject(math::Mat4D model) override;
 
 private:
   FeExpect<void, Error> CreateFence(Fence *pFence, bool signaled);
@@ -37,9 +38,12 @@ private:
   FeExpect<bool, Error> AwaitFence(Fence *pFence, uint64 timeoutNs);
   FeExpect<void, Error> ResetFence(Fence *pFence);
   FeExpect<void, Error> CreateBuffers();
-  FeExpect<void, Error> UploadDataRange(VkCommandPool pool, VkFence fence,
-                                        VkQueue queue, uint64 offset,
-                                        uint64 size, VulkanBuffer &buffer,
+  FeExpect<void, Error> UploadDataRange(VkCommandPool pool,
+                                        VkFence fence,
+                                        VkQueue queue,
+                                        uint64 offset,
+                                        uint64 size,
+                                        VulkanBuffer &buffer,
                                         void *pData);
 
 private:

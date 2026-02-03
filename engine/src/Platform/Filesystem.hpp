@@ -4,6 +4,7 @@
 #include "Core/FeMemory.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
+
 #include <filesystem>
 #include <span>
 
@@ -44,10 +45,8 @@ public:
 
   FEAPI FeExpect<void, Error> CloseFile(FileHandle &handle);
 
-  FEAPI FeExpect<uint64, Error> ReadFromFile(FileHandle &handle,
-                                             std::span<std::byte> out);
-  FEAPI FeExpect<uint64, Error> WriteToFile(FileHandle &handle,
-                                            std::span<const std::byte> data);
+  FEAPI FeExpect<uint64, Error> ReadFromFile(FileHandle &handle, std::span<std::byte> out);
+  FEAPI FeExpect<uint64, Error> WriteToFile(FileHandle &handle, std::span<const std::byte> data);
 
   FEAPI void SetRootDirectory(const stdfs::path &path);
 

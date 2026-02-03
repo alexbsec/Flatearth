@@ -12,7 +12,8 @@ namespace flatearth::renderer {
 class FrontendRenderer {
 public:
   explicit FrontendRenderer(ApplicationState *appState,
-                            memory::MemoryManager &memManager, platform::FileSystem &fs);
+                            memory::MemoryManager &memManager,
+                            platform::FileSystem &fs);
   ~FrontendRenderer();
 
   FeExpect<bool, Error> Initialize();

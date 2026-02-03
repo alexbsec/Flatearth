@@ -1,17 +1,25 @@
 #include "VulkanPipeline.hpp"
+
 #include "Math/MathTypes.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
+
 #include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan {
 
-FeExpect<void, Error> PipelineManager::CreateGraphicsPipeline(
-    Context &ctx, Renderpass *pRenderpass, uint32 attributeCount,
-    VkVertexInputAttributeDescription *pAttributes,
-    uint32 descriptorSetLayoutCount, VkDescriptorSetLayout *pDescriptorLayouts,
-    uint32 stageCount, VkPipelineShaderStageCreateInfo *pStages,
-    VkViewport viewport, VkRect2D scissor, bool isWireframe,
-    Pipeline *pPipeline) {
+FeExpect<void, Error>
+PipelineManager::CreateGraphicsPipeline(Context &ctx,
+                                        Renderpass *pRenderpass,
+                                        uint32 attributeCount,
+                                        VkVertexInputAttributeDescription *pAttributes,
+                                        uint32 descriptorSetLayoutCount,
+                                        VkDescriptorSetLayout *pDescriptorLayouts,
+                                        uint32 stageCount,
+                                        VkPipelineShaderStageCreateInfo *pStages,
+                                        VkViewport viewport,
+                                        VkRect2D scissor,
+                                        bool isWireframe,
+                                        Pipeline *pPipeline) {
   if (pRenderpass == nullptr) {
     FLOG_ERROR("cannot create graphics pipeline with nullptr renderpass");
     return FeErr{Error("renderpass is nullptr", ErrorType::NullptrException)};
@@ -19,8 +27,7 @@ FeExpect<void, Error> PipelineManager::CreateGraphicsPipeline(
 
   if (pPipeline == nullptr) {
     FLOG_ERROR("cannot create graphics pipeline on nullptr pipeline");
-    return FeErr{
-        Error("pipeline object is nullptr", ErrorType::NullptrException)};
+    return FeErr{Error("pipeline object is nullptr", ErrorType::NullptrException)};
   }
 
   VkPipelineViewportStateCreateInfo viewportState = {
@@ -35,8 +42,7 @@ FeExpect<void, Error> PipelineManager::CreateGraphicsPipeline(
       VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
   rasterizerInfo.depthClampEnable = VK_FALSE;
   rasterizerInfo.rasterizerDiscardEnable = VK_FALSE;
-  rasterizerInfo.polygonMode =
-      isWireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
+  rasterizerInfo.polygonMode = isWireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
   rasterizerInfo.lineWidth = 1.0f;
   rasterizerInfo.cullMode = VK_CULL_MODE_NONE;
   rasterizerInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
@@ -65,8 +71,7 @@ FeExpect<void, Error> PipelineManager::CreateGraphicsPipeline(
   stencilInfo.stencilTestEnable = VK_FALSE;
 
   VkPipelineColorBlendAttachmentState colorBlendState;
-  ctx.memoryManager.FZeroMemory(&colorBlendState,
-                                sizeof(VkPipelineColorBlendAttachmentState));
+  ctx.memoryManager.FZeroMemory(&colorBlendState, sizeof(VkPipelineColorBlendAttachmentState));
   colorBlendState.blendEnable = VK_TRUE;
   colorBlendState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
   colorBlendState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -74,9 +79,8 @@ FeExpect<void, Error> PipelineManager::CreateGraphicsPipeline(
   colorBlendState.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
   colorBlendState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
   colorBlendState.alphaBlendOp = VK_BLEND_OP_ADD;
-  colorBlendState.colorWriteMask =
-      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-      VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  colorBlendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                                   VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
   VkPipelineColorBlendStateCreateInfo colorBlendInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO};
@@ -120,20 +124,25 @@ FeExpect<void, Error> PipelineManager::CreateGraphicsPipeline(
   inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
 
   // Pipeline layout
-  VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
-      VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+  VkPipelineLayoutCreateInfo pipelineLayoutInfo = {VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+  // Push constants
+  VkPushConstantRange pushConstant;
+  pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  pushConstant.offset = sizeof(math::Mat4D) * 0;
+  pushConstant.size = sizeof(math::Mat4D) * 2;
+
   pipelineLayoutInfo.setLayoutCount = descriptorSetLayoutCount;
   pipelineLayoutInfo.pSetLayouts = pDescriptorLayouts;
-  auto res = VkCheck(vkCreatePipelineLayout(ctx.device.logicalDevice,
-                                            &pipelineLayoutInfo, ctx.pAllocator,
-                                            &pPipeline->layout));
+  pipelineLayoutInfo.pushConstantRangeCount = 1;
+  pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
+  auto res = VkCheck(vkCreatePipelineLayout(
+      ctx.device.logicalDevice, &pipelineLayoutInfo, ctx.pAllocator, &pPipeline->layout));
   if (!res.has_value()) {
     FLOG_ERROR("failed to create pipeline layout");
     return FeErr{res.error()};
   }
 
-  VkGraphicsPipelineCreateInfo graphicsInfo = {
-      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
+  VkGraphicsPipelineCreateInfo graphicsInfo = {VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
   graphicsInfo.stageCount = stageCount;
   graphicsInfo.pStages = pStages;
   graphicsInfo.pVertexInputState = &vertexInputInfo;
@@ -152,40 +161,39 @@ FeExpect<void, Error> PipelineManager::CreateGraphicsPipeline(
   graphicsInfo.basePipelineHandle = VK_NULL_HANDLE;
   graphicsInfo.basePipelineIndex = -1;
 
-  VkResult result = vkCreateGraphicsPipelines(
-      ctx.device.logicalDevice, VK_NULL_HANDLE, 1, &graphicsInfo,
-      ctx.pAllocator, &pPipeline->handle);
+  VkResult result = vkCreateGraphicsPipelines(ctx.device.logicalDevice,
+                                              VK_NULL_HANDLE,
+                                              1,
+                                              &graphicsInfo,
+                                              ctx.pAllocator,
+                                              &pPipeline->handle);
   if (VkResultIsSuccess(result)) {
     FLOG_INFO("graphics pipeline created successfully");
     return {};
   }
 
-  return FeErr{Error("failed to create graphics pipeline",
-                     ErrorType::RendererVulkanError)};
+  return FeErr{Error("failed to create graphics pipeline", ErrorType::RendererVulkanError)};
 }
 
-void PipelineManager::DestroyGraphicsPipeline(Context &ctx,
-                                              Pipeline *pPipeline) {
+void PipelineManager::DestroyGraphicsPipeline(Context &ctx, Pipeline *pPipeline) {
   if (pPipeline == nullptr) {
     return;
   }
 
   if (pPipeline->handle != nullptr) {
-    vkDestroyPipeline(ctx.device.logicalDevice, pPipeline->handle,
-                      ctx.pAllocator);
+    vkDestroyPipeline(ctx.device.logicalDevice, pPipeline->handle, ctx.pAllocator);
     pPipeline->handle = nullptr;
   }
 
   if (pPipeline->layout != nullptr) {
-    vkDestroyPipelineLayout(ctx.device.logicalDevice, pPipeline->layout,
-                            ctx.pAllocator);
+    vkDestroyPipelineLayout(ctx.device.logicalDevice, pPipeline->layout, ctx.pAllocator);
     pPipeline->layout = nullptr;
   }
 }
 
 void PipelineManager::BindPipeline(CommandBuffer &cmdBuffer,
-                              VkPipelineBindPoint bindPoint,
-                              Pipeline &pipeline) {
+                                   VkPipelineBindPoint bindPoint,
+                                   Pipeline &pipeline) {
   vkCmdBindPipeline(cmdBuffer.handle, bindPoint, pipeline.handle);
 }
 

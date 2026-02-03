@@ -7,11 +7,11 @@
 
 namespace flatearth {
 
-
 class EngineListener final : public event::ListenerAdapter {
 public:
   explicit EngineListener(event::EventManager &eventManager,
-                          ApplicationState &appState, renderer::FrontendRenderer &renderer);
+                          ApplicationState &appState,
+                          renderer::FrontendRenderer &renderer);
 
   ~EngineListener();
   // Inherited overrrides
@@ -24,9 +24,8 @@ public:
                                 const event::EventContext &eventCtx) override;
   FeExpect<bool, Error> OnButton(const event::EventDispatchContext &ctx,
                                  const event::EventContext &eventCtx) override;
-  FeExpect<bool, Error>
-  OnMouseMove(const event::EventDispatchContext &ctx,
-              const event::EventContext &eventCtx) override;
+  FeExpect<bool, Error> OnMouseMove(const event::EventDispatchContext &ctx,
+                                    const event::EventContext &eventCtx) override;
 
 private:
   FeExpect<void, Error> WireEvents();
@@ -46,6 +45,6 @@ private:
   event::EventManager &_eventManager;
 };
 
-}
+} // namespace flatearth
 
 #endif // _FLATEARTH_ENGINE_ENGINE_LISTENER_HPP

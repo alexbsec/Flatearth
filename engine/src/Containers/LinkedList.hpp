@@ -11,6 +11,6 @@ struct Node {
   Node(T data) : data(data), pNext(nullptr) {}
 };
 
-}
+} // namespace flatearth::containers
 
 #endif // _FLATEARTH_ENGINE_CORE_LINKED_LIST_HPP

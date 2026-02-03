@@ -1,4 +1,5 @@
 #include "Application.hpp"
+
 #include "Core/Clock.hpp"
 #include "Core/EngineListener.hpp"
 #include "Core/Event.hpp"
@@ -11,17 +12,15 @@
 namespace flatearth {
 
 Engine::Engine(Game &game)
-    : _appState(game), _eventManager(_memoryManager),
-      _inputManager(_eventManager),
-      _frontendRenderer(&_appState, _memoryManager, _filesystem),
-      _filesystem(_memoryManager) {
-  _engineListener =
-      _memoryManager.Allocate<event::IEventListener, EngineListener>(
-          memory::Tag::Application, _eventManager, _appState,
-          _frontendRenderer);
+    : _appState(game), _eventManager(_memoryManager), _inputManager(_eventManager),
+      _frontendRenderer(&_appState, _memoryManager, _filesystem), _filesystem(_memoryManager) {
+  _engineListener = _memoryManager.Allocate<event::IEventListener, EngineListener>(
+      memory::Tag::Application, _eventManager, _appState, _frontendRenderer);
 }
 
-Engine::~Engine() { FLOG_INFO("engine shutdown gracefully"); }
+Engine::~Engine() {
+  FLOG_INFO("engine shutdown gracefully");
+}
 
 FeExpect<void, Error> Engine::Initialize() {
   FILE_LOGGING(FeTrue);
@@ -33,23 +32,24 @@ FeExpect<void, Error> Engine::Initialize() {
   // initialize game
   if (!_appState.gameInstance.Initialize(&_appState.gameInstance)) {
     FLOG_FATAL("game failed to initialize");
-    return FeErr{Error("game Initialize() returned, cannot initialize it",
-                       ErrorType::GameInitializeError)};
+    return FeErr{
+        Error("game Initialize() returned, cannot initialize it", ErrorType::GameInitializeError)};
   }
 
   _appState.appConfig.windowStartPosX = _appState.gameInstance.windowStartPosX;
   _appState.appConfig.windowStartPosY = _appState.gameInstance.windowStartPosY;
-  _appState.appConfig.windowStartWidth =
-      _appState.gameInstance.windowStartWidth;
-  _appState.appConfig.windowStartHeight =
-      _appState.gameInstance.windowStartHeight;
+  _appState.appConfig.windowStartWidth = _appState.gameInstance.windowStartWidth;
+  _appState.appConfig.windowStartHeight = _appState.gameInstance.windowStartHeight;
 
-  _pPlatform = _memoryManager.Allocate<platform::Platform>(
-      memory::Tag::Platform, _appState.gameInstance.gameName,
-      _appState.appConfig.windowStartPosX, _appState.appConfig.windowStartPosY,
-      _appState.appConfig.windowStartWidth,
-      _appState.appConfig.windowStartHeight, _memoryManager, _inputManager,
-      _eventManager);
+  _pPlatform = _memoryManager.Allocate<platform::Platform>(memory::Tag::Platform,
+                                                           _appState.gameInstance.gameName,
+                                                           _appState.appConfig.windowStartPosX,
+                                                           _appState.appConfig.windowStartPosY,
+                                                           _appState.appConfig.windowStartWidth,
+                                                           _appState.appConfig.windowStartHeight,
+                                                           _memoryManager,
+                                                           _inputManager,
+                                                           _eventManager);
 
   auto platInitRes = _pPlatform->Initialize();
   if (!platInitRes.has_value()) {
@@ -66,8 +66,7 @@ FeExpect<void, Error> Engine::Initialize() {
 
   FeExpect<bool, Error> frontendInitRes = _frontendRenderer.Initialize();
   if (!frontendInitRes.has_value()) {
-    FLOG_ERROR("frontend renderer failed to initialize: {}",
-               frontendInitRes.error().message);
+    FLOG_ERROR("frontend renderer failed to initialize: {}", frontendInitRes.error().message);
     return FeErr{frontendInitRes.error()};
   }
 
@@ -90,8 +89,7 @@ FeExpect<void, Error> Engine::Start() {
   while (_appState.isRunning) {
     auto pollRes = _pPlatform->PollEvents();
     if (!pollRes.has_value()) {
-      FLOG_ERROR("engine failed to poll events from platform {}",
-                 pollRes.error().message);
+      FLOG_ERROR("engine failed to poll events from platform {}", pollRes.error().message);
       return FeErr{pollRes.error()};
     }
 
@@ -121,8 +119,7 @@ FeExpect<void, Error> Engine::Start() {
     packet.deltaTime = deltaTime;
     auto drawRes = _frontendRenderer.DrawFrame(&packet);
     if (!drawRes.has_value()) {
-      FLOG_ERROR("frontend renderer failed to draw frame: {}",
-                 drawRes.error().message);
+      FLOG_ERROR("frontend renderer failed to draw frame: {}", drawRes.error().message);
       return FeErr{drawRes.error()};
     }
 
@@ -157,13 +154,13 @@ FeExpect<void, Error> Engine::CheckGamePrerequisites() {
   }
 
   if (_appState.gameInstance.Update == nullptr) {
-    return FeErr{Error("game instance Update() function is not defined",
-                       ErrorType::GameUpdateUndefined)};
+    return FeErr{
+        Error("game instance Update() function is not defined", ErrorType::GameUpdateUndefined)};
   }
 
   if (_appState.gameInstance.OnResize == nullptr) {
-    return FeErr{Error("game instance OnResize() function is not defined",
-                       ErrorType::GameResizeUndefined)};
+    return FeErr{
+        Error("game instance OnResize() function is not defined", ErrorType::GameResizeUndefined)};
   }
 
   return {};

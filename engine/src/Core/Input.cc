@@ -1,10 +1,11 @@
 #include "Input.hpp"
+
 #include "Core/Event.hpp"
 
 namespace flatearth::input {
 
-InputManager::InputManager(event::EventManager &eventManager)
-    : _eventManager(eventManager) {}
+InputManager::InputManager(event::EventManager &eventManager) : _eventManager(eventManager) {
+}
 
 void InputManager::Update(float64 deltaTime) {
   _state.keyboardPrevious = _state.keyboardCurrent;
@@ -20,8 +21,7 @@ FeExpect<bool, Error> InputManager::ProcessKey(Keys key, bool pressed) {
   _state.keyboardCurrent.keys[key] = pressed;
   EventContext eventCtx;
   eventCtx.Set(EventLayout::Uint16x8, static_cast<uint16>(key));
-  SystemEventCode code =
-      pressed ? SystemEventCode::KeyPressed : SystemEventCode::KeyReleased;
+  SystemEventCode code = pressed ? SystemEventCode::KeyPressed : SystemEventCode::KeyReleased;
   return _eventManager.FireEvent(code, nullptr, eventCtx);
 }
 
@@ -35,8 +35,7 @@ FeExpect<bool, Error> InputManager::ProcessButton(Button button, bool pressed) {
   _state.mouseCurrent.buttons[numberButton] = pressed;
   EventContext eventCtx;
   eventCtx.Set(EventLayout::Uint16x8, numberButton);
-  SystemEventCode code = pressed ? SystemEventCode::ButtonPressed
-                                 : SystemEventCode::ButtonReleased;
+  SystemEventCode code = pressed ? SystemEventCode::ButtonPressed : SystemEventCode::ButtonReleased;
 
   return _eventManager.FireEvent(code, nullptr, eventCtx);
 }

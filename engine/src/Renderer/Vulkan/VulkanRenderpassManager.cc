@@ -1,19 +1,29 @@
 #include "VulkanRenderpassManager.hpp"
+
 #include "Renderer/Vulkan/VulkanTypes.hpp"
 
 namespace flatearth::renderer::vulkan {
 
 RenderpassManager::RenderpassManager(memory::MemoryManager &memManager)
-    : _memoryManager(memManager) {}
+    : _memoryManager(memManager) {
+}
 
 RenderpassManager::~RenderpassManager() {
   FLOG_INFO("renderpass exited gracefully");
 }
 
-FeExpect<void, Error> RenderpassManager::CreateRenderpass(
-    Context &ctx, Renderpass *pRenderpass, float32 x, float32 y, float32 width,
-    float32 height, float32 r, float32 g, float32 b, float32 a, float32 depth,
-    uint32 stencil) {
+FeExpect<void, Error> RenderpassManager::CreateRenderpass(Context &ctx,
+                                                          Renderpass *pRenderpass,
+                                                          float32 x,
+                                                          float32 y,
+                                                          float32 width,
+                                                          float32 height,
+                                                          float32 r,
+                                                          float32 g,
+                                                          float32 b,
+                                                          float32 a,
+                                                          float32 depth,
+                                                          uint32 stencil) {
 
   pRenderpass->x = x;
   pRenderpass->y = y;
@@ -68,8 +78,7 @@ FeExpect<void, Error> RenderpassManager::CreateRenderpass(
   depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  depthAttachment.finalLayout =
-      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
   attachmentDescriptions[1] = depthAttachment;
 
@@ -96,13 +105,12 @@ FeExpect<void, Error> RenderpassManager::CreateRenderpass(
   dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
   dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
   dependency.srcAccessMask = 0;
-  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
-                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependency.dstAccessMask =
+      VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
   dependency.dependencyFlags = 0;
 
   // Render pass creation
-  VkRenderPassCreateInfo renderPassCreateInfo = {
-      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
+  VkRenderPassCreateInfo renderPassCreateInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
   renderPassCreateInfo.attachmentCount = attachmentDescriptionCount;
   renderPassCreateInfo.pAttachments = attachmentDescriptions.Data();
   renderPassCreateInfo.subpassCount = 1;
@@ -113,9 +121,8 @@ FeExpect<void, Error> RenderpassManager::CreateRenderpass(
   renderPassCreateInfo.flags = 0;
   /***********************************************/
 
-  if (auto res = VkCheck(
-          vkCreateRenderPass(ctx.device.logicalDevice, &renderPassCreateInfo,
-                             ctx.pAllocator, &pRenderpass->handle));
+  if (auto res = VkCheck(vkCreateRenderPass(
+          ctx.device.logicalDevice, &renderPassCreateInfo, ctx.pAllocator, &pRenderpass->handle));
       !res.has_value()) {
     FLOG_ERROR("failed to create renderpass");
     return FeErr{res.error()};
@@ -124,19 +131,18 @@ FeExpect<void, Error> RenderpassManager::CreateRenderpass(
   return {};
 }
 
-FeExpect<void, Error>
-RenderpassManager::DestroyRenderpass(Context &ctx, Renderpass *pRenderpass) {
+FeExpect<void, Error> RenderpassManager::DestroyRenderpass(Context &ctx, Renderpass *pRenderpass) {
 
   if (pRenderpass != nullptr && pRenderpass->handle != nullptr) {
-    vkDestroyRenderPass(ctx.device.logicalDevice, pRenderpass->handle,
-                        ctx.pAllocator);
+    vkDestroyRenderPass(ctx.device.logicalDevice, pRenderpass->handle, ctx.pAllocator);
     pRenderpass->handle = nullptr;
   }
 
   return {};
 }
 
-void RenderpassManager::BeginRenderpass(Context &ctx, CommandBuffer *pCmdBuffer,
+void RenderpassManager::BeginRenderpass(Context &ctx,
+                                        CommandBuffer *pCmdBuffer,
                                         Renderpass *pRenderpass,
                                         VkFramebuffer frameBuffer) {
 
@@ -161,12 +167,12 @@ void RenderpassManager::BeginRenderpass(Context &ctx, CommandBuffer *pCmdBuffer,
   beginInfo.clearValueCount = clearValCount;
   beginInfo.pClearValues = clearVals;
 
-  vkCmdBeginRenderPass(pCmdBuffer->handle, &beginInfo,
-                       VK_SUBPASS_CONTENTS_INLINE);
+  vkCmdBeginRenderPass(pCmdBuffer->handle, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
   pCmdBuffer->state = CmdBufferState::InRenderpass;
 }
 
-void RenderpassManager::EndRenderpass(Context &ctx, CommandBuffer *pCmdBuffer,
+void RenderpassManager::EndRenderpass(Context &ctx,
+                                      CommandBuffer *pCmdBuffer,
                                       Renderpass *pRenderpass) {
   vkCmdEndRenderPass(pCmdBuffer->handle);
   pCmdBuffer->state = CmdBufferState::Recording;

@@ -1,7 +1,9 @@
 #include "Renderer/RendererFrontend.hpp"
+
 #include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
+#include "Math/Matrix4D.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererInterface.hpp"
 #include "Renderer/Vulkan/VulkanBackend.hpp"
@@ -11,8 +13,9 @@ namespace flatearth::renderer {
 FrontendRenderer::FrontendRenderer(ApplicationState *appState,
                                    memory::MemoryManager &memManager,
                                    platform::FileSystem &fs)
-    : _applicationName(appState->appConfig.name), _memoryManager(memManager),
-      _pAppState(appState), _filesystem(fs) {}
+    : _applicationName(appState->appConfig.name), _memoryManager(memManager), _pAppState(appState),
+      _filesystem(fs) {
+}
 
 FrontendRenderer::~FrontendRenderer() {
   FLOG_INFO("frontend renderer exited gracefully");
@@ -21,8 +24,7 @@ FrontendRenderer::~FrontendRenderer() {
 FeExpect<bool, Error> FrontendRenderer::Initialize() {
   auto backendsRes = MakeBackends();
   if (!backendsRes.has_value()) {
-    FLOG_ERROR("failed to scaffold renderer backends: {}",
-               backendsRes.error().message);
+    FLOG_ERROR("failed to scaffold renderer backends: {}", backendsRes.error().message);
     return FeErr{backendsRes.error()};
   }
 
@@ -30,8 +32,7 @@ FeExpect<bool, Error> FrontendRenderer::Initialize() {
   uint32 vulkanIndex = static_cast<uint32>(BackendType::Vulkan);
   if (_pBackends[vulkanIndex] == nullptr) {
     FLOG_FATAL("no valid backend found");
-    return FeErr{Error("no backend was set in frontend renderer",
-                       ErrorType::NoBackendRenderer)};
+    return FeErr{Error("no backend was set in frontend renderer", ErrorType::NoBackendRenderer)};
   }
 
   _pActiveBackend = _pBackends[vulkanIndex].get();
@@ -92,8 +93,17 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
     return FeTrue;
   }
 
-  auto updateRes = _pActiveBackend->UpdateGlobalState(
-      math::Mat4D::Identity(), math::Mat4D::Identity(), math::Vec3D::Zero(), 0);
+  math::Mat4D projection = math::Mat4D::Orthographic(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+  math::Mat4D view = math::Mat4D::Identity();
+
+  static float32 angle = 0.0f;
+
+  // radians per second (tweak speed)
+  angle += pRenderPacket->deltaTime * 1.5f;
+
+  math::Mat4D model = math::Mat4D::RotationZ(angle) * math::Mat4D::Translation(0.0f, 0.0f, 0.0f);
+  _pActiveBackend->UpdateObject(model);
+  auto updateRes = _pActiveBackend->UpdateGlobalState(projection, view, math::Vec3D::Zero(), 0);
   if (!updateRes.has_value()) {
     FLOG_ERROR("failed to update global state on frontend renderer");
     return FeErr{updateRes.error()};
@@ -125,9 +135,8 @@ FeExpect<void, Error> FrontendRenderer::OnResize(uint32 width, uint32 height) {
 
 FeExpect<void, Error> FrontendRenderer::MakeBackends() {
   uint32 vulkanIndex = static_cast<uint32>(BackendType::Vulkan);
-  _pBackends[vulkanIndex] =
-      _memoryManager.Allocate<IRendererBackend, vulkan::VulkanBackend>(
-          memory::Tag::Renderer, _memoryManager, _filesystem);
+  _pBackends[vulkanIndex] = _memoryManager.Allocate<IRendererBackend, vulkan::VulkanBackend>(
+      memory::Tag::Renderer, _memoryManager, _filesystem);
   return {};
 }
 

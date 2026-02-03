@@ -17,7 +17,7 @@ struct ApplicationConfig {
 };
 
 struct ApplicationState {
-  Game &gameInstance; 
+  Game &gameInstance;
   bool isRunning;
   bool isSuspended;
   int32 width;

@@ -6,7 +6,10 @@
 
 namespace flatearth::renderer::vulkan {
 
-FeExpect<bool, Error> CreateShaderModule(Context &ctx, const string &name,
+void EnsureGPUMatrixLayout(math::Mat4D &inProj, math::Mat4D &inView);
+
+FeExpect<bool, Error> CreateShaderModule(Context &ctx,
+                                         const string &name,
                                          const string &typeStr,
                                          VkShaderStageFlagBits stageFlag,
                                          uint32 stageIndex,
