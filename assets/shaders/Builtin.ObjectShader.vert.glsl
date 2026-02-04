@@ -12,6 +12,11 @@ layout(push_constant) uniform pushConstants {
   mat4 model;
 } uPushConstants;
 
+layout(location = 0) out vec2 vNdc; 
+
 void main() {
-  gl_Position = globalUbo.projection * globalUbo.view * uPushConstants.model * vec4(inPosition, 1.0);
+  vec4 clip = globalUbo.projection * globalUbo.view * uPushConstants.model * vec4(inPosition, 1.0);
+  gl_Position = clip;
+
+  vNdc = clip.xy / clip.w;
 }

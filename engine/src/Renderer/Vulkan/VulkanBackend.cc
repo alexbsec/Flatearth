@@ -236,12 +236,12 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
                                                       0,
                                                       _ctx.framebufferWidth,
                                                       _ctx.framebufferHeight,
+                                                      0.08f,
+                                                      0.08f,
+                                                      0.10f,
+                                                      1.0f, 
                                                       1.0f,
-                                                      1.0f,
-                                                      1.0f,
-                                                      1.0f,
-                                                      1.0f,
-                                                      0);
+                                                      0); 
   if (!rpassRes.has_value()) {
     FLOG_ERROR("failed to create renderpass");
     return FeErr{rpassRes.error()};
