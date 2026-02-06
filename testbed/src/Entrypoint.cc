@@ -6,12 +6,12 @@
 #include <Entrypoint.hpp>
 #include <cstdlib>
 
-bool CreateGame(flatearth::Game *outGame) {
+bool CreateGame(flatearth::Game *pGame) {
   using namespace flatearth::testbed;
-  outGame->Update = GameTest::GameUpdate;
-  outGame->Initialize = GameTest::GameInitialize;
-  outGame->OnResize = GameTest::GameOnResize;
-  outGame->Render = GameTest::GameRender;
+  pGame->Update = GameTest::GameUpdate;
+  pGame->Initialize = GameTest::GameInitialize;
+  pGame->OnResize = GameTest::GameOnResize;
+  pGame->Render = GameTest::GameRender;
   return true;
 }
 
