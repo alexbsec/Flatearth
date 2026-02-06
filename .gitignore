@@ -18,6 +18,12 @@ tests/compile_commands.json
 .github/*
 log.txt
 build/
+engine/build-debug/*
+engine/build-release/*
+testbed/build-debug/*
+testbed/build-release/*
+debug/*
+release/*
 
 # Visual Studio
 .vs/

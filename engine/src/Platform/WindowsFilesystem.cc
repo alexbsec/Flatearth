@@ -13,6 +13,12 @@ stdfs::path WorkDirectory() {
   return stdfs::current_path();
 }
 
+stdfs::path GetExecutableDir() {
+    wchar_t buffer[MAX_PATH];
+    GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+    return std::filesystem::path(buffer).parent_path();
+}
+
 static HANDLE GetHandle(FileHandle &handle) {
   return reinterpret_cast<HANDLE>(handle.nativeHandle);
 }
@@ -36,7 +42,7 @@ static std::string Win32LastErrorToString(DWORD err) {
 }
 
 FileSystem::FileSystem(memory::MemoryManager &memManager)
-    : _memoryManager(memManager), _rootDir(WorkDirectory()) {
+    : _memoryManager(memManager), _rootDir(GetExecutableDir()) {
 }
 
 bool FileSystem::Exists(const stdfs::path &path) const {

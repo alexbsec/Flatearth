@@ -13,20 +13,41 @@ stdfs::path WorkDirectory() {
   return stdfs::current_path();
 }
 
+stdfs::path GetExecutableDirectory() {
+  char buffer[4096];
+  ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+  if (len <= 0) {
+    return {};
+  }
+
+  buffer[len] = 0;
+  return stdfs::path(buffer).parent_path();
+}
+
+stdfs::path ResolvePath(const stdfs::path &root, const stdfs::path &path) {
+  if (path.is_absolute()) {
+    return path;
+  }
+
+  return (root / path).lexically_normal();
+}
+
 int32 GetFileDescriptor(FileHandle &handle) {
   return static_cast<int32>(reinterpret_cast<intptr_t>(handle.nativeHandle));
 }
 
 FileSystem::FileSystem(memory::MemoryManager &memoryManager)
-    : _memoryManager(memoryManager), _rootDir(WorkDirectory()) {
+    : _memoryManager(memoryManager), _rootDir(GetExecutableDirectory()) {
 }
 
 bool FileSystem::Exists(const stdfs::path &path) const {
-  return stdfs::exists(path);
+  stdfs::path absolutePath = ResolvePath(_rootDir, path);
+  return stdfs::exists(absolutePath);
 }
 
 uint64 FileSystem::SizeOfFile(const stdfs::path &path) const {
-  return stdfs::file_size(path);
+  stdfs::path absolutePath = ResolvePath(_rootDir, path);
+  return stdfs::file_size(absolutePath);
 }
 
 FeExpect<FileHandle, Error>
@@ -42,7 +63,8 @@ FileSystem::OpenFile(const stdfs::path &path, FileMode mode, bool binary) {
     return FeErr{Error("invalid file mode", ErrorType::InvalidFileMode)};
   }
 
-  stdfs::path absolutePath = _rootDir / path;
+  stdfs::path absolutePath = ResolvePath(_rootDir, path); 
+  FLOG_INFO("absolute path is {}", absolutePath.string());
 
   int32 fd = open(absolutePath.c_str(), flags, S_IRUSR | S_IWUSR);
   if (fd < 0) {

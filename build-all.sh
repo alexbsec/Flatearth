@@ -1,13 +1,30 @@
 #!/bin/bash
+set -e
 
-set echo on
+# Usage:
+#   ./build-all.sh            -> Debug (default)
+#   ./build-all.sh debug      -> Debug
+#   ./build-all.sh release    -> Release
+#
+# Anything else -> error
+mode="${1:-debug}"
 
-mkdir -p bin
+if [[ ! "$mode" =~ ^([Dd]ebug|[Rr]elease)$ ]]; then
+  echo "Usage: $0 [debug|release]"
+  exit 1
+fi
+#
+# Normalize
+mode=$(echo "$mode" | tr '[:upper:]' '[:lower:]')
 
-pushd engine
-./run.sh
-popd
+OUT_ROOT="$mode"
 
-pushd testbed
-./run.sh
-popd
+mkdir -p "$OUT_ROOT/bin"
+
+pushd engine >/dev/null
+./run.sh "$mode" "$OUT_ROOT"
+popd >/dev/null
+
+pushd testbed >/dev/null
+./run.sh "$mode" "$OUT_ROOT"
+popd >/dev/null
