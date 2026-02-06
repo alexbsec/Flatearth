@@ -18,8 +18,10 @@ tests/compile_commands.json
 .github/*
 log.txt
 build/
-build-debug/
-build-release/
+engine/build-debug/*
+engine/build-release/*
+testbed/build-debug/*
+testbed/build-release/*
 debug/*
 release/*
 
