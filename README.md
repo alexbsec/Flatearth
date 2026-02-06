@@ -123,7 +123,17 @@ Here's how you can build the project in your machine:
 ### Linux
 
 To build in a Linux machine, just run the bash script `./build-all.sh`. The
-binaries are going to be placed inside the newly created `./bin` directory.
+binaries are going to be placed inside the newly created `./debug/bin` directory.
+
+If you want, you can also use `make` command to build and run:
+
+```bash
+make build
+make run
+```
+
+Will already run the necessary commands to build and run the engine.
+
 
 ### Windows
 
