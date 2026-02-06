@@ -18,6 +18,10 @@ tests/compile_commands.json
 .github/*
 log.txt
 build/
+build-debug/
+build-release/
+debug/*
+release/*
 
 # Visual Studio
 .vs/

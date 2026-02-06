@@ -31,7 +31,7 @@ FeExpect<bool, Error> CreateShaderModule(Context &ctx,
                                          uint32 stageIndex,
                                          ShaderStage *pShaderStage) {
   const std::filesystem::path cFileName =
-      std::filesystem::path(std::format("bin/assets/shaders/{}.{}.spv", name, typeStr));
+      std::filesystem::path(std::format("assets/shaders/{}.{}.spv", name, typeStr));
 
   ctx.memoryManager.FZeroMemory(&pShaderStage[stageIndex].shaderModuleCreateInfo,
                                 sizeof(VkShaderModuleCreateInfo));

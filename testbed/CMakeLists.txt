@@ -116,12 +116,13 @@ else()
     )
 endif()
 
-if(NOT WIN32)
+if(NOT WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(flatearth_testbed PRIVATE
         -fsanitize=address,undefined
         -fno-omit-frame-pointer
+        -O1
+        -g
     )
-
     target_link_options(flatearth_testbed PRIVATE
         -fsanitize=address,undefined
     )
