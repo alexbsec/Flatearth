@@ -3,7 +3,6 @@
 
 #include "Defines.hpp"
 #include "Math/FeMath.hpp"
-#include "Math/MathTypes.hpp"
 #include "Math/Vector3D.hpp"
 
 #include <features.h>
@@ -26,11 +25,28 @@ public:
 
   FEINLINE constexpr Mat4D Identity() { return Mat4D(); }
 
+  FEINLINE constexpr Mat4D Zero() {
+    Mat4D m = Identity();
+    m._x00 = 0;
+    m._x11 = 0;
+    m._x22 = 0;
+    m._x33 = 0;
+    return m;
+  }
+
   FEINLINE constexpr Mat4D Translation(float32 tx, float32 ty, float32 tz) {
-    Mat4D m;
+    Mat4D m = Identity();
     m._x03 = tx;
     m._x13 = ty;
     m._x23 = tz;
+    return m;
+  }
+
+  FEINLINE constexpr Mat4D Translation(const Vec3D &position) {
+    Mat4D m;
+    m._x03 = position.x();
+    m._x13 = position.y();
+    m._x23 = position.z();
     return m;
   }
 
@@ -72,6 +88,13 @@ public:
     mat._x33 = 1;
 
     return mat;
+  }
+
+  FEINLINE Mat4D FromEuler(float32 yawRad, float32 pitchRad, float32 rollRad) noexcept {
+    Mat4D rx = RotationX(pitchRad);
+    Mat4D ry = RotationY(yawRad);
+    Mat4D rz = RotationZ(rollRad);
+    return rz * ry * rx;
   }
 
   FEINLINE Mat4D Perspective(float32 fovRadians,
@@ -190,7 +213,7 @@ public:
     return result;
   }
 
-  math::Mat4D ToGPUMatrix() const noexcept { return Transposed(); }
+  math::Mat4D ToGPUMatrix() const noexcept { return *this; }
 
   Mat4D Transposed() const noexcept {
     Mat4D t;

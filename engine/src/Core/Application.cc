@@ -11,8 +11,8 @@
 
 namespace flatearth {
 
-Engine::Engine(Game &game)
-    : _appState(game), _eventManager(_memoryManager), _inputManager(_eventManager),
+Engine::Engine(Game *pGame)
+    : _appState(pGame), _eventManager(_memoryManager), _inputManager(_eventManager),
       _frontendRenderer(&_appState, _memoryManager, _filesystem), _filesystem(_memoryManager) {
   _engineListener = _memoryManager.Allocate<event::IEventListener, EngineListener>(
       memory::Tag::Application, _eventManager, _appState, _frontendRenderer);
@@ -30,19 +30,19 @@ FeExpect<void, Error> Engine::Initialize() {
   }
 
   // initialize game
-  if (!_appState.gameInstance.Initialize(&_appState.gameInstance)) {
+  if (!_appState.pGameInstance->Initialize(_appState.pGameInstance)) {
     FLOG_FATAL("game failed to initialize");
     return FeErr{
         Error("game Initialize() returned, cannot initialize it", ErrorType::GameInitializeError)};
   }
 
-  _appState.appConfig.windowStartPosX = _appState.gameInstance.windowStartPosX;
-  _appState.appConfig.windowStartPosY = _appState.gameInstance.windowStartPosY;
-  _appState.appConfig.windowStartWidth = _appState.gameInstance.windowStartWidth;
-  _appState.appConfig.windowStartHeight = _appState.gameInstance.windowStartHeight;
+  _appState.appConfig.windowStartPosX = _appState.pGameInstance->windowStartPosX;
+  _appState.appConfig.windowStartPosY = _appState.pGameInstance->windowStartPosY;
+  _appState.appConfig.windowStartWidth = _appState.pGameInstance->windowStartWidth;
+  _appState.appConfig.windowStartHeight = _appState.pGameInstance->windowStartHeight;
 
   _pPlatform = _memoryManager.Allocate<platform::Platform>(memory::Tag::Platform,
-                                                           _appState.gameInstance.gameName,
+                                                           _appState.pGameInstance->gameName,
                                                            _appState.appConfig.windowStartPosX,
                                                            _appState.appConfig.windowStartPosY,
                                                            _appState.appConfig.windowStartWidth,
@@ -73,7 +73,7 @@ FeExpect<void, Error> Engine::Initialize() {
   _appState.isRunning = FeTrue;
   _appState.isSuspended = FeFalse;
   _appState.platformState = _pPlatform->State();
-
+  _appState.pGameInstance->pInputManager = &_inputManager;
   FLOG_INFO("engine successfully initialized");
   return {};
 }
@@ -108,7 +108,7 @@ FeExpect<void, Error> Engine::Start() {
     float64 frameStartTime = clock::GetAbsoluteTime();
 
     // Update game
-    if (!_appState.gameInstance.Update(&_appState.gameInstance, deltaTime)) {
+    if (!_appState.pGameInstance->Update(_appState.pGameInstance, deltaTime)) {
       FLOG_FATAL("game update failed, shutting down application");
       break;
     }
@@ -117,6 +117,11 @@ FeExpect<void, Error> Engine::Start() {
     // TODO: remove
     renderer::RenderPacket packet;
     packet.deltaTime = deltaTime;
+    if (!_appState.pGameInstance->Render(_appState.pGameInstance, packet)) {
+      FLOG_FATAL("could not populate render packet inside game instance");
+      break;
+    }
+    _frontendRenderer.SetView(packet.view);
     auto drawRes = _frontendRenderer.DrawFrame(&packet);
     if (!drawRes.has_value()) {
       FLOG_ERROR("frontend renderer failed to draw frame: {}", drawRes.error().message);
@@ -148,17 +153,22 @@ FeExpect<void, Error> Engine::Start() {
 }
 
 FeExpect<void, Error> Engine::CheckGamePrerequisites() {
-  if (_appState.gameInstance.Initialize == nullptr) {
+  if (_appState.pGameInstance->Initialize == nullptr) {
     return FeErr{Error("game instance Initialize() function is not defined",
                        ErrorType::GameInitializeUndefined)};
   }
 
-  if (_appState.gameInstance.Update == nullptr) {
+  if (_appState.pGameInstance->Update == nullptr) {
     return FeErr{
         Error("game instance Update() function is not defined", ErrorType::GameUpdateUndefined)};
   }
 
-  if (_appState.gameInstance.OnResize == nullptr) {
+  if (_appState.pGameInstance->Render == nullptr) {
+    return FeErr{
+        Error("game instance Render() function is not defined", ErrorType::GameUpdateUndefined)};
+  }
+
+  if (_appState.pGameInstance->OnResize == nullptr) {
     return FeErr{
         Error("game instance OnResize() function is not defined", ErrorType::GameResizeUndefined)};
   }

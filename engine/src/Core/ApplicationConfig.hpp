@@ -17,7 +17,7 @@ struct ApplicationConfig {
 };
 
 struct ApplicationState {
-  Game &gameInstance;
+  Game *pGameInstance;
   bool isRunning;
   bool isSuspended;
   int32 width;
@@ -27,7 +27,7 @@ struct ApplicationState {
   ApplicationConfig appConfig;
   clock::Clock clock;
 
-  ApplicationState(Game &game) : gameInstance(game) {}
+  ApplicationState(Game *game) : pGameInstance(game) {}
 };
 
 } // namespace flatearth

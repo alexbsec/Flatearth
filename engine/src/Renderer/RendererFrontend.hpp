@@ -9,6 +9,12 @@
 
 namespace flatearth::renderer {
 
+struct RendererState {
+  IRendererBackend *pActiveBackend;
+  math::Mat4D projection, view;
+  float32 nearClip{-1.0f}, farClip{1.0f};
+};
+
 class FrontendRenderer {
 public:
   explicit FrontendRenderer(ApplicationState *appState,
@@ -22,12 +28,17 @@ public:
   FeExpect<bool, Error> DrawFrame(RenderPacket *pRenderPacket);
   FeExpect<void, Error> OnResize(uint32 width, uint32 height);
 
+  // Setters
+  // NOTE: this should not be exposed outside of the engine
+  // remove once done testing
+  FEAPI void SetView(const math::Mat4D &view);
+
 private:
   FeExpect<void, Error> MakeBackends();
 
 private:
   std::array<FePtr<IRendererBackend>, scMaxBackends> _pBackends;
-  IRendererBackend *_pActiveBackend;
+  RendererState _rendererState;
 
   memory::MemoryManager &_memoryManager;
   ApplicationState *_pAppState;

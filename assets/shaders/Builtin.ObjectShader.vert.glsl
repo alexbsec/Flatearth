@@ -4,12 +4,12 @@
 layout(location = 0) in vec3 inPosition;
 
 layout(set = 0, binding = 0) uniform globalUniformObject {
-  mat4 projection;
-  mat4 view;
+  layout(row_major) mat4 projection;
+  layout(row_major) mat4 view;
 } globalUbo;
 
 layout(push_constant) uniform pushConstants {
-  mat4 model;
+  layout(row_major) mat4 model;
 } uPushConstants;
 
 layout(location = 0) out vec2 vNdc; 

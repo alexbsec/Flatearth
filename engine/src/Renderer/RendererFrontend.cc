@@ -35,24 +35,30 @@ FeExpect<bool, Error> FrontendRenderer::Initialize() {
     return FeErr{Error("no backend was set in frontend renderer", ErrorType::NoBackendRenderer)};
   }
 
-  _pActiveBackend = _pBackends[vulkanIndex].get();
-  auto backendInitRes = _pActiveBackend->Initialize(_pAppState);
+  _rendererState.pActiveBackend = _pBackends[vulkanIndex].get();
+  auto backendInitRes = _rendererState.pActiveBackend->Initialize(_pAppState);
   if (!backendInitRes.has_value()) {
     FLOG_ERROR("failed to initialize backend renderer");
     return FeErr{backendInitRes.error()};
   }
+
+  // Set up renderer state values
+  float32 aspect = static_cast<float32>(_pAppState->width) / _pAppState->height;
+  _rendererState.projection = math::Mat4D::Orthographic(
+      -aspect, aspect, -1.0f, 1.0f, _rendererState.nearClip, _rendererState.farClip);
+  _rendererState.view = math::Mat4D::Identity();
 
   FLOG_INFO("frontend renderer successfully initialized");
   return FeTrue;
 }
 
 FeExpect<bool, Error> FrontendRenderer::BeginFrame(float32 deltaTime) {
-  if (_pActiveBackend == nullptr) {
+  if (_rendererState.pActiveBackend == nullptr) {
     FLOG_WARN("no active backends");
     return FeFalse;
   }
 
-  auto res = _pActiveBackend->BeginFrame(deltaTime);
+  auto res = _rendererState.pActiveBackend->BeginFrame(deltaTime);
   if (!res.has_value()) {
     FLOG_ERROR("backend renderer failed to begin frame");
     return FeErr{res.error()};
@@ -62,12 +68,12 @@ FeExpect<bool, Error> FrontendRenderer::BeginFrame(float32 deltaTime) {
 }
 
 FeExpect<bool, Error> FrontendRenderer::EndFrame(float32 deltaTime) {
-  if (_pActiveBackend == nullptr) {
+  if (_rendererState.pActiveBackend == nullptr) {
     FLOG_WARN("no active backends");
     return FeFalse;
   }
 
-  auto res = _pActiveBackend->EndFrame(deltaTime);
+  auto res = _rendererState.pActiveBackend->EndFrame(deltaTime);
   if (!res.has_value()) {
     FLOG_ERROR("backend renderer failed to end frame");
     return FeErr{res.error()};
@@ -93,18 +99,15 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
     return FeTrue;
   }
 
-  float32 aspect = static_cast<float32>(_pAppState->width) / _pAppState->height;
-  math::Mat4D projection = math::Mat4D::Orthographic(-aspect, aspect, -1.0f, 1.0f, -1.0f, 1.0f);
-  math::Mat4D view = math::Mat4D::Identity();
 
   static float32 angle = 0.0f;
-
   // radians per second (tweak speed)
   angle += pRenderPacket->deltaTime * 1.5f;
 
   math::Mat4D model = math::Mat4D::RotationZ(angle) * math::Mat4D::Translation(0.0f, 0.0f, 0.0f);
-  _pActiveBackend->UpdateObject(model);
-  auto updateRes = _pActiveBackend->UpdateGlobalState(projection, view, math::Vec3D::Zero(), 0);
+  _rendererState.pActiveBackend->UpdateObject(model);
+  auto updateRes = _rendererState.pActiveBackend->UpdateGlobalState(
+      _rendererState.projection, _rendererState.view, math::Vec3D::Zero(), 0);
   if (!updateRes.has_value()) {
     FLOG_ERROR("failed to update global state on frontend renderer");
     return FeErr{updateRes.error()};
@@ -120,18 +123,25 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
 }
 
 FeExpect<void, Error> FrontendRenderer::OnResize(uint32 width, uint32 height) {
-  if (_pActiveBackend == nullptr) {
+  if (_rendererState.pActiveBackend == nullptr) {
     FLOG_WARN("no active backends");
     return {};
   }
 
-  auto res = _pActiveBackend->OnResize(width, height);
+  float32 aspect = static_cast<float32>(width) / height;
+  _rendererState.projection = math::Mat4D::Orthographic(
+      aspect, -aspect, -1.0f, 1.0f, _rendererState.nearClip, _rendererState.farClip);
+  auto res = _rendererState.pActiveBackend->OnResize(width, height);
   if (!res.has_value()) {
     FLOG_ERROR("backend renderer failed to resize");
     return FeErr{res.error()};
   }
 
   return {};
+}
+
+void FrontendRenderer::SetView(const math::Mat4D &view) {
+  _rendererState.view = view;
 }
 
 FeExpect<void, Error> FrontendRenderer::MakeBackends() {
