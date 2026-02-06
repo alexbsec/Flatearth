@@ -4,6 +4,14 @@
 
 namespace flatearth::input {
 
+uint16 KeyIndex(Keys key) noexcept {
+  return static_cast<uint16>(key);
+}
+
+uint16 ButtonIndex(Button button) noexcept {
+  return static_cast<uint16>(button);
+}
+
 InputManager::InputManager(event::EventManager &eventManager) : _eventManager(eventManager) {
 }
 
@@ -61,5 +69,38 @@ FeExpect<bool, Error> InputManager::ProcessMouseMove(int16 x, int16 y) {
   SystemEventCode code = SystemEventCode::MouseMoved;
   return _eventManager.FireEvent(code, nullptr, eventCtx);
 }
+
+bool InputManager::IsKeyDown(Keys key) {
+  return _state.keyboardCurrent.keys[KeyIndex(key)];
+}
+
+bool InputManager::IsKeyUp(Keys key) {
+  return !_state.keyboardCurrent.keys[KeyIndex(key)];
+}
+
+bool InputManager::WasKeyDown(Keys key) {
+  return _state.keyboardPrevious.keys[KeyIndex(key)];
+}
+
+bool InputManager::WasKeyUp(Keys key) {
+  return !_state.keyboardPrevious.keys[KeyIndex(key)];
+}
+
+bool InputManager::IsButtonDown(Button button) {
+  return _state.mouseCurrent.buttons[ButtonIndex(button)];
+}
+
+bool InputManager::IsButtonUp(Button button) {
+  return !_state.mouseCurrent.buttons[ButtonIndex(button)];
+}
+
+bool InputManager::WasButtonDown(Button button) {
+  return _state.mousePrevious.buttons[ButtonIndex(button)];
+}
+
+bool InputManager::WasButtonUp(Button button) {
+  return !_state.mousePrevious.buttons[ButtonIndex(button)];
+}
+
 
 } // namespace flatearth::input

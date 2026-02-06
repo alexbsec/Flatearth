@@ -3,19 +3,27 @@
 
 #include <Defines.hpp>
 #include <GameTypes.hpp>
+#include <Math/Matrix4D.hpp>
+#include <Renderer/RendererTypes.hpp>
 
 namespace flatearth::testbed {
 
 struct GameState {
   float32 deltaTime;
+  math::Mat4D view;
+  math::Vec3D cameraPosition, cameraEuler;
+  bool cameraViewDirty{false};
 };
 
 class GameTest {
 public:
   static bool GameInitialize(flatearth::Game *gameInstance);
   static bool GameUpdate(flatearth::Game *gameInstance, float32 deltaTime);
-  static bool GameRender(flatearth::Game *gameInstance, float32 deltaTime);
+  static bool GameRender(flatearth::Game *gameInstance, renderer::RenderPacket &packet);
   static bool GameOnResize(flatearth::Game *gameInstance, uint32 width, uint32 height);
+
+private:
+  static GameState _state;
 };
 
 } // namespace flatearth::testbed

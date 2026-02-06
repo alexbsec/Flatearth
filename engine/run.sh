@@ -56,8 +56,7 @@ fi
 echo -e "${GREEN}Creating compile_commands.json...${RESET}"
 cmake -DCMAKE_BUILD_TYPE=$type \
       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-      -DCMAKE_CXX_FLAGS_DEBUG="$SAN_FLAGS" \
-      -DCMAKE_CXX_FLAGS_DEBUG="$SAN_FLAGS" \
+      -DCMAKE_CXX_FLAGS_DEBUG="${SAN_FLAGS}" \
       -S . \
       -B "$buildDir"
 

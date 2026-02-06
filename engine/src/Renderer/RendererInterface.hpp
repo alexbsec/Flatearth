@@ -16,10 +16,6 @@ enum class BackendType {
 
 static constexpr int32 scMaxBackends = static_cast<int32>(BackendType::MaxBackends);
 
-struct RenderPacket {
-  float32 deltaTime;
-};
-
 class IRendererBackend {
 public:
   virtual FeExpect<bool, Error> Initialize(ApplicationState *appState) = 0;

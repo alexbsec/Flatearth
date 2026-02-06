@@ -11,6 +11,7 @@ bool CreateGame(flatearth::Game *outGame) {
   outGame->Update = GameTest::GameUpdate;
   outGame->Initialize = GameTest::GameInitialize;
   outGame->OnResize = GameTest::GameOnResize;
+  outGame->Render = GameTest::GameRender;
   return true;
 }
 
@@ -22,7 +23,7 @@ int main(void) {
     return EXIT_FAILURE;
   }
 
-  flatearth::Engine engine(gameInstance);
+  flatearth::Engine engine(&gameInstance);
   if (auto res = engine.Initialize(); !res.has_value()) {
     LOG_ERROR("engine failed to initialize");
     return EXIT_FAILURE;

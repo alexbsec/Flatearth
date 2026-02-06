@@ -38,7 +38,7 @@ if [ -f compile_commands.json ]; then
 fi
 
 echo -e "${GREEN}Creating compile_commands.json...${RESET}"
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -S . -B "$buildDir"
+cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -S . -B "$buildDir"
 ln -sf "${linkPath}/build/compile_commands.json" compile_commands.json 
 
 echo -e "${CYAN}Running CMake build...${RESET}"

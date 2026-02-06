@@ -2,7 +2,9 @@
 #define _FLATEARTH_ENGINE_GAME_TYPES_HPP
 
 #include "Defines.hpp"
+#include "Renderer/RendererTypes.hpp"
 
+#include <Core/Input.hpp>
 #include <functional>
 
 namespace flatearth {
@@ -15,7 +17,7 @@ struct Game {
 public:
   std::function<bool(struct Game *gameInstance)> Initialize;
   std::function<bool(struct Game *gameInstance, float32 deltaTime)> Update;
-  std::function<bool(struct Game *gameInstance, float32 deltaTime)> Render;
+  std::function<bool(struct Game *gameInstance, renderer::RenderPacket &packet)> Render;
   std::function<bool(struct Game *gameInstance, uint32 width, uint32 height)> OnResize;
 
   Game()
@@ -30,6 +32,7 @@ public:
 public:
   string gameName;
   int32 windowStartPosX, windowStartPosY, windowStartWidth, windowStartHeight;
+  input::InputManager *pInputManager{nullptr};
 };
 
 } // namespace flatearth

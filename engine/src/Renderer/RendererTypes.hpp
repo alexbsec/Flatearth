@@ -5,6 +5,11 @@
 
 namespace flatearth::renderer {
 
+struct RenderPacket {
+  float32 deltaTime;
+  math::Mat4D view;
+};
+
 struct GlobalUniformObject {
   math::Mat4D projection, view;
   // These below are so that GlobalUniformObject always

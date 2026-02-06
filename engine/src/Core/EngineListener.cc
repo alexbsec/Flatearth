@@ -102,7 +102,7 @@ FeExpect<bool, Error> EngineListener::OnResize(const event::EventDispatchContext
     _appState.isSuspended = FeFalse;
   }
 
-  if (!_appState.gameInstance.OnResize(&_appState.gameInstance, width, height)) {
+  if (!_appState.pGameInstance->OnResize(_appState.pGameInstance, width, height)) {
     return FeErr{Error("game failed to resize", ErrorType::GameResizeError)};
   }
 
