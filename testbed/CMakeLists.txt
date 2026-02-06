@@ -30,19 +30,23 @@ find_package(Vulkan REQUIRED)
 # Flatearth (prebuilt engine lib) for Linux builds where engine is built separately
 # ----------------------------------------------------------------------------
 if(UNIX AND NOT APPLE AND NOT TARGET flatearth)
+    set(_fe_engine_build_suffix "debug")
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+      set(_fe_engine_build_suffix "release")
+    endif()
+
     set(FLATEARTH_ENGINE_BUILD_DIR
-        "${CMAKE_CURRENT_LIST_DIR}/../engine/build"
-        CACHE PATH "Path to engine build dir containing libflatearth.so"
+      "${CMAKE_CURRENT_LIST_DIR}/../engine/build-${_fe_engine_build_suffix}"
+      CACHE PATH "Path to engine build dir containing libflatearth.so"
     )
 
-    # Try common output layouts
     find_library(FLATEARTH_LIB
-        NAMES flatearth libflatearth
-        PATHS
-            "${FLATEARTH_ENGINE_BUILD_DIR}"
-            "${FLATEARTH_ENGINE_BUILD_DIR}/lib"
-            "${CMAKE_CURRENT_LIST_DIR}/../bin"
-        NO_DEFAULT_PATH
+      NAMES flatearth libflatearth
+      PATHS
+        "${CMAKE_CURRENT_LIST_DIR}/../${_fe_engine_build_suffix}/bin"
+        "${FLATEARTH_ENGINE_BUILD_DIR}"
+        "${FLATEARTH_ENGINE_BUILD_DIR}/lib"
+      NO_DEFAULT_PATH
     )
 
     if(NOT FLATEARTH_LIB)
@@ -59,10 +63,19 @@ if(UNIX AND NOT APPLE AND NOT TARGET flatearth)
         IMPORTED_LOCATION "${FLATEARTH_LIB}"
     )
 
-    # Optional: if you include engine headers from testbed
     target_include_directories(flatearth INTERFACE
         "${CMAKE_CURRENT_LIST_DIR}/../engine/src"
     )
+endif()
+
+if(UNIX AND NOT APPLE)
+  set_target_properties(${BINARY_NAME} PROPERTIES
+    BUILD_RPATH "\$ORIGIN"
+    INSTALL_RPATH "\$ORIGIN"
+    SKIP_BUILD_RPATH FALSE
+    BUILD_WITH_INSTALL_RPATH TRUE
+    INSTALL_RPATH_USE_LINK_PATH FALSE
+  )
 endif()
 
 target_link_libraries(${BINARY_NAME}
