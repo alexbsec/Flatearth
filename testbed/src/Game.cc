@@ -52,12 +52,12 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
   }
 
   if (gameInstance->pInputManager->IsKeyDown(Keys::KEY_A)) {
-    _state.cameraPosition = _state.cameraPosition + math::Vec3D(-dx, 0.0f, 0.0f);
+    _state.cameraPosition = _state.cameraPosition + math::Vec3D(+dx, 0.0f, 0.0f);
     _state.cameraViewDirty = FeTrue;
   }
 
   if (gameInstance->pInputManager->IsKeyDown(Keys::KEY_D)) {
-    _state.cameraPosition = _state.cameraPosition + math::Vec3D(dx, 0.0f, 0.0f);
+    _state.cameraPosition = _state.cameraPosition + math::Vec3D(-dx, 0.0f, 0.0f);
     _state.cameraViewDirty = FeTrue;
   }
 
