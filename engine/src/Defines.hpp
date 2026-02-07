@@ -102,8 +102,8 @@ STATIC_ASSERT(sizeof(float64) == 8, "Expected float64 to be 8 bytes");
 
 // Inlining
 #ifdef _MSC_VER
-#define FEINLINE __forceinline
-#define FENOINLINE __declspec(noinline)
+#define FEINLINE static __forceinline
+#define FENOINLINE static __declspec(noinline)
 #else
 #define FEINLINE static inline
 #define FENOINLINE
