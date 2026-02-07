@@ -5,8 +5,6 @@
 #include "Math/FeMath.hpp"
 #include "Math/Vector3D.hpp"
 
-#include <features.h>
-
 namespace flatearth::math {
 
 class Mat4D {
