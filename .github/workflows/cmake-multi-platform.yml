@@ -1,0 +1,89 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cpp_compiler: g++-14
+            build_type: Release
+          - os: windows-latest
+            cpp_compiler: cl
+            build_type: Release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---------- Linux ----------
+      - name: Install GCC 14 (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt-get update
+          sudo apt-get install -y gcc-14 g++-14
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y \
+            cmake ninja-build \
+            libvulkan-dev vulkan-validationlayers glslc \
+            libx11-dev libxcb1-dev libx11-xcb-dev \
+            libxcb-keysyms1-dev libxcb-icccm4-dev \
+            libxcb-image0-dev libxcb-shm0-dev \
+            libxcb-xfixes0-dev libxcb-randr0-dev \
+            libxcb-render-util0-dev
+
+      - name: Configure (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cmake -B build \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -G Ninja \
+            -S .
+
+      # ---------- Windows ----------
+      - name: Setup MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Vulkan SDK (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = "1.3.290.0"
+          $installer = "VulkanSDK-$version-Installer.exe"
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/$version/windows/$installer" -OutFile $installer
+          Start-Process -FilePath $installer -ArgumentList "--accept-licenses --default-answer --confirm-command install" -Wait
+          echo "VULKAN_SDK=C:\VulkanSDK\$version" >> $env:GITHUB_ENV
+          echo "C:\VulkanSDK\$version\Bin" >> $env:GITHUB_PATH
+
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ninja -y
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -B build `
+            -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -G Ninja `
+            -S .
+
+      # ---------- Shared ----------
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }}
