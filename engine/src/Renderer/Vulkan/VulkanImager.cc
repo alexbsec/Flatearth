@@ -112,6 +112,69 @@ FeExpect<void, Error> ImageManager::CreateImageView(Context &ctx,
   return {};
 }
 
+FeExpect<void, Error> ImageManager::TransitionImageLayout(Context &ctx,
+                                                          CommandBuffer &cmdBuffer,
+                                                          Image &image,
+                                                          VkFormat format,
+                                                          VkImageLayout oldLayout,
+                                                          VkImageLayout newLayout) {
+  VkImageMemoryBarrier barrier = {VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+  barrier.oldLayout = oldLayout;
+  barrier.newLayout = newLayout;
+  barrier.srcQueueFamilyIndex = ctx.device.graphicsQueueIndex;
+  barrier.dstQueueFamilyIndex = ctx.device.graphicsQueueIndex;
+  barrier.image = image.handle;
+  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.baseMipLevel = 0;
+  barrier.subresourceRange.layerCount = 1;
+  barrier.subresourceRange.baseArrayLayer = 0;
+  barrier.subresourceRange.layerCount = 1;
+
+  VkPipelineStageFlags sourceFlags, destFlags;
+  if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    sourceFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    destFlags = VK_PIPELINE_STAGE_TRANSFER_BIT;
+  } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+             newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    sourceFlags = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    destFlags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  } else {
+    FLOG_ERROR("unsupported layout transition");
+    return FeErr{Error("forbidden layout transition", ErrorType::RendererVulkanError)};
+  }
+
+  vkCmdPipelineBarrier(
+      cmdBuffer.handle, sourceFlags, destFlags, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+  return {};
+}
+
+void ImageManager::CopyFromBuffer(Context &ctx,
+                                  Image &image,
+                                  CommandBuffer &cmdBuffer,
+                                  VkBuffer buffer) {
+  VkBufferImageCopy region;
+  ctx.memoryManager.FZeroMemory(&region, sizeof(VkBufferImageCopy));
+  region.bufferOffset = 0;
+  region.bufferRowLength = 0;
+  region.bufferImageHeight = 0;
+
+  region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.imageSubresource.mipLevel = 0;
+  region.imageSubresource.baseArrayLayer = 0;
+  region.imageSubresource.layerCount = 1;
+
+  region.imageExtent.width = image.width;
+  region.imageExtent.height = image.height;
+  region.imageExtent.depth = 1;
+
+  vkCmdCopyBufferToImage(
+      cmdBuffer.handle, buffer, image.handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+}
+
 FeExpect<void, Error> ImageManager::DestroyImage(Context &ctx, Image &image) {
   if (image.view != nullptr) {
     vkDestroyImageView(ctx.device.logicalDevice, image.view, ctx.pAllocator);

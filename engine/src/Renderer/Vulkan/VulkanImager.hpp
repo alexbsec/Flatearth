@@ -20,6 +20,15 @@ public:
                                     bool createView,
                                     VkImageAspectFlags aspectFlags);
 
+  FeExpect<void, Error> TransitionImageLayout(Context &ctx,
+                                              CommandBuffer &cmdBuffer,
+                                              Image &image,
+                                              VkFormat format,
+                                              VkImageLayout oldLayout,
+                                              VkImageLayout newLayout);
+
+  void CopyFromBuffer(Context &ctx, Image &image, CommandBuffer &cmdBuffer, VkBuffer buffer);
+
   FeExpect<void, Error>
   CreateImageView(Context &ctx, Image &image, VkFormat format, VkImageAspectFlags aspectFlags);
 

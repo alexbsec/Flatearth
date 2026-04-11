@@ -8,6 +8,7 @@
 #include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
 #include "Renderer/Vulkan/VulkanUtils.hpp"
+#include "Resources/ResourceTypes.hpp"
 
 #include <vulkan/vulkan_core.h>
 
@@ -239,9 +240,9 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
                                                       0.08f,
                                                       0.08f,
                                                       0.10f,
-                                                      1.0f, 
                                                       1.0f,
-                                                      0); 
+                                                      1.0f,
+                                                      0);
   if (!rpassRes.has_value()) {
     FLOG_ERROR("failed to create renderpass");
     return FeErr{rpassRes.error()};
@@ -342,6 +343,11 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
   vertices[1].position = math::Vec3D(0.5f, 0.5f, 0.0f);
   vertices[2].position = math::Vec3D(-0.5f, 0.5f, 0.0f);
   vertices[3].position = math::Vec3D(0.5f, -0.5f, 0.0f);
+
+  vertices[0].uv = math::Vec2D::Zero();
+  vertices[1].uv = math::Vec2D::Right();
+  vertices[2].uv = math::Vec2D::One();
+  vertices[3].uv = math::Vec2D::Up();
 
   const uint32 cIndexCount = 6;
   std::array<uint32, cIndexCount> indicies = {0, 2, 1, 0, 3, 1};
@@ -575,6 +581,150 @@ FeExpect<void, Error> VulkanBackend::UpdateGlobalState(math::Mat4D projection,
   return {};
 }
 
+FeExpect<void, Error> VulkanBackend::CreateTexture(const string &name,
+                                                   bool autoRelease,
+                                                   int32 width,
+                                                   int32 height,
+                                                   int32 channelCount,
+                                                   const uint8 *pPixels,
+                                                   bool hasTransparency,
+                                                   resources::Texture *pTexture) {
+  if (pTexture == nullptr) {
+    FLOG_ERROR("cannot create a texture on a nullptr");
+    return FeErr{Error("failed to create texture in vulkan backend", ErrorType::NullptrException)};
+  }
+
+  pTexture->width = width;
+  pTexture->height = height;
+  pTexture->channelCount = channelCount;
+  pTexture->generation = 0;
+
+  void *pData =
+      _memoryManager.RawAlloc(sizeof(TextureData), alignof(TextureData), memory::Tag::Texture);
+  pTexture->pInternalData = pData;
+  TextureData *pTextureData = reinterpret_cast<TextureData *>(pData);
+
+  VkDeviceSize imageSize = width * height * channelCount;
+
+  VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+  VkMemoryPropertyFlags memFlags =
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+  VulkanBuffer staging;
+  auto createRes =
+      _bufferManager.CreateVulkanBuffer(_ctx, imageSize, usage, memFlags, FeTrue, &staging);
+  if (!createRes.has_value()) {
+    FLOG_ERROR("failed to create vulkan buffer for texture");
+    return FeErr{Error("texture creation failed", ErrorType::RendererVulkanError)};
+  }
+
+  auto loadRes = _bufferManager.LoadData(_ctx, staging, 0, imageSize, 0, pPixels);
+  if (!loadRes.has_value()) {
+    FLOG_ERROR("failed to load data for texture");
+    return FeErr{Error("load texture failed", ErrorType::RendererVulkanError)};
+  }
+
+  // NOTE: assume 8 bits per channel
+  VkFormat imageFormat = VK_FORMAT_R8G8B8A8_UNORM;
+  createRes = _imageManager.CreateImage(
+      _ctx,
+      pTextureData->image,
+      VK_IMAGE_TYPE_2D,
+      width,
+      height,
+      imageFormat,
+      VK_IMAGE_TILING_OPTIMAL,
+      VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+          VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+      FeTrue,
+      VK_IMAGE_ASPECT_COLOR_BIT);
+  if (!createRes.has_value()) {
+    FLOG_ERROR("failed to create image for texture");
+    return FeErr{Error("texture failed to create image", ErrorType::RendererVulkanError)};
+  }
+
+  VkCommandPool pool = _ctx.device.graphicsCommandPool;
+  VkQueue queue = _ctx.device.graphicsQueue;
+
+  auto callback = [&](CommandBuffer buffer) {
+    return TextureSubmitCallback(buffer, imageFormat, pTextureData, staging);
+  };
+
+  VkFence tempFence;
+  VkFenceCreateInfo fenceInfo = {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+  vkCreateFence(_ctx.device.logicalDevice, &fenceInfo, _ctx.pAllocator, &tempFence);
+
+  auto submitRes = _cmdBufferManager.ImmediateSubmit(_ctx, pool, queue, tempFence, callback);
+  vkDestroyFence(_ctx.device.logicalDevice, tempFence, _ctx.pAllocator);
+  _bufferManager.DestroyVulkanBuffer(_ctx, &staging);
+  if (!submitRes.has_value()) {
+    FLOG_ERROR("failed to submit command buffer for texture creation");
+    return FeErr{Error("texture creation failed during submit", ErrorType::RendererVulkanError)};
+  }
+
+  VkSamplerCreateInfo samplerInfo = {VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+  samplerInfo.magFilter = VK_FILTER_LINEAR;
+  samplerInfo.minFilter = VK_FILTER_LINEAR;
+  samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerInfo.anisotropyEnable = VK_TRUE;
+  samplerInfo.maxAnisotropy = 16;
+  samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+  samplerInfo.unnormalizedCoordinates = VK_FALSE;
+  samplerInfo.compareEnable = VK_FALSE;
+  samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+  samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  samplerInfo.mipLodBias = 0.0f;
+  samplerInfo.minLod = 0.0f;
+  samplerInfo.maxLod = 0.0f;
+
+  VkResult result = vkCreateSampler(
+      _ctx.device.logicalDevice, &samplerInfo, _ctx.pAllocator, &pTextureData->sampler);
+  if (!VkResultIsSuccess(result)) {
+    FLOG_ERROR("failed to create sampler for texture");
+    return FeErr{
+        Error("texture creation failed during sampler creation", ErrorType::RendererVulkanError)};
+  }
+
+  if (auto res = _vulkanShader.AcquireTextureResources(_ctx, _ctx.objectShader, pTextureData);
+      !res.has_value()) {
+    FLOG_ERROR("failed to acquire texture resources");
+    return FeErr{res.error()};
+  }
+
+  pTexture->hasTransparency = hasTransparency;
+  pTexture->generation++;
+  return {};
+}
+
+FeExpect<void, Error> VulkanBackend::DestroyTexture(resources::Texture *pTexture) {
+  if (pTexture == nullptr) {
+    return {};
+  }
+
+  TextureData *pTextureData = reinterpret_cast<TextureData *>(pTexture->pInternalData);
+  if (pTextureData == nullptr) {
+    FLOG_WARN("attempted to destroy texture with nullptr internal data");
+    return {};
+  }
+
+  auto destroyRes = _imageManager.DestroyImage(_ctx, pTextureData->image);
+  if (!destroyRes.has_value()) {
+    FLOG_ERROR("failed to destroy image for texture");
+    return FeErr{Error("failed to destroy texture image", ErrorType::RendererVulkanError)};
+  }
+
+  _memoryManager.FZeroMemory(&pTextureData->image, sizeof(Image));
+
+  vkDestroySampler(_ctx.device.logicalDevice, pTextureData->sampler, _ctx.pAllocator);
+  pTextureData->sampler = VK_NULL_HANDLE;
+
+  _memoryManager.RawFree(pTexture->pInternalData, sizeof(TextureData), memory::Tag::Texture);
+  _memoryManager.FZeroMemory(pTexture, sizeof(resources::Texture));
+  return {};
+}
+
 void VulkanBackend::UpdateObject(math::Mat4D model) {
   CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
   _vulkanShader.UpdateObject(_ctx, _ctx.objectShader, model.ToGPUMatrix());
@@ -589,6 +739,17 @@ void VulkanBackend::UpdateObject(math::Mat4D model) {
                             0,
                             1,
                             &set0,
+                            0,
+                            nullptr);
+  }
+
+  {
+    vkCmdBindDescriptorSets(cmdBuffer.handle,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            _ctx.objectShader.pipeline.layout,
+                            1,
+                            1,
+                            &_ctx.objectShader.textureDescriptorSet,
                             0,
                             nullptr);
   }
@@ -786,6 +947,50 @@ FeExpect<void, Error> VulkanBackend::UploadDataRange(VkCommandPool pool,
 
   _bufferManager.DestroyVulkanBuffer(_ctx, &staging);
   return {};
+}
+
+void VulkanBackend::TextureSubmitCallback(CommandBuffer cmd,
+                                          VkFormat imageFormat,
+                                          TextureData *pTextureData,
+                                          const VulkanBuffer &vkBuffer) {
+  auto transitionRes = _imageManager.TransitionImageLayout(_ctx,
+                                                           cmd,
+                                                           pTextureData->image,
+                                                           imageFormat,
+                                                           VK_IMAGE_LAYOUT_UNDEFINED,
+                                                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+  if (!transitionRes.has_value()) {
+    FLOG_ERROR("failed to transition image layout for texture upload");
+    return;
+  }
+
+  const uint32 width = pTextureData->image.width;
+  const uint32 height = pTextureData->image.height;
+
+  VkBufferImageCopy region{};
+  region.bufferOffset = 0;
+  region.bufferRowLength = 0;
+  region.bufferImageHeight = 0;
+  region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.imageSubresource.mipLevel = 0;
+  region.imageSubresource.baseArrayLayer = 0;
+  region.imageSubresource.layerCount = 1;
+  region.imageOffset = {0, 0, 0};
+  region.imageExtent = {width, height, 1};
+
+  _imageManager.CopyFromBuffer(_ctx, pTextureData->image, cmd, vkBuffer.handle);
+
+  transitionRes = _imageManager.TransitionImageLayout(_ctx,
+                                                      cmd,
+                                                      pTextureData->image,
+                                                      imageFormat,
+                                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  if (!transitionRes.has_value()) {
+    FLOG_ERROR("failed to transition image layout for texture upload");
+    return;
+  }
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL

@@ -4,6 +4,7 @@
 #include "Core/ApplicationConfig.hpp"
 #include "Defines.hpp"
 #include "Renderer/RendererTypes.hpp"
+#include "Resources/ResourceTypes.hpp"
 
 namespace flatearth::renderer {
 
@@ -27,6 +28,16 @@ public:
                                                   math::Mat4D view,
                                                   math::Vec3D viewPosition,
                                                   int32 mode) = 0;
+  virtual FeExpect<void, Error> CreateTexture(const string &name,
+                                              bool autoRelease,
+                                              int32 width,
+                                              int32 height,
+                                              int32 channelCount,
+                                              const uint8 *pPixels,
+                                              bool hasTransparency,
+                                              resources::Texture *pTexture) = 0;
+  virtual FeExpect<void, Error> DestroyTexture(resources::Texture *pTexture) = 0;
+
   virtual void UpdateObject(math::Mat4D model) = 0;
 
 protected:

@@ -30,6 +30,17 @@ public:
                                           math::Mat4D view,
                                           math::Vec3D viewPosition,
                                           int32 mode) override;
+
+  FeExpect<void, Error> CreateTexture(const string &name,
+                                      bool autoRelease,
+                                      int32 width,
+                                      int32 height,
+                                      int32 channelCount,
+                                      const uint8 *pPixels,
+                                      bool hasTransparency,
+                                      resources::Texture *pTexture) override;
+  FeExpect<void, Error> DestroyTexture(resources::Texture *pTexture) override;
+
   void UpdateObject(math::Mat4D model) override;
 
 private:
@@ -45,6 +56,11 @@ private:
                                         uint64 size,
                                         VulkanBuffer &buffer,
                                         void *pData);
+
+  void TextureSubmitCallback(CommandBuffer cmd,
+                             VkFormat imageFormat,
+                             TextureData *pTextureData,
+                             const VulkanBuffer &vkBuffer);
 
 private:
   memory::MemoryManager &_memoryManager;

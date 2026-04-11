@@ -99,7 +99,6 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
     return FeTrue;
   }
 
-
   static float32 angle = 0.0f;
   // radians per second (tweak speed)
   angle += pRenderPacket->deltaTime * 1.5f;
@@ -138,6 +137,24 @@ FeExpect<void, Error> FrontendRenderer::OnResize(uint32 width, uint32 height) {
   }
 
   return {};
+}
+
+FeExpect<void, Error> FrontendRenderer::CreateTexture(const string &name,
+                                                      bool autoRelease,
+                                                      int32 width,
+                                                      int32 height,
+                                                      int32 channelCount,
+                                                      const uint8 *pPixels,
+                                                      bool hasTransparency,
+                                                      resources::Texture *pTexture) {
+  uint32 vulkanIndex = static_cast<uint32>(BackendType::Vulkan);
+  return _pBackends[vulkanIndex]->CreateTexture(
+      name, autoRelease, width, height, channelCount, pPixels, hasTransparency, pTexture);
+}
+
+FeExpect<void, Error> FrontendRenderer::DestroyTexture(resources::Texture *pTexture) {
+  uint32 vulkanIndex = static_cast<uint32>(BackendType::Vulkan);
+  return _pBackends[vulkanIndex]->DestroyTexture(pTexture);
 }
 
 void FrontendRenderer::SetView(const math::Mat4D &view) {

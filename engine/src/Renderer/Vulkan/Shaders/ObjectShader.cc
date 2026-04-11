@@ -1,5 +1,6 @@
 #include "ObjectShader.hpp"
 
+#include "Core/Logger.hpp"
 #include "Math/Vector3D.hpp"
 #include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
@@ -8,6 +9,66 @@
 #include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan::shaders {
+
+FeExpect<void, Error> CreateDescriptorSetLayout(VkDevice logicalDevice,
+                                                VkDescriptorSetLayout *pLayout,
+                                                VkAllocationCallbacks *pAllocator,
+                                                uint32 binding,
+                                                uint32 descriptorCount,
+                                                VkDescriptorType type,
+                                                const VkSampler *sampler,
+                                                VkShaderStageFlags stageFlags);
+
+FeExpect<void, Error> CreateDescriptorPool(VkDevice logicalDevice,
+                                           VkDescriptorPool *pPool,
+                                           VkAllocationCallbacks *pAllocator,
+                                           uint32 imageCount,
+                                           uint32 poolSizeCount,
+                                           VkDescriptorType type);
+
+FeExpect<void, Error>
+MakeLayoutBinding(const Context &ctx, ObjectShader *pObjShader, DescriptorBinding layout) {
+  switch (layout) {
+    case DescriptorBinding::Global:
+      return CreateDescriptorSetLayout(ctx.device.logicalDevice,
+                                       &pObjShader->globalDescriptorSetLayout,
+                                       ctx.pAllocator,
+                                       0,
+                                       1,
+                                       VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                                       nullptr,
+                                       VK_SHADER_STAGE_VERTEX_BIT);
+    case DescriptorBinding::Texture:
+      return CreateDescriptorSetLayout(ctx.device.logicalDevice,
+                                       &pObjShader->textureDescriptorSetLayout,
+                                       ctx.pAllocator,
+                                       0,
+                                       1,
+                                       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                       nullptr,
+                                       VK_SHADER_STAGE_FRAGMENT_BIT);
+  }
+}
+
+FeExpect<void, Error>
+MakeDescriptorPool(const Context &ctx, ObjectShader *pObjectShader, DescriptorBinding binding) {
+  switch (binding) {
+    case DescriptorBinding::Global:
+      return CreateDescriptorPool(ctx.device.logicalDevice,
+                                  &pObjectShader->globalDescriptorPool,
+                                  ctx.pAllocator,
+                                  ctx.swapchain.imageCount,
+                                  1,
+                                  VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    case DescriptorBinding::Texture:
+      return CreateDescriptorPool(ctx.device.logicalDevice,
+                                  &pObjectShader->textureDescriptorPool,
+                                  ctx.pAllocator,
+                                  ctx.swapchain.imageCount,
+                                  1,
+                                  VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+  }
+}
 
 VulkanShader::VulkanShader(memory::MemoryManager &memManager, BufferManager &bufferManager)
     : _memoryManager(memManager), _bufferManager(bufferManager) {
@@ -51,43 +112,33 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
   // -----------------------------
   // Global descriptor set layout
   // -----------------------------
-  VkDescriptorSetLayoutBinding globalUBOLayoutBinding{};
-  globalUBOLayoutBinding.binding = 0;
-  globalUBOLayoutBinding.descriptorCount = 1;
-  globalUBOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  globalUBOLayoutBinding.pImmutableSamplers = nullptr;
-  globalUBOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  if (auto res = MakeLayoutBinding(ctx, pObjShader, DescriptorBinding::Global); !res.has_value()) {
+    FLOG_ERROR("failed to create global descriptor set layout");
+    return FeErr{res.error()};
+  }
 
-  VkDescriptorSetLayoutCreateInfo layoutCreateInfo{
-      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
-  layoutCreateInfo.bindingCount = 1;
-  layoutCreateInfo.pBindings = &globalUBOLayoutBinding;
-
-  if (auto res = VkCheck(vkCreateDescriptorSetLayout(ctx.device.logicalDevice,
-                                                     &layoutCreateInfo,
-                                                     ctx.pAllocator,
-                                                     &pObjShader->globalDescriptorSetLayout));
-      !res.has_value()) {
-    FLOG_ERROR("failed to create descriptor set layout");
+  // -----------------------------
+  // Texture descriptor and layout
+  // -----------------------------
+  if (auto res = MakeLayoutBinding(ctx, pObjShader, DescriptorBinding::Texture); !res.has_value()) {
+    FLOG_ERROR("failed to create texture descriptor set layout");
     return FeErr{res.error()};
   }
 
   // -----------------------------
   // Descriptor pool
   // -----------------------------
-  VkDescriptorPoolSize globalPoolSize{};
-  globalPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  globalPoolSize.descriptorCount = ctx.swapchain.imageCount; // 1 UBO per set
+  if (auto res = MakeDescriptorPool(ctx, pObjShader, DescriptorBinding::Global); !res.has_value()) {
+    FLOG_ERROR("failed to create global descriptor pool");
+    return FeErr{res.error()};
+  }
 
-  VkDescriptorPoolCreateInfo poolInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
-  poolInfo.poolSizeCount = 1;
-  poolInfo.pPoolSizes = &globalPoolSize;
-  poolInfo.maxSets = ctx.swapchain.imageCount;
-
-  if (auto res = VkCheck(vkCreateDescriptorPool(
-          ctx.device.logicalDevice, &poolInfo, ctx.pAllocator, &pObjShader->globalDescriptorPool));
+  // -----------------------------
+  // Texture pool
+  // -----------------------------
+  if (auto res = MakeDescriptorPool(ctx, pObjShader, DescriptorBinding::Texture);
       !res.has_value()) {
-    FLOG_ERROR("failed to create descriptor pool");
+    FLOG_ERROR("failed to create texture descriptor pool");
     return FeErr{res.error()};
   }
 
@@ -109,10 +160,11 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
   scissor.extent.height = ctx.framebufferHeight;
 
   uint32 offset = 0;
-  const int32 attributeCount = 1;
+  const int32 attributeCount = 2;
   std::array<VkVertexInputAttributeDescription, attributeCount> attrDescription{};
-  std::array<VkFormat, attributeCount> formats = {VK_FORMAT_R32G32B32_SFLOAT};
-  std::array<uint32, attributeCount> sizes = {sizeof(math::Vec3D)};
+  std::array<VkFormat, attributeCount> formats = {VK_FORMAT_R32G32B32_SFLOAT,
+                                                  VK_FORMAT_R32G32_SFLOAT};
+  std::array<uint32, attributeCount> sizes = {sizeof(math::Vec3D), sizeof(math::Vec2D)};
 
   for (uint32 i = 0; i < static_cast<uint32>(attributeCount); i++) {
     attrDescription[i].binding = 0;
@@ -123,9 +175,10 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
   }
 
   // Descriptor set layouts for pipeline layout
-  const uint64 cLayoutCount = 1;
+  const uint64 cLayoutCount = 2;
   std::array<VkDescriptorSetLayout, cLayoutCount> layouts = {
       pObjShader->globalDescriptorSetLayout,
+      pObjShader->textureDescriptorSetLayout,
   };
 
   // Shader stages
@@ -226,9 +279,19 @@ void VulkanShader::DestroyObjectShader(Context &ctx, ObjectShader *pObjShader) {
 
   vkDeviceWaitIdle(dev);
 
+  if (pObjShader->textureDescriptorPool) {
+    vkDestroyDescriptorPool(dev, pObjShader->textureDescriptorPool, ctx.pAllocator);
+    pObjShader->textureDescriptorPool = VK_NULL_HANDLE;
+  }
+
   if (pObjShader->globalDescriptorPool) {
     vkDestroyDescriptorPool(dev, pObjShader->globalDescriptorPool, ctx.pAllocator);
     pObjShader->globalDescriptorPool = VK_NULL_HANDLE;
+  }
+
+  if (pObjShader->textureDescriptorSetLayout) {
+    vkDestroyDescriptorSetLayout(dev, pObjShader->textureDescriptorSetLayout, ctx.pAllocator);
+    pObjShader->textureDescriptorSetLayout = VK_NULL_HANDLE;
   }
 
   if (pObjShader->globalDescriptorSetLayout) {
@@ -277,8 +340,79 @@ void VulkanShader::UpdateObject(Context &ctx, ObjectShader &objShader, math::Mat
                      objShader.pipeline.layout,
                      VK_SHADER_STAGE_VERTEX_BIT,
                      0,
-                     sizeof(math::Mat4D) * 2,
+                     sizeof(math::Mat4D),
                      &model);
+}
+
+FeExpect<void, Error> VulkanShader::AcquireTextureResources(Context &ctx,
+                                                            ObjectShader &objShader,
+                                                            TextureData *pTextureData) {
+  VkDescriptorSetAllocateInfo allocInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+  allocInfo.descriptorPool = objShader.textureDescriptorPool;
+  allocInfo.descriptorSetCount = 1;
+  allocInfo.pSetLayouts = &objShader.textureDescriptorSetLayout;
+
+  if (auto res = VkCheck(vkAllocateDescriptorSets(
+          ctx.device.logicalDevice, &allocInfo, &objShader.textureDescriptorSet));
+      !res.has_value()) {
+    FLOG_ERROR("failed to allocate texture descriptor set");
+    return FeErr{res.error()};
+  }
+
+  VkDescriptorImageInfo imageInfo{};
+  imageInfo.sampler = pTextureData->sampler;
+  imageInfo.imageView = pTextureData->image.view;
+  imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+  VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+  write.dstSet = objShader.textureDescriptorSet;
+  write.dstBinding = 0;
+  write.dstArrayElement = 0;
+  write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  write.descriptorCount = 1;
+  write.pImageInfo = &imageInfo;
+
+  vkUpdateDescriptorSets(ctx.device.logicalDevice, 1, &write, 0, nullptr);
+  return {};
+}
+
+FeExpect<void, Error> CreateDescriptorSetLayout(VkDevice logicalDevice,
+                                                VkDescriptorSetLayout *pLayout,
+                                                VkAllocationCallbacks *pAllocator,
+                                                uint32 binding,
+                                                uint32 descriptorCount,
+                                                VkDescriptorType type,
+                                                const VkSampler *sampler,
+                                                VkShaderStageFlags stageFlags) {
+  VkDescriptorSetLayoutBinding bindingLayout;
+  bindingLayout.binding = binding;
+  bindingLayout.descriptorCount = descriptorCount;
+  bindingLayout.descriptorType = type;
+  bindingLayout.pImmutableSamplers = sampler;
+  bindingLayout.stageFlags = stageFlags;
+
+  VkDescriptorSetLayoutCreateInfo createInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+  createInfo.bindingCount = 1;
+  createInfo.pBindings = &bindingLayout;
+
+  return VkCheck(vkCreateDescriptorSetLayout(logicalDevice, &createInfo, pAllocator, pLayout));
+}
+
+FeExpect<void, Error> CreateDescriptorPool(VkDevice logicalDevice,
+                                           VkDescriptorPool *pPool,
+                                           VkAllocationCallbacks *pAllocator,
+                                           uint32 imageCount,
+                                           uint32 poolSizeCount,
+                                           VkDescriptorType type) {
+  VkDescriptorPoolSize poolSize{};
+  poolSize.type = type;
+  poolSize.descriptorCount = imageCount;
+
+  VkDescriptorPoolCreateInfo createInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+  createInfo.poolSizeCount = poolSizeCount;
+  createInfo.pPoolSizes = &poolSize;
+  createInfo.maxSets = imageCount;
+  return VkCheck(vkCreateDescriptorPool(logicalDevice, &createInfo, pAllocator, pPool));
 }
 
 } // namespace flatearth::renderer::vulkan::shaders

@@ -28,6 +28,16 @@ public:
   FeExpect<bool, Error> DrawFrame(RenderPacket *pRenderPacket);
   FeExpect<void, Error> OnResize(uint32 width, uint32 height);
 
+  FeExpect<void, Error> CreateTexture(const string &name,
+                                      bool autoRelease,
+                                      int32 width,
+                                      int32 height,
+                                      int32 channelCount,
+                                      const uint8 *pPixels,
+                                      bool hasTransparency,
+                                      resources::Texture *pTexture);
+  FeExpect<void, Error> DestroyTexture(resources::Texture *pTexture);
+
   // Setters
   // NOTE: this should not be exposed outside of the engine
   // remove once done testing

@@ -17,6 +17,7 @@ constexpr MatrixLayout GPUMatrixLayout() {
 
 struct Vertex3D {
   Vec3D position;
+  Vec2D uv;
 };
 
 } // namespace flatearth::math

@@ -8,6 +8,7 @@
 #include "Core/Logger.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
+#include "Resources/TextureLoader.hpp"
 
 namespace flatearth {
 
@@ -19,6 +20,7 @@ Engine::Engine(Game *pGame)
 }
 
 Engine::~Engine() {
+  auto _ = _frontendRenderer.DestroyTexture(&_appState.testTexture);
   FLOG_INFO("engine shutdown gracefully");
 }
 
@@ -68,6 +70,13 @@ FeExpect<void, Error> Engine::Initialize() {
   if (!frontendInitRes.has_value()) {
     FLOG_ERROR("frontend renderer failed to initialize: {}", frontendInitRes.error().message);
     return FeErr{frontendInitRes.error()};
+  }
+
+  auto texRes = resources::LoadTexture(
+      "assets/textures/texture.jpg", _filesystem, _frontendRenderer, &_appState.testTexture);
+  if (!texRes.has_value()) {
+      FLOG_ERROR("failed to load texture: {}", texRes.error().message);
+      return FeErr{texRes.error()};
   }
 
   _appState.isRunning = FeTrue;
