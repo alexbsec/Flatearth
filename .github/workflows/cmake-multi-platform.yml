@@ -39,7 +39,7 @@ jobs:
         run: |
           sudo apt-get install -y \
             cmake ninja-build \
-            libvulkan-dev vulkan-validationlayers \
+            libvulkan-dev vulkan-validationlayers glslc \
             libx11-dev libxcb1-dev libx11-xcb-dev \
             libxcb-keysyms1-dev libxcb-icccm4-dev \
             libxcb-image0-dev libxcb-shm0-dev \
