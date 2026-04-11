@@ -219,13 +219,13 @@ FeExpect<void, Error> BufferManager::CopyBufferTo(Context &ctx,
   }
 
   // Record + submit + wait in one shot (single-use command buffer)
-  return _cmdBufferManager.ImmediateSubmit(ctx, pool, queue, fence, [&](VkCommandBuffer cmd) {
+  return _cmdBufferManager.ImmediateSubmit(ctx, pool, queue, fence, [&](CommandBuffer cmd) {
     VkBufferCopy region{};
     region.srcOffset = sourceOffset;
     region.dstOffset = destOffset;
     region.size = size;
 
-    vkCmdCopyBuffer(cmd, source, dest, 1, &region);
+    vkCmdCopyBuffer(cmd.handle, source, dest, 1, &region);
   });
 }
 

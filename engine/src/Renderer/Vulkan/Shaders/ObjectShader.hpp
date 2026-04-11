@@ -7,6 +7,17 @@
 
 namespace flatearth::renderer::vulkan::shaders {
 
+enum class DescriptorBinding {
+  Global,
+  Texture,
+};
+
+FeExpect<void, Error>
+MakeLayoutBinding(const Context &ctx, ObjectShader *pObjectShader, DescriptorBinding layout);
+
+FeExpect<void, Error>
+MakeDescriptorPool(const Context &ctx, ObjectShader *pObjectShader, DescriptorBinding binding);
+
 class VulkanShader {
 public:
   explicit VulkanShader(memory::MemoryManager &memManager, BufferManager &bufferManager);
@@ -20,6 +31,9 @@ public:
 
   // temp method
   void UpdateObject(Context &ctx, ObjectShader &objShader, math::Mat4D model);
+
+  FeExpect<void, Error>
+  AcquireTextureResources(Context &ctx, ObjectShader &objShader, TextureData *pTextureData);
 
 private:
   memory::MemoryManager &_memoryManager;

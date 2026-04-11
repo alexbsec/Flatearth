@@ -5,6 +5,7 @@
 #include "Defines.hpp"
 #include "GameTypes.hpp"
 #include "Platform/Platform.hpp"
+#include "Resources/ResourceTypes.hpp"
 
 namespace flatearth {
 
@@ -26,6 +27,9 @@ struct ApplicationState {
   platform::PlatformState *platformState;
   ApplicationConfig appConfig;
   clock::Clock clock;
+
+  // TODO: remove, only here to store the test texture
+  resources::Texture testTexture;
 
   ApplicationState(Game *game) : pGameInstance(game) {}
 };

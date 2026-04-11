@@ -196,6 +196,11 @@ struct ObjectShader {
   VkDescriptorPool globalDescriptorPool;
   VkDescriptorSetLayout globalDescriptorSetLayout;
 
+  VkDescriptorPool textureDescriptorPool;
+  VkDescriptorSetLayout textureDescriptorSetLayout;
+  VkDescriptorSet
+      textureDescriptorSet; // single set for single texture TODO: make it an array later
+
   containers::DArray<VkDescriptorSet> globalDescriptorSets;
 
   // Global uniform object
@@ -259,6 +264,11 @@ struct Context {
 #if defined(_DEBUG)
   VkDebugUtilsMessengerEXT debugMessenger;
 #endif
+};
+
+struct TextureData {
+  Image image;
+  VkSampler sampler;
 };
 
 FeExpect<void, Error> DetectDeviceDepthFormat(Device &device);

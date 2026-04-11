@@ -19,6 +19,7 @@ Engine::Engine(Game *pGame)
 }
 
 Engine::~Engine() {
+  auto _ = _frontendRenderer.DestroyTexture(&_appState.testTexture);
   FLOG_INFO("engine shutdown gracefully");
 }
 
@@ -68,6 +69,32 @@ FeExpect<void, Error> Engine::Initialize() {
   if (!frontendInitRes.has_value()) {
     FLOG_ERROR("frontend renderer failed to initialize: {}", frontendInitRes.error().message);
     return FeErr{frontendInitRes.error()};
+  }
+
+  // 2x2 checkerboard: black and white pixels
+  uint8 pixels[16] = {
+      255,
+      255,
+      255,
+      255,
+      0,
+      0,
+      0,
+      255,
+      0,
+      0,
+      0,
+      255,
+      255,
+      255,
+      255,
+      255,
+  };
+  auto texRes =
+      _frontendRenderer.CreateTexture("test", false, 2, 2, 4, pixels, false, &_appState.testTexture);
+  if (!texRes.has_value()) {
+    FLOG_ERROR("failed to create test texture");
+    return FeErr{texRes.error()};
   }
 
   _appState.isRunning = FeTrue;
