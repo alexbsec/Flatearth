@@ -8,6 +8,7 @@
 #include "Core/Logger.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
+#include "Resources/TextureLoader.hpp"
 
 namespace flatearth {
 
@@ -71,30 +72,11 @@ FeExpect<void, Error> Engine::Initialize() {
     return FeErr{frontendInitRes.error()};
   }
 
-  // 2x2 checkerboard: black and white pixels
-  uint8 pixels[16] = {
-      255,
-      255,
-      255,
-      255,
-      0,
-      0,
-      0,
-      255,
-      0,
-      0,
-      0,
-      255,
-      255,
-      255,
-      255,
-      255,
-  };
-  auto texRes =
-      _frontendRenderer.CreateTexture("test", false, 2, 2, 4, pixels, false, &_appState.testTexture);
+  auto texRes = resources::LoadTexture(
+      "assets/textures/texture.jpg", _filesystem, _frontendRenderer, &_appState.testTexture);
   if (!texRes.has_value()) {
-    FLOG_ERROR("failed to create test texture");
-    return FeErr{texRes.error()};
+      FLOG_ERROR("failed to load texture: {}", texRes.error().message);
+      return FeErr{texRes.error()};
   }
 
   _appState.isRunning = FeTrue;

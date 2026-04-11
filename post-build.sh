@@ -47,4 +47,7 @@ echo "assets/shaders/Builtin.ObjectShader.frag.glsl -> ${SHADER_DIR}/Builtin.Obj
 
 echo "Copying assets into ${BIN_DIR}..."
 
+mkdir -p "${ASSET_DIR}/textures"
+cp -r assets/textures/. "${ASSET_DIR}/textures/" 
+
 echo "Done."
