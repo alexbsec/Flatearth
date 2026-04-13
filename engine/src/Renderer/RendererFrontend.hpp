@@ -38,13 +38,13 @@ public:
                                       resources::Texture *pTexture);
   FeExpect<void, Error> DestroyTexture(resources::Texture *pTexture);
 
-  FeExpect<void, Error> CreateGeometry(uint32 id,
-                                       uint32 vertexCount,
-                                       const math::Vertex3D *pVertices,
-                                       uint32 indexCount,
-                                       const uint32 *pIndices);
-  FeExpect<void, Error> DestroyGeometry(uint32 id);
-  FeExpect<void, Error> LoadTextureFromFile(const string &path, resources::Texture *pOut);
+  FEAPI FeExpect<void, Error> CreateGeometry(uint32 id,
+                                             uint32 vertexCount,
+                                             const math::Vertex3D *pVertices,
+                                             uint32 indexCount,
+                                             const uint32 *pIndices);
+  FEAPI FeExpect<void, Error> DestroyGeometry(uint32 id);
+  FEAPI FeExpect<void, Error> LoadTextureFromFile(const string &path, resources::Texture *pOut);
 
 private:
   FeExpect<void, Error> MakeBackends();
