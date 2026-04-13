@@ -75,6 +75,13 @@ inline bool VkResultIsSuccess(VkResult result) {
   }
 }
 
+struct GeometryData {
+  uint64 vertexBufferOffset{0};
+  uint64 indexBufferOffset{0};
+  uint32 indexCount{0};
+  uint32 vertexCount{0};
+};
+
 struct VulkanBuffer {
   uint32 totalSize;
   VkBuffer handle;

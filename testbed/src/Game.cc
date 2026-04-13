@@ -4,6 +4,7 @@
 #include <Core/Logger.hpp>
 #include <Defines.hpp>
 #include <Math/FeMath.hpp>
+#include <Renderer/RendererFrontend.hpp>
 #include <Renderer/RendererTypes.hpp>
 
 namespace flatearth::testbed {
@@ -30,6 +31,44 @@ bool GameTest::GameInitialize(flatearth::Game *gameInstance) {
   _state.cameraEuler = math::Vec3D::Zero();
   _state.view = math::Mat4D::Identity();
   _state.cameraViewDirty = FeTrue;
+  return FeTrue;
+}
+
+bool GameTest::GameLoad(flatearth::Game *gameInstance) {
+  std::array<math::Vertex3D, 4> verts{};
+  verts[0].position = math::Vec3D(-0.5f, -0.5f, 0.0f);
+  verts[1].position = math::Vec3D(0.5f,  0.5f,  0.0f);
+  verts[2].position = math::Vec3D(-0.5f, 0.5f,  0.0f);
+  verts[3].position = math::Vec3D(0.5f,  -0.5f, 0.0f);
+
+  verts[0].uv = math::Vec2D::Zero();
+  verts[1].uv = math::Vec2D::Right();
+  verts[2].uv = math::Vec2D::One();
+  verts[3].uv = math::Vec2D::Up();
+
+  std::array<uint32, 6> indices = {0, 2, 1, 0, 3, 1};
+
+  auto geomRes = gameInstance->pRenderer->CreateGeometry(
+      _state.quadGeometry, 4, verts.data(), 6, indices.data());
+  if (!geomRes.has_value()) {
+    FLOG_ERROR("failed to create quad geometry");
+    return FeFalse;
+  }
+
+  geomRes = gameInstance->pRenderer->CreateGeometry(
+      _state.quad2Geometry, 4, verts.data(), 6, indices.data());
+  if (!geomRes.has_value()) {
+    FLOG_ERROR("failed to create second quad geometry");
+    return FeFalse;
+  }
+
+  auto texRes = gameInstance->pRenderer->LoadTextureFromFile(
+      "assets/textures/texture.jpg", &_state.texture);
+  if (!texRes.has_value()) {
+    FLOG_ERROR("failed to load texture");
+    return FeFalse;
+  }
+
   return FeTrue;
 }
 
@@ -67,6 +106,15 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
 bool GameTest::GameRender(flatearth::Game *, renderer::RenderPacket &packet) {
   RecalculateCameraView(_state);
   packet.view = _state.view;
+
+  _state.angle += packet.deltaTime * 1.5f;
+  math::Mat4D model = math::Mat4D::RotationZ(_state.angle);
+  packet.objects.Push({_state.quadGeometry, model});
+
+  _state.angle2 -= packet.deltaTime * 2.0f;
+  math::Mat4D model2 = math::Mat4D::Translation(0.0f, 1.2f, 0.0f) * math::Mat4D::RotationZ(_state.angle2);
+  packet.objects.Push({_state.quad2Geometry, model2});
+
   return FeTrue;
 }
 

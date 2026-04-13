@@ -1,13 +1,23 @@
 #ifndef _FLATEARHT_ENGINE_RENDERER_TYPES_HPP
 #define _FLATEARHT_ENGINE_RENDERER_TYPES_HPP
 
+#include "Containers/DArray.hpp"
 #include "Math/Matrix4D.hpp"
 
 namespace flatearth::renderer {
 
+struct RenderObject {
+  uint32 geometryId;
+  math::Mat4D model;
+};
+
 struct RenderPacket {
   float32 deltaTime;
   math::Mat4D view;
+  containers::DArray<RenderObject> objects;
+
+  RenderPacket(memory::MemoryManager &memManager)
+    : objects(memManager) {}
 };
 
 struct GlobalUniformObject {

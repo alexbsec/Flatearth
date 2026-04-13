@@ -19,19 +19,24 @@ public:
       : _memoryManager(memManager), _bucketCount(bucketCount) {
     assert(bucketCount > 0);
 
-    _ppBuckets = FeCast<FePtr<Node<HashMapEntry<T, V>>> *>(
+    _ppBuckets = FeCast<FePtr<Node<HashMapEntry<T, V>>>>(
         _memoryManager.RawAlloc(sizeof(FePtr<Node<HashMapEntry<T, V>>>) * _bucketCount,
                                 alignof(FePtr<Node<HashMapEntry<T, V>>>),
                                 memory::Tag::HashMap));
 
     for (uint64 i = 0; i < _bucketCount; i++) {
-      _ppBuckets[i] = nullptr;
+      new (&_ppBuckets[i]) FePtr<Node<HashMapEntry<T, V>>>();
     }
   }
 
   ~HashMap() {
     if (_ppBuckets == nullptr) {
       return;
+    }
+
+    using BucketPtr = FePtr<Node<HashMapEntry<T, V>>>;
+    for (uint64 i = 0; i < _bucketCount; i++) {
+      _ppBuckets[i].~BucketPtr();
     }
 
     _memoryManager.RawFree(

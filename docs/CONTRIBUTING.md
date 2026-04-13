@@ -158,10 +158,24 @@ If in doubt, look at how something similar is done nearby and match it.
 
 ## Submitting a PR
 
-1. Branch off `main`
-2. One feature or fix per PR — don't bundle unrelated changes
-3. Run `make` and make sure there are no errors and no ASAN/LSAN violations
-4. Write a clear PR description: what you changed and why
+We don't give direct push access. Fork the repo, work in your fork, then open a PR back here.
+
+1. Fork the repo on GitHub and clone your fork
+2. Add the upstream remote so you can stay in sync:
+   ```bash
+   git remote add upstream https://github.com/alexbsec/FlatearthEngine.git
+   git fetch upstream
+   ```
+3. Branch off `main` in your fork using the naming convention below
+4. Do your work — one feature or fix per PR, don't bundle unrelated changes
+5. Before opening the PR, sync with upstream to avoid conflicts:
+   ```bash
+   git fetch upstream
+   git rebase upstream/main
+   ```
+6. Run `make` and make sure there are no errors and no ASAN/LSAN violations
+7. Open a PR from your fork's branch to `alexbsec/FlatearthEngine:main`
+8. Write a clear PR description: what you changed and why
 
 ### Branch naming
 
