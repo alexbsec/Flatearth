@@ -55,6 +55,13 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
     return FeFalse;
   }
 
+  geomRes = gameInstance->pRenderer->CreateGeometry(
+      _state.quad2Geometry, 4, verts.data(), 6, indices.data());
+  if (!geomRes.has_value()) {
+    FLOG_ERROR("failed to create second quad geometry");
+    return FeFalse;
+  }
+
   auto texRes = gameInstance->pRenderer->LoadTextureFromFile(
       "assets/textures/texture.jpg", &_state.texture);
   if (!texRes.has_value()) {
@@ -103,6 +110,10 @@ bool GameTest::GameRender(flatearth::Game *, renderer::RenderPacket &packet) {
   _state.angle += packet.deltaTime * 1.5f;
   math::Mat4D model = math::Mat4D::RotationZ(_state.angle);
   packet.objects.Push({_state.quadGeometry, model});
+
+  _state.angle2 -= packet.deltaTime * 2.0f;
+  math::Mat4D model2 = math::Mat4D::Translation(0.0f, 1.2f, 0.0f) * math::Mat4D::RotationZ(_state.angle2);
+  packet.objects.Push({_state.quad2Geometry, model2});
 
   return FeTrue;
 }

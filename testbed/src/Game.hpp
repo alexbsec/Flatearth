@@ -16,8 +16,10 @@ struct GameState {
   bool cameraViewDirty{false};
 
   uint32 quadGeometry{0};
+  uint32 quad2Geometry{1};
   resources::Texture texture;
   float32 angle{0.0f};
+  float32 angle2{0.0f};
 };
 
 class GameTest {
