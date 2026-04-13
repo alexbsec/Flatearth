@@ -4,8 +4,8 @@
 #include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Platform/Filesystem.hpp"
+#include "Containers/HashMap.hpp"
 #include "Renderer/RendererInterface.hpp"
-#include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/Shaders/ObjectShader.hpp"
 #include "Renderer/Vulkan/VulkanBuffer.hpp"
 #include "Renderer/Vulkan/VulkanCommandBufferManager.hpp"
@@ -13,6 +13,7 @@
 #include "Renderer/Vulkan/VulkanImager.hpp"
 #include "Renderer/Vulkan/VulkanRenderpassManager.hpp"
 #include "Renderer/Vulkan/VulkanSwapchainManager.hpp"
+#include "Renderer/Vulkan/VulkanTypes.hpp"
 
 namespace flatearth::renderer::vulkan {
 
@@ -25,7 +26,6 @@ public:
   FeExpect<bool, Error> OnResize(uint32 width, uint32 height) override;
   FeExpect<bool, Error> BeginFrame(float32 deltaTime) override;
   FeExpect<bool, Error> EndFrame(float32 deltaTime) override;
-  FeExpect<bool, Error> DrawFrame(const RenderPacket &renderPacket) override;
   FeExpect<void, Error> UpdateGlobalState(math::Mat4D projection,
                                           math::Mat4D view,
                                           math::Vec3D viewPosition,
@@ -40,8 +40,14 @@ public:
                                       bool hasTransparency,
                                       resources::Texture *pTexture) override;
   FeExpect<void, Error> DestroyTexture(resources::Texture *pTexture) override;
+  FeExpect<void, Error> CreateGeometry(uint32 id,
+                                       uint32 vertexCount,
+                                       const math::Vertex3D *pVertices,
+                                       uint32 indexCount,
+                                       const uint32 *pIndices) override;
+  FeExpect<void, Error> DestroyGeometry(uint32 id) override;
 
-  void UpdateObject(math::Mat4D model) override;
+  void DrawGeometry(uint32 id, math::Mat4D model) override;
 
 private:
   FeExpect<void, Error> CreateFence(Fence *pFence, bool signaled);
@@ -55,7 +61,7 @@ private:
                                         uint64 offset,
                                         uint64 size,
                                         VulkanBuffer &buffer,
-                                        void *pData);
+                                        const void *pData);
 
   void TextureSubmitCallback(CommandBuffer cmd,
                              VkFormat imageFormat,
@@ -73,6 +79,8 @@ private:
   shaders::VulkanShader _vulkanShader;
   // No-op (not an error)
   Context _ctx;
+
+  containers::HashMap<uint32, GeometryData> _geometries;
 
   uint32 _cachedFrameBufferWidth{0}, _cachedFrameBufferHeight{0};
 };

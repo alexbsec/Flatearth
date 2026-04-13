@@ -8,7 +8,6 @@
 #include "Core/Logger.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
-#include "Resources/TextureLoader.hpp"
 
 namespace flatearth {
 
@@ -20,7 +19,6 @@ Engine::Engine(Game *pGame)
 }
 
 Engine::~Engine() {
-  auto _ = _frontendRenderer.DestroyTexture(&_appState.testTexture);
   FLOG_INFO("engine shutdown gracefully");
 }
 
@@ -72,17 +70,19 @@ FeExpect<void, Error> Engine::Initialize() {
     return FeErr{frontendInitRes.error()};
   }
 
-  auto texRes = resources::LoadTexture(
-      "assets/textures/texture.jpg", _filesystem, _frontendRenderer, &_appState.testTexture);
-  if (!texRes.has_value()) {
-      FLOG_ERROR("failed to load texture: {}", texRes.error().message);
-      return FeErr{texRes.error()};
-  }
-
   _appState.isRunning = FeTrue;
   _appState.isSuspended = FeFalse;
   _appState.platformState = _pPlatform->State();
   _appState.pGameInstance->pInputManager = &_inputManager;
+  _appState.pGameInstance->pRenderer = &_frontendRenderer;
+
+  if (_appState.pGameInstance->Load) {
+    if (!_appState.pGameInstance->Load(_appState.pGameInstance)) {
+      FLOG_FATAL("game failed to load resources");
+      return FeErr{Error("game Load() failed", ErrorType::GameInitializeError)};
+    }
+  }
+
   FLOG_INFO("engine successfully initialized");
   return {};
 }
@@ -124,13 +124,13 @@ FeExpect<void, Error> Engine::Start() {
 
     // Hardcoded just to make it up and running
     // TODO: remove
-    renderer::RenderPacket packet;
+    renderer::RenderPacket packet(_memoryManager);
     packet.deltaTime = deltaTime;
     if (!_appState.pGameInstance->Render(_appState.pGameInstance, packet)) {
       FLOG_FATAL("could not populate render packet inside game instance");
       break;
     }
-    _frontendRenderer.SetView(packet.view);
+
     auto drawRes = _frontendRenderer.DrawFrame(&packet);
     if (!drawRes.has_value()) {
       FLOG_ERROR("frontend renderer failed to draw frame: {}", drawRes.error().message);

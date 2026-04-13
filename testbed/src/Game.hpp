@@ -5,6 +5,7 @@
 #include <GameTypes.hpp>
 #include <Math/Matrix4D.hpp>
 #include <Renderer/RendererTypes.hpp>
+#include <Resources/ResourceTypes.hpp>
 
 namespace flatearth::testbed {
 
@@ -13,11 +14,16 @@ struct GameState {
   math::Mat4D view;
   math::Vec3D cameraPosition, cameraEuler;
   bool cameraViewDirty{false};
+
+  uint32 quadGeometry{0};
+  resources::Texture texture;
+  float32 angle{0.0f};
 };
 
 class GameTest {
 public:
   static bool GameInitialize(flatearth::Game *gameInstance);
+  static bool GameLoad(flatearth::Game *gameInstance);
   static bool GameUpdate(flatearth::Game *gameInstance, float32 deltaTime);
   static bool GameRender(flatearth::Game *gameInstance, renderer::RenderPacket &packet);
   static bool GameOnResize(flatearth::Game *gameInstance, uint32 width, uint32 height);

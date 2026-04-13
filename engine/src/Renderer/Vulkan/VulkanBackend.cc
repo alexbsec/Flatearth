@@ -24,7 +24,7 @@ VulkanBackend::VulkanBackend(memory::MemoryManager &memManager, platform::FileSy
     : _memoryManager(memManager), _deviceManager(memManager),
       _swapchainManager(memManager, _imageManager), _renderpassManager(memManager),
       _cmdBufferManager(memManager), _bufferManager(_cmdBufferManager),
-      _vulkanShader(memManager, _bufferManager), _ctx(memManager, fs) {
+      _vulkanShader(memManager, _bufferManager), _ctx(memManager, fs), _geometries(memManager) {
 }
 
 VulkanBackend::~VulkanBackend() {
@@ -334,54 +334,6 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
     return FeErr{createBufferRes.error()};
   }
 
-  // TEMPORARY TEST CODEBack
-  const uint32 cVertCount = 4;
-  std::array<math::Vertex3D, cVertCount> vertices;
-  _memoryManager.FZeroMemory(vertices.data(), sizeof(math::Vertex3D) * cVertCount);
-
-  vertices[0].position = math::Vec3D(-0.5f, -0.5f, 0.0f);
-  vertices[1].position = math::Vec3D(0.5f, 0.5f, 0.0f);
-  vertices[2].position = math::Vec3D(-0.5f, 0.5f, 0.0f);
-  vertices[3].position = math::Vec3D(0.5f, -0.5f, 0.0f);
-
-  vertices[0].uv = math::Vec2D::Zero();
-  vertices[1].uv = math::Vec2D::Right();
-  vertices[2].uv = math::Vec2D::One();
-  vertices[3].uv = math::Vec2D::Up();
-
-  const uint32 cIndexCount = 6;
-  std::array<uint32, cIndexCount> indicies = {0, 2, 1, 0, 3, 1};
-
-  VkFence tempFence;
-  VkFenceCreateInfo fenceInfo = {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
-  vkCreateFence(_ctx.device.logicalDevice, &fenceInfo, _ctx.pAllocator, &tempFence);
-
-  auto uploadRes = UploadDataRange(_ctx.device.graphicsCommandPool,
-                                   tempFence,
-                                   _ctx.device.graphicsQueue,
-                                   0,
-                                   sizeof(math::Vertex3D) * cVertCount,
-                                   _ctx.objectVertexBuffer,
-                                   vertices.data());
-  if (!uploadRes.has_value()) {
-    FLOG_ERROR("failed to upload data range in test");
-    return FeErr{uploadRes.error()};
-  }
-
-  uploadRes = UploadDataRange(_ctx.device.graphicsCommandPool,
-                              tempFence,
-                              _ctx.device.graphicsQueue,
-                              0,
-                              sizeof(uint32) * cIndexCount,
-                              _ctx.objectIndexBuffer,
-                              indicies.data());
-
-  vkDestroyFence(_ctx.device.logicalDevice, tempFence, _ctx.pAllocator);
-  if (!uploadRes.has_value()) {
-    FLOG_ERROR("failed to upload index data");
-    return FeErr{uploadRes.error()};
-  }
-
   FLOG_INFO("sync objects & fences created successfully");
   FLOG_INFO("Vulkan backend initialized successfully");
   return FeTrue;
@@ -536,27 +488,6 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
     return FeErr{presentRes.error()};
   }
 
-  return FeTrue;
-}
-
-FeExpect<bool, Error> VulkanBackend::DrawFrame(const RenderPacket &renderPacket) {
-  if (_ctx.recreatingSwapchain) {
-    return FeFalse;
-  }
-
-  (void)renderPacket;
-
-  CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
-
-  _vulkanShader.UseShader(_ctx, _ctx.objectShader);
-
-  VkDeviceSize offset = 0;
-  vkCmdBindVertexBuffers(cmdBuffer.handle, 0, 1, &_ctx.objectVertexBuffer.handle, &offset);
-
-  vkCmdBindIndexBuffer(cmdBuffer.handle, _ctx.objectIndexBuffer.handle, 0, VK_INDEX_TYPE_UINT32);
-
-  // Draw quad (6 indices)
-  vkCmdDrawIndexed(cmdBuffer.handle, 6, 1, 0, 0, 0);
   return FeTrue;
 }
 
@@ -725,10 +656,69 @@ FeExpect<void, Error> VulkanBackend::DestroyTexture(resources::Texture *pTexture
   return {};
 }
 
-void VulkanBackend::UpdateObject(math::Mat4D model) {
+FeExpect<void, Error> VulkanBackend::CreateGeometry(uint32 id,
+                                                    uint32 vertexCount,
+                                                    const math::Vertex3D *pVertices,
+                                                    uint32 indexCount,
+                                                    const uint32 *pIndices) {
+  VkFence tempFence;
+  VkFenceCreateInfo fenceInfo = {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+  vkCreateFence(_ctx.device.logicalDevice, &fenceInfo, _ctx.pAllocator, &tempFence);
+
+  uint64 vertexOffset = _ctx.geometryVertexOffset;
+  uint64 indexOffset = _ctx.geometryIndexOffset;
+  uint64 vertexSize = sizeof(math::Vertex3D) * vertexCount;
+  uint64 indexSize = sizeof(uint32) * indexCount;
+
+  auto uploadRes = UploadDataRange(_ctx.device.graphicsCommandPool,
+                                   tempFence,
+                                   _ctx.device.graphicsQueue,
+                                   vertexOffset,
+                                   vertexSize,
+                                   _ctx.objectVertexBuffer,
+                                   pVertices);
+  if (!uploadRes.has_value()) {
+    vkDestroyFence(_ctx.device.logicalDevice, tempFence, _ctx.pAllocator);
+    FLOG_ERROR("failed to upload data range in test");
+    return FeErr{uploadRes.error()};
+  }
+
+  uploadRes = UploadDataRange(_ctx.device.graphicsCommandPool,
+                              tempFence,
+                              _ctx.device.graphicsQueue,
+                              indexOffset,
+                              indexSize,
+                              _ctx.objectIndexBuffer,
+                              pIndices);
+
+  vkDestroyFence(_ctx.device.logicalDevice, tempFence, _ctx.pAllocator);
+  if (!uploadRes.has_value()) {
+    FLOG_ERROR("failed to upload index data");
+    return FeErr{uploadRes.error()};
+  }
+
+  GeometryData geom{};
+  geom.vertexBufferOffset = vertexOffset;
+  geom.indexBufferOffset = indexOffset;
+  geom.indexCount = indexCount;
+  auto insertRes = _geometries.Insert(id, geom);
+  if (!insertRes.has_value()) {
+    FLOG_ERROR("failed to insert geometry into hashmap");
+    return FeErr{insertRes.error()};
+  }
+
+  _ctx.geometryIndexOffset += indexSize;
+  _ctx.geometryVertexOffset += vertexSize;
+  return {};
+}
+
+FeExpect<void, Error> VulkanBackend::DestroyGeometry(uint32 id) {
+  return {};
+}
+
+void VulkanBackend::DrawGeometry(uint32 id, math::Mat4D model) {
   CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
   _vulkanShader.UpdateObject(_ctx, _ctx.objectShader, model.ToGPUMatrix());
-
   _vulkanShader.UseShader(_ctx, _ctx.objectShader);
 
   {
@@ -772,8 +762,13 @@ void VulkanBackend::UpdateObject(math::Mat4D model) {
   constexpr uint32 cFirstScissor = 0;
   constexpr uint32 cScissorCount = 1;
 
-  // TODO: remove (for tests)
-  std::array<VkDeviceSize, 1> offsets = {0};
+  const GeometryData *pGeom = _geometries.Retrieve(id);
+  if (pGeom == nullptr) {
+    FLOG_WARN("failed to retrieve unexistent geometry for id {}", id);
+    return;
+  }
+
+  std::array<VkDeviceSize, 1> offsets = {pGeom->vertexBufferOffset};
 
   vkCmdSetViewport(cmdBuffer.handle, cFirstViewport, cViewportCount, &viewport);
   vkCmdSetScissor(cmdBuffer.handle, cFirstScissor, cScissorCount, &scissor);
@@ -784,9 +779,12 @@ void VulkanBackend::UpdateObject(math::Mat4D model) {
                          &_ctx.objectVertexBuffer.handle,
                          static_cast<VkDeviceSize *>(offsets.data()));
 
-  vkCmdBindIndexBuffer(cmdBuffer.handle, _ctx.objectIndexBuffer.handle, 0, VK_INDEX_TYPE_UINT32);
+  vkCmdBindIndexBuffer(cmdBuffer.handle,
+                       _ctx.objectIndexBuffer.handle,
+                       pGeom->indexBufferOffset,
+                       VK_INDEX_TYPE_UINT32);
 
-  vkCmdDrawIndexed(cmdBuffer.handle, 6, 1, 0, 0, 0);
+  vkCmdDrawIndexed(cmdBuffer.handle, pGeom->indexCount, 1, 0, 0, 0);
 }
 
 // PRIVATE MEMBERS
@@ -919,7 +917,7 @@ FeExpect<void, Error> VulkanBackend::UploadDataRange(VkCommandPool pool,
                                                      uint64 offset,
                                                      uint64 size,
                                                      VulkanBuffer &buffer,
-                                                     void *pData) {
+                                                     const void *pData) {
   VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
   VkMemoryPropertyFlags memoryFlags =
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;

@@ -7,6 +7,8 @@
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererInterface.hpp"
 #include "Renderer/Vulkan/VulkanBackend.hpp"
+#include "Resources/ResourceTypes.hpp"
+#include "Resources/TextureLoader.hpp"
 
 namespace flatearth::renderer {
 
@@ -46,7 +48,6 @@ FeExpect<bool, Error> FrontendRenderer::Initialize() {
   float32 aspect = static_cast<float32>(_pAppState->width) / _pAppState->height;
   _rendererState.projection = math::Mat4D::Orthographic(
       -aspect, aspect, -1.0f, 1.0f, _rendererState.nearClip, _rendererState.farClip);
-  _rendererState.view = math::Mat4D::Identity();
 
   FLOG_INFO("frontend renderer successfully initialized");
   return FeTrue;
@@ -99,17 +100,16 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
     return FeTrue;
   }
 
-  static float32 angle = 0.0f;
-  // radians per second (tweak speed)
-  angle += pRenderPacket->deltaTime * 1.5f;
-
-  math::Mat4D model = math::Mat4D::RotationZ(angle) * math::Mat4D::Translation(0.0f, 0.0f, 0.0f);
-  _rendererState.pActiveBackend->UpdateObject(model);
   auto updateRes = _rendererState.pActiveBackend->UpdateGlobalState(
-      _rendererState.projection, _rendererState.view, math::Vec3D::Zero(), 0);
+      _rendererState.projection, pRenderPacket->view, math::Vec3D::Zero(), 0);
   if (!updateRes.has_value()) {
     FLOG_ERROR("failed to update global state on frontend renderer");
     return FeErr{updateRes.error()};
+  }
+
+  for (uint32 i = 0; i < pRenderPacket->objects.Length(); i++) {
+    const RenderObject &object = pRenderPacket->objects[i];
+    _rendererState.pActiveBackend->DrawGeometry(object.geometryId, object.model);
   }
 
   auto endRes = EndFrame(pRenderPacket->deltaTime);
@@ -152,13 +152,26 @@ FeExpect<void, Error> FrontendRenderer::CreateTexture(const string &name,
       name, autoRelease, width, height, channelCount, pPixels, hasTransparency, pTexture);
 }
 
+FeExpect<void, Error> FrontendRenderer::CreateGeometry(uint32 id,
+                                                       uint32 vertexCount,
+                                                       const math::Vertex3D *pVertices,
+                                                       uint32 indexCount,
+                                                       const uint32 *pIndices) {
+  return _rendererState.pActiveBackend->CreateGeometry(
+      id, vertexCount, pVertices, indexCount, pIndices);
+}
+
+FeExpect<void, Error> FrontendRenderer::DestroyGeometry(uint32 id) {
+  return _rendererState.pActiveBackend->DestroyGeometry(id);
+}
+
+FeExpect<void, Error> FrontendRenderer::LoadTextureFromFile(const string &path, resources::Texture *pOut) {
+  return resources::LoadTexture(path, _filesystem, *this, pOut);
+}
+
 FeExpect<void, Error> FrontendRenderer::DestroyTexture(resources::Texture *pTexture) {
   uint32 vulkanIndex = static_cast<uint32>(BackendType::Vulkan);
   return _pBackends[vulkanIndex]->DestroyTexture(pTexture);
-}
-
-void FrontendRenderer::SetView(const math::Mat4D &view) {
-  _rendererState.view = view;
 }
 
 FeExpect<void, Error> FrontendRenderer::MakeBackends() {

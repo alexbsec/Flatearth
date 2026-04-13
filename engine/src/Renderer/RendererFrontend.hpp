@@ -38,10 +38,13 @@ public:
                                       resources::Texture *pTexture);
   FeExpect<void, Error> DestroyTexture(resources::Texture *pTexture);
 
-  // Setters
-  // NOTE: this should not be exposed outside of the engine
-  // remove once done testing
-  FEAPI void SetView(const math::Mat4D &view);
+  FeExpect<void, Error> CreateGeometry(uint32 id,
+                                       uint32 vertexCount,
+                                       const math::Vertex3D *pVertices,
+                                       uint32 indexCount,
+                                       const uint32 *pIndices);
+  FeExpect<void, Error> DestroyGeometry(uint32 id);
+  FeExpect<void, Error> LoadTextureFromFile(const string &path, resources::Texture *pOut);
 
 private:
   FeExpect<void, Error> MakeBackends();

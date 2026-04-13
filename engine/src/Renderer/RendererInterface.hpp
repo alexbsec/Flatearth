@@ -3,6 +3,7 @@
 
 #include "Core/ApplicationConfig.hpp"
 #include "Defines.hpp"
+#include "Math/MathTypes.hpp"
 #include "Renderer/RendererTypes.hpp"
 #include "Resources/ResourceTypes.hpp"
 
@@ -23,7 +24,6 @@ public:
   virtual FeExpect<bool, Error> OnResize(uint32 width, uint32 height) = 0;
   virtual FeExpect<bool, Error> BeginFrame(float32 deltaTime) = 0;
   virtual FeExpect<bool, Error> EndFrame(float32 deltaTime) = 0;
-  virtual FeExpect<bool, Error> DrawFrame(const RenderPacket &renderPacket) = 0;
   virtual FeExpect<void, Error> UpdateGlobalState(math::Mat4D projection,
                                                   math::Mat4D view,
                                                   math::Vec3D viewPosition,
@@ -38,7 +38,13 @@ public:
                                               resources::Texture *pTexture) = 0;
   virtual FeExpect<void, Error> DestroyTexture(resources::Texture *pTexture) = 0;
 
-  virtual void UpdateObject(math::Mat4D model) = 0;
+  virtual FeExpect<void, Error> CreateGeometry(uint32 id,
+                                               uint32 vertexCount,
+                                               const math::Vertex3D *pVertices,
+                                               uint32 indexCount,
+                                               const uint32 *pIndices) = 0;
+  virtual FeExpect<void, Error> DestroyGeometry(uint32 id) = 0;
+  virtual void DrawGeometry(uint32 id, math::Mat4D model) = 0;
 
 protected:
   virtual ~IRendererBackend() = default;

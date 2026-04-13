@@ -8,10 +8,11 @@
 
 bool CreateGame(flatearth::Game *pGame) {
   using namespace flatearth::testbed;
-  pGame->Update = GameTest::GameUpdate;
   pGame->Initialize = GameTest::GameInitialize;
-  pGame->OnResize = GameTest::GameOnResize;
+  pGame->Load = GameTest::GameLoad;
+  pGame->Update = GameTest::GameUpdate;
   pGame->Render = GameTest::GameRender;
+  pGame->OnResize = GameTest::GameOnResize;
   return true;
 }
 
