@@ -10,6 +10,7 @@
 namespace flatearth::resources {
 class TextureSystem;
 class MaterialSystem;
+class MeshSystem;
 }
 
 namespace flatearth::renderer {
@@ -47,6 +48,7 @@ public:
   input::InputManager *pInputManager{nullptr};
   resources::TextureSystem *pTextureSystem{nullptr};
   resources::MaterialSystem *pMaterialSystem{nullptr};
+  resources::MeshSystem *pMeshSystem{nullptr};
   renderer::FrontendRenderer *pRenderer{nullptr};
 };
 
