@@ -1,40 +1,31 @@
 #ifndef _FLATEARTH_ENGINE_RESOURCES_MATERIAL_SYSTEM_HPP
 #define _FLATEARTH_ENGINE_RESOURCES_MATERIAL_SYSTEM_HPP
 
-#include "Containers/DArray.hpp"
-#include "Containers/HashMap.hpp"
 #include "Core/FeMemory.hpp"
 #include "Renderer/RendererFrontend.hpp"
+#include "Resources/ResourceSystem.hpp"
 #include "Resources/ResourceTypes.hpp"
 #include "Resources/TextureSystem.hpp"
 
 namespace flatearth::resources {
 
-struct MaterialEntry {
-  Material material{};
-  uint32 refCount{0};
-};
-
-class MaterialSystem {
+class MaterialSystem : public ResourceSystem<Material> {
 public:
   FEAPI explicit MaterialSystem(memory::MemoryManager &memManager,
                                 renderer::FrontendRenderer &renderer,
                                 TextureSystem &textureSystem);
+
   FEAPI FeExpect<MaterialHandle, Error> AcquireMaterial(const string &name,
                                                         TextureHandle texHandle);
-  FEAPI void ReleaseMaterial(MaterialHandle handle);
-  FEAPI Material *GetMaterial(MaterialHandle handle);
-  FEAPI void Shutdown();
+
+protected:
+  FeExpect<void, Error> Create(Material *pMaterial, uint32 handle, const string &name) override;
+  FeExpect<void, Error> Destroy(Material *pMaterial) override;
 
 private:
-  memory::MemoryManager &_memoryManager;
-  renderer::FrontendRenderer &_frontendRenderer;
+  renderer::FrontendRenderer &_renderer;
   TextureSystem &_textureSystem;
-
-  MaterialHandle _nextHandle{0};
-  containers::HashMap<string, MaterialHandle> _nameHandleMap;
-  containers::HashMap<MaterialHandle, MaterialEntry> _handleEntryMap;
-  containers::DArray<MaterialHandle> _activeHandles;
+  TextureHandle _pendingTexHandle{0};
 };
 
 } // namespace flatearth::resources

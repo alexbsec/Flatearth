@@ -15,7 +15,8 @@ Engine::Engine(Game *pGame)
     : _appState(pGame), _eventManager(_memoryManager), _inputManager(_eventManager),
       _frontendRenderer(&_appState, _memoryManager, _filesystem), _filesystem(_memoryManager),
       _textureSystem(_memoryManager, _frontendRenderer, _filesystem),
-      _materialSystem(_memoryManager, _frontendRenderer, _textureSystem) {
+      _materialSystem(_memoryManager, _frontendRenderer, _textureSystem),
+      _meshSystem(_memoryManager, _frontendRenderer) {
   _engineListener = _memoryManager.Allocate<event::IEventListener, EngineListener>(
       memory::Tag::Application, _eventManager, _appState, _frontendRenderer);
 }
@@ -24,6 +25,7 @@ Engine::~Engine() {
   if (_appState.pGameInstance->Unload) {
     _appState.pGameInstance->Unload(_appState.pGameInstance);
   }
+  _meshSystem.Shutdown();
   _materialSystem.Shutdown();
   _textureSystem.Shutdown();
   FLOG_INFO("engine shutdown gracefully");
@@ -83,6 +85,7 @@ FeExpect<void, Error> Engine::Initialize() {
   _appState.pGameInstance->pInputManager = &_inputManager;
   _appState.pGameInstance->pTextureSystem = &_textureSystem;
   _appState.pGameInstance->pMaterialSystem = &_materialSystem;
+  _appState.pGameInstance->pMeshSystem = &_meshSystem;
   _appState.pGameInstance->pRenderer = &_frontendRenderer;
 
   if (_appState.pGameInstance->Load) {

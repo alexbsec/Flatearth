@@ -7,6 +7,21 @@ namespace flatearth::resources {
 
 using TextureHandle = uint32;
 using MaterialHandle = uint32;
+using MeshHandle = uint32;
+
+enum class MeshShape {
+  Quad,
+  Circle,
+  Capsule2D,
+};
+
+struct Mesh {
+  uint32 id;
+  string name;
+  uint32 vertexCount;
+  uint32 indexCount;
+  void *pInternalData;
+};
 
 struct Material {
   uint32 id;

@@ -8,6 +8,7 @@
 #include "Platform/Filesystem.hpp"
 #include "Platform/Platform.hpp"
 #include "Resources/MaterialSystem.hpp"
+#include "Resources/MeshSystem.hpp"
 #include "Resources/TextureSystem.hpp"
 #include "Renderer/RendererFrontend.hpp"
 
@@ -33,6 +34,7 @@ private:
   renderer::FrontendRenderer _frontendRenderer;
   resources::TextureSystem _textureSystem;
   resources::MaterialSystem _materialSystem;
+  resources::MeshSystem _meshSystem;
   FePtr<event::IEventListener> _engineListener;
 };
 

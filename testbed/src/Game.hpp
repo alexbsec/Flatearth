@@ -5,6 +5,7 @@
 #include <GameTypes.hpp>
 #include <Math/Matrix4D.hpp>
 #include <Renderer/RendererTypes.hpp>
+#include <Resources/MeshSystem.hpp>
 #include <Resources/ResourceTypes.hpp>
 
 namespace flatearth::testbed {
@@ -23,10 +24,12 @@ struct GameState {
   resources::MaterialHandle mat2Handle{0};
   resources::Material *pMaterial2{nullptr};
 
-  uint32 quadGeometry{0};
-  uint32 quad2Geometry{1};
+  resources::MeshHandle quadMesh{0};
+  resources::MeshHandle circleMesh{0};
+  resources::MeshHandle capsuleMesh{0};
   float32 angle{0.0f};
   float32 angle2{0.0f};
+  float32 angle3{0.0f};
 };
 
 class GameTest {
