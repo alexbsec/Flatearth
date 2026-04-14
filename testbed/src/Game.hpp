@@ -15,9 +15,9 @@ struct GameState {
   math::Vec3D cameraPosition, cameraEuler;
   bool cameraViewDirty{false};
 
+  resources::TextureHandle texHandle{0};
   uint32 quadGeometry{0};
   uint32 quad2Geometry{1};
-  resources::Texture texture;
   float32 angle{0.0f};
   float32 angle2{0.0f};
 };
@@ -26,6 +26,7 @@ class GameTest {
 public:
   static bool GameInitialize(flatearth::Game *gameInstance);
   static bool GameLoad(flatearth::Game *gameInstance);
+  static void GameUnload(flatearth::Game *gameInstance);
   static bool GameUpdate(flatearth::Game *gameInstance, float32 deltaTime);
   static bool GameRender(flatearth::Game *gameInstance, renderer::RenderPacket &packet);
   static bool GameOnResize(flatearth::Game *gameInstance, uint32 width, uint32 height);

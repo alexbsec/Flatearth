@@ -102,9 +102,10 @@ public:
       Node<HashMapEntry<T, V>> *node = ppOwner->get();
 
       if (eqFn(node->data.key, key)) {
-        *ppOwner = std::move(node->pNext);
+        FePtr<Node<HashMapEntry<T, V>>> toDelete = std::move(*ppOwner); // take ownership
+        *ppOwner = std::move(toDelete->pNext);                          // splice successor in
         _size--;
-        return FeTrue;
+        return FeTrue;                                                  // toDelete frees node
       }
 
       ppOwner = &node->pNext;

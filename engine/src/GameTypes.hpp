@@ -1,13 +1,19 @@
 #ifndef _FLATEARTH_ENGINE_GAME_TYPES_HPP
 #define _FLATEARTH_ENGINE_GAME_TYPES_HPP
 
+#include "Core/Input.hpp"
 #include "Defines.hpp"
 #include "Renderer/RendererTypes.hpp"
 
-#include <Core/Input.hpp>
 #include <functional>
 
-namespace flatearth::renderer { class FrontendRenderer; }
+namespace flatearth::resources {
+class TextureSystem;
+}
+
+namespace flatearth::renderer {
+class FrontendRenderer;
+}
 
 namespace flatearth {
 
@@ -19,17 +25,18 @@ struct Game {
 public:
   std::function<bool(struct Game *gameInstance)> Initialize;
   std::function<bool(struct Game *gameInstance)> Load;
+  std::function<void(struct Game *gameInstance)> Unload;
   std::function<bool(struct Game *gameInstance, float32 deltaTime)> Update;
   std::function<bool(struct Game *gameInstance, renderer::RenderPacket &packet)> Render;
   std::function<bool(struct Game *gameInstance, uint32 width, uint32 height)> OnResize;
 
   Game()
-      : Initialize(nullptr), Load(nullptr), Update(nullptr), Render(nullptr), OnResize(nullptr),
+      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), Render(nullptr), OnResize(nullptr),
         gameName(cGameName), windowStartWidth(scDefaultStartWidth),
         windowStartHeight(scDefaultStartHeight) {}
 
   Game(const string &name)
-      : Initialize(nullptr), Load(nullptr), Update(nullptr), Render(nullptr), OnResize(nullptr),
+      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), Render(nullptr), OnResize(nullptr),
         gameName(name), windowStartWidth(scDefaultStartWidth),
         windowStartHeight(scDefaultStartHeight) {}
 
@@ -37,7 +44,7 @@ public:
   string gameName;
   int32 windowStartPosX, windowStartPosY, windowStartWidth, windowStartHeight;
   input::InputManager *pInputManager{nullptr};
-  // TODO: remove once resource manager exists
+  resources::TextureSystem *pTextureSystem{nullptr};
   renderer::FrontendRenderer *pRenderer{nullptr};
 };
 

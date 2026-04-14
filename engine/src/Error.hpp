@@ -27,6 +27,7 @@ enum class ErrorType {
   InvalidFileHandle,
   MathError,
   NullptrException,
+  LogicalError,
 };
 
 struct Error {
