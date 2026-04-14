@@ -108,7 +108,7 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
 
   for (uint32 i = 0; i < pRenderPacket->objects.Length(); i++) {
     const RenderObject &object = pRenderPacket->objects[i];
-    _rendererState.pActiveBackend->DrawGeometry(object.geometryId, object.model);
+    _rendererState.pActiveBackend->DrawGeometry(object.geometryId, object.model, object.pMaterial);
   }
 
   auto endRes = EndFrame(pRenderPacket->deltaTime);

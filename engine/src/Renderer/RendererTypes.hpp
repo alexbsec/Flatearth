@@ -3,12 +3,14 @@
 
 #include "Containers/DArray.hpp"
 #include "Math/Matrix4D.hpp"
+#include "Resources/ResourceTypes.hpp"
 
 namespace flatearth::renderer {
 
 struct RenderObject {
   uint32 geometryId;
   math::Mat4D model;
+  resources::Material *pMaterial{nullptr};
 };
 
 struct RenderPacket {
