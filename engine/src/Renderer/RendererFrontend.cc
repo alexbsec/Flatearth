@@ -169,6 +169,15 @@ FeExpect<void, Error> FrontendRenderer::DestroyTexture(resources::Texture *pText
   return _pBackends[vulkanIndex]->DestroyTexture(pTexture);
 }
 
+FeExpect<void, Error> FrontendRenderer::CreateMaterial(resources::Material *pMaterial,
+                                                       const resources::Texture *pTexture) {
+  return _rendererState.pActiveBackend->CreateMaterial(pMaterial, pTexture);
+}
+
+FeExpect<void, Error> FrontendRenderer::DestroyMaterial(resources::Material *pMaterial) {
+  return _rendererState.pActiveBackend->DestroyMaterial(pMaterial);
+}
+
 FeExpect<void, Error> FrontendRenderer::MakeBackends() {
   uint32 vulkanIndex = static_cast<uint32>(BackendType::Vulkan);
   _pBackends[vulkanIndex] = _memoryManager.Allocate<IRendererBackend, vulkan::VulkanBackend>(

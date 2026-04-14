@@ -49,6 +49,9 @@ public:
 
   void DrawGeometry(uint32 id, math::Mat4D model) override;
 
+  FeExpect<void, Error> CreateMaterial(resources::Material *pMaterial, const resources::Texture *pTexture) override;
+  FeExpect<void, Error> DestroyMaterial(resources::Material *pMaterial) override;
+
 private:
   FeExpect<void, Error> CreateFence(Fence *pFence, bool signaled);
   FeExpect<void, Error> DestroyFence(Fence *pFence);

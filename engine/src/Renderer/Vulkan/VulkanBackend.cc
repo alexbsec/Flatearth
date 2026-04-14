@@ -787,6 +787,62 @@ void VulkanBackend::DrawGeometry(uint32 id, math::Mat4D model) {
   vkCmdDrawIndexed(cmdBuffer.handle, pGeom->indexCount, 1, 0, 0, 0);
 }
 
+FeExpect<void, Error> VulkanBackend::CreateMaterial(resources::Material *pMaterial,
+                                                    const resources::Texture *pTexture) {
+  if (pTexture == nullptr) {
+    return {};
+  }
+
+  const TextureData *pData = FeCast<TextureData>(pTexture->pInternalData);
+  MaterialData *pMatData = FeCast<MaterialData>(
+      _memoryManager.RawAlloc(sizeof(MaterialData), alignof(MaterialData), memory::Tag::Renderer));
+  pMaterial->pInternalData = pMatData;
+
+  VkDescriptorSetAllocateInfo allocInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+  allocInfo.descriptorPool = _ctx.objectShader.textureDescriptorPool;
+  allocInfo.descriptorSetCount = 1;
+  allocInfo.pSetLayouts = &_ctx.objectShader.textureDescriptorSetLayout;
+  if (auto res = VkCheck(vkAllocateDescriptorSets(_ctx.device.logicalDevice, &allocInfo, &pMatData->descriptorSet)); !res.has_value()) {
+    FLOG_ERROR("failed to allocate descriptor sets for material");
+    return FeErr{res.error()};
+  }
+
+  VkDescriptorImageInfo imageInfo{};
+  imageInfo.sampler = pData->sampler;
+  imageInfo.imageView = pData->image.view;
+  imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+  VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+  write.dstSet = pMatData->descriptorSet;
+  write.dstBinding = 0;
+  write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  write.descriptorCount = 1;
+  write.pImageInfo = &imageInfo;
+
+  vkUpdateDescriptorSets(_ctx.device.logicalDevice, 1, &write, 0, nullptr);
+  return {};
+}
+
+FeExpect<void, Error> VulkanBackend::DestroyMaterial(resources::Material *pMaterial) {
+  if (pMaterial == nullptr || pMaterial->pInternalData == nullptr) {
+    return {};
+  }
+
+  MaterialData *pMatData = FeCast<MaterialData>(pMaterial->pInternalData);
+  if (auto res = VkCheck(vkFreeDescriptorSets(_ctx.device.logicalDevice,
+                                              _ctx.objectShader.textureDescriptorPool,
+                                              1,
+                                              &pMatData->descriptorSet));
+    !res.has_value()) {
+    FLOG_ERROR("failed to free descriptor set for material");
+    return FeErr{res.error()};
+  }
+
+  _memoryManager.RawFree(pMatData, sizeof(MaterialData), memory::Tag::Renderer);
+  pMaterial->pInternalData = nullptr;
+  return {};
+}
+
 // PRIVATE MEMBERS
 
 FeExpect<void, Error> VulkanBackend::CreateFence(Fence *pFence, bool signaled) {
