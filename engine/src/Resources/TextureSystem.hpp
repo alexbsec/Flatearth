@@ -1,6 +1,7 @@
 #ifndef _FLATEARTH_ENGINE_RESOURCES_TEXTURE_SYSTEM_HPP
 #define _FLATEARTH_ENGINE_RESOURCES_TEXTURE_SYSTEM_HPP
 
+#include "Containers/DArray.hpp"
 #include "Containers/HashMap.hpp"
 #include "Core/FeMemory.hpp"
 #include "Platform/Filesystem.hpp"
@@ -23,6 +24,7 @@ public:
   FEAPI FeExpect<TextureHandle, Error> AcquireTexture(const string &path);
   FEAPI void ReleaseTexture(TextureHandle handle);
   FEAPI Texture *GetTexture(TextureHandle handle);
+  FEAPI void Shutdown();
 
 private:
   FeExpect<void, Error> LoadTexture(const string &path, Texture *pTexture);
@@ -35,6 +37,7 @@ private:
   TextureHandle _nextHandle{0};
   containers::HashMap<string, TextureHandle> _pathHandleMap;
   containers::HashMap<TextureHandle, TextureEntry> _handleEntryMap;
+  containers::DArray<TextureHandle> _activeHandles;
 };
 
 } // namespace flatearth::resources

@@ -44,7 +44,6 @@ public:
                                              uint32 indexCount,
                                              const uint32 *pIndices);
   FEAPI FeExpect<void, Error> DestroyGeometry(uint32 id);
-  FEAPI FeExpect<void, Error> LoadTextureFromFile(const string &path, resources::Texture *pOut);
 
 private:
   FeExpect<void, Error> MakeBackends();

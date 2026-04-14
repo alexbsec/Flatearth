@@ -8,7 +8,6 @@
 #include "Renderer/RendererInterface.hpp"
 #include "Renderer/Vulkan/VulkanBackend.hpp"
 #include "Resources/ResourceTypes.hpp"
-#include "Resources/TextureLoader.hpp"
 
 namespace flatearth::renderer {
 
@@ -163,10 +162,6 @@ FeExpect<void, Error> FrontendRenderer::CreateGeometry(uint32 id,
 
 FeExpect<void, Error> FrontendRenderer::DestroyGeometry(uint32 id) {
   return _rendererState.pActiveBackend->DestroyGeometry(id);
-}
-
-FeExpect<void, Error> FrontendRenderer::LoadTextureFromFile(const string &path, resources::Texture *pOut) {
-  return resources::LoadTexture(path, _filesystem, *this, pOut);
 }
 
 FeExpect<void, Error> FrontendRenderer::DestroyTexture(resources::Texture *pTexture) {

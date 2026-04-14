@@ -15,6 +15,8 @@ struct Texture {
   void *pInternalData;
 };
 
+using TextureHandle = uint32;
+
 };
 
 #endif // _FLATEARTH_ENGINE_RESOURCES_RESOURCE_TYPES_HPP

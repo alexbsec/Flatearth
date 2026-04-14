@@ -4,8 +4,10 @@
 #include "Core/ApplicationConfig.hpp"
 #include "Core/Event.hpp"
 #include "Core/Input.hpp"
+#include "GameTypes.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Platform/Platform.hpp"
+#include "Resources/TextureSystem.hpp"
 #include "Renderer/RendererFrontend.hpp"
 
 namespace flatearth {
@@ -28,6 +30,7 @@ private:
   input::InputManager _inputManager;
   platform::FileSystem _filesystem;
   renderer::FrontendRenderer _frontendRenderer;
+  resources::TextureSystem _textureSystem;
   FePtr<event::IEventListener> _engineListener;
 };
 

@@ -14,7 +14,7 @@ TextureSystem::TextureSystem(memory::MemoryManager &memManager,
                              renderer::FrontendRenderer &renderer,
                              platform::FileSystem &fs)
     : _memoryManager(memManager), _frontendRenderer(renderer), _filesystem(fs),
-      _pathHandleMap(memManager), _handleEntryMap(memManager) {
+      _pathHandleMap(memManager), _handleEntryMap(memManager), _activeHandles(memManager) {
 }
 
 FeExpect<TextureHandle, Error> TextureSystem::AcquireTexture(const string &path) {
@@ -57,6 +57,7 @@ FeExpect<TextureHandle, Error> TextureSystem::AcquireTexture(const string &path)
     return FeErr{insertRes.error()};
   }
 
+  _activeHandles.Push(_nextHandle);
   return _nextHandle++;
 }
 
@@ -94,6 +95,31 @@ void TextureSystem::ReleaseTexture(TextureHandle handle) {
   if (!erased) {
     FLOG_ERROR("failed to erase texture entry from handle map");
   }
+}
+
+void TextureSystem::Shutdown() {
+  for (uint64 i = 0; i < _activeHandles.Length(); i++) {
+    TextureHandle handle = _activeHandles[i];
+    TextureEntry *pEntry = _handleEntryMap.Retrieve(handle);
+    if (pEntry == nullptr) {
+      continue; // already properly released
+    }
+
+    if (pEntry->refCount > 0) {
+      FLOG_WARN("TextureSystem::Shutdown — texture '{}' still has {} reference(s), force destroying",
+                pEntry->path, pEntry->refCount);
+    }
+
+    auto destroyRes = _frontendRenderer.DestroyTexture(&pEntry->texture);
+    if (!destroyRes.has_value()) {
+      FLOG_FATAL("TextureSystem::Shutdown — failed to destroy texture '{}'", pEntry->path);
+    }
+
+    _pathHandleMap.Erase(pEntry->path);
+    _handleEntryMap.Erase(handle);
+  }
+
+  _activeHandles.Clear();
 }
 
 Texture *TextureSystem::GetTexture(TextureHandle handle) {

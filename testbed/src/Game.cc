@@ -5,6 +5,7 @@
 #include <Defines.hpp>
 #include <Math/FeMath.hpp>
 #include <Renderer/RendererFrontend.hpp>
+#include <Resources/TextureSystem.hpp>
 #include <Renderer/RendererTypes.hpp>
 
 namespace flatearth::testbed {
@@ -37,9 +38,9 @@ bool GameTest::GameInitialize(flatearth::Game *gameInstance) {
 bool GameTest::GameLoad(flatearth::Game *gameInstance) {
   std::array<math::Vertex3D, 4> verts{};
   verts[0].position = math::Vec3D(-0.5f, -0.5f, 0.0f);
-  verts[1].position = math::Vec3D(0.5f,  0.5f,  0.0f);
-  verts[2].position = math::Vec3D(-0.5f, 0.5f,  0.0f);
-  verts[3].position = math::Vec3D(0.5f,  -0.5f, 0.0f);
+  verts[1].position = math::Vec3D(0.5f, 0.5f, 0.0f);
+  verts[2].position = math::Vec3D(-0.5f, 0.5f, 0.0f);
+  verts[3].position = math::Vec3D(0.5f, -0.5f, 0.0f);
 
   verts[0].uv = math::Vec2D::Zero();
   verts[1].uv = math::Vec2D::Right();
@@ -62,13 +63,13 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
     return FeFalse;
   }
 
-  auto texRes = gameInstance->pRenderer->LoadTextureFromFile(
-      "assets/textures/texture.jpg", &_state.texture);
+  auto texRes = gameInstance->pTextureSystem->AcquireTexture("assets/textures/texture.jpg");
   if (!texRes.has_value()) {
     FLOG_ERROR("failed to load texture");
     return FeFalse;
   }
 
+  _state.texHandle = texRes.value();
   return FeTrue;
 }
 
@@ -112,10 +113,17 @@ bool GameTest::GameRender(flatearth::Game *, renderer::RenderPacket &packet) {
   packet.objects.Push({_state.quadGeometry, model});
 
   _state.angle2 -= packet.deltaTime * 2.0f;
-  math::Mat4D model2 = math::Mat4D::Translation(0.0f, 1.2f, 0.0f) * math::Mat4D::RotationZ(_state.angle2);
+  math::Mat4D model2 =
+      math::Mat4D::Translation(0.0f, 1.2f, 0.0f) * math::Mat4D::RotationZ(_state.angle2);
   packet.objects.Push({_state.quad2Geometry, model2});
 
   return FeTrue;
+}
+
+void GameTest::GameUnload(flatearth::Game *gameInstance) {
+  if (gameInstance->pTextureSystem) {
+    gameInstance->pTextureSystem->ReleaseTexture(_state.texHandle);
+  }
 }
 
 bool GameTest::GameOnResize(flatearth::Game *, uint32, uint32) {
