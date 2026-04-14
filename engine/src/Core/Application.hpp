@@ -7,6 +7,7 @@
 #include "GameTypes.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Platform/Platform.hpp"
+#include "Resources/MaterialSystem.hpp"
 #include "Resources/TextureSystem.hpp"
 #include "Renderer/RendererFrontend.hpp"
 
@@ -31,6 +32,7 @@ private:
   platform::FileSystem _filesystem;
   renderer::FrontendRenderer _frontendRenderer;
   resources::TextureSystem _textureSystem;
+  resources::MaterialSystem _materialSystem;
   FePtr<event::IEventListener> _engineListener;
 };
 

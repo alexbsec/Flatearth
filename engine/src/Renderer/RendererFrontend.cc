@@ -108,7 +108,7 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
 
   for (uint32 i = 0; i < pRenderPacket->objects.Length(); i++) {
     const RenderObject &object = pRenderPacket->objects[i];
-    _rendererState.pActiveBackend->DrawGeometry(object.geometryId, object.model);
+    _rendererState.pActiveBackend->DrawGeometry(object.geometryId, object.model, object.pMaterial);
   }
 
   auto endRes = EndFrame(pRenderPacket->deltaTime);
@@ -167,6 +167,15 @@ FeExpect<void, Error> FrontendRenderer::DestroyGeometry(uint32 id) {
 FeExpect<void, Error> FrontendRenderer::DestroyTexture(resources::Texture *pTexture) {
   uint32 vulkanIndex = static_cast<uint32>(BackendType::Vulkan);
   return _pBackends[vulkanIndex]->DestroyTexture(pTexture);
+}
+
+FeExpect<void, Error> FrontendRenderer::CreateMaterial(resources::Material *pMaterial,
+                                                       const resources::Texture *pTexture) {
+  return _rendererState.pActiveBackend->CreateMaterial(pMaterial, pTexture);
+}
+
+FeExpect<void, Error> FrontendRenderer::DestroyMaterial(resources::Material *pMaterial) {
+  return _rendererState.pActiveBackend->DestroyMaterial(pMaterial);
 }
 
 FeExpect<void, Error> FrontendRenderer::MakeBackends() {

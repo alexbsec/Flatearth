@@ -618,12 +618,6 @@ FeExpect<void, Error> VulkanBackend::CreateTexture(const string &name,
         Error("texture creation failed during sampler creation", ErrorType::RendererVulkanError)};
   }
 
-  if (auto res = _vulkanShader.AcquireTextureResources(_ctx, _ctx.objectShader, pTextureData);
-      !res.has_value()) {
-    FLOG_ERROR("failed to acquire texture resources");
-    return FeErr{res.error()};
-  }
-
   pTexture->hasTransparency = hasTransparency;
   pTexture->generation++;
   return {};
@@ -716,7 +710,9 @@ FeExpect<void, Error> VulkanBackend::DestroyGeometry(uint32 id) {
   return {};
 }
 
-void VulkanBackend::DrawGeometry(uint32 id, math::Mat4D model) {
+void VulkanBackend::DrawGeometry(uint32 id,
+                                 math::Mat4D model,
+                                 const resources::Material *pMaterial) {
   CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
   _vulkanShader.UpdateObject(_ctx, _ctx.objectShader, model.ToGPUMatrix());
   _vulkanShader.UseShader(_ctx, _ctx.objectShader);
@@ -734,14 +730,22 @@ void VulkanBackend::DrawGeometry(uint32 id, math::Mat4D model) {
   }
 
   {
-    vkCmdBindDescriptorSets(cmdBuffer.handle,
-                            VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            _ctx.objectShader.pipeline.layout,
-                            1,
-                            1,
-                            &_ctx.objectShader.textureDescriptorSet,
-                            0,
-                            nullptr);
+    if (pMaterial == nullptr) {
+      FLOG_ERROR("DrawGeometry: pMaterial is nullptr — set 1 will not be bound");
+    } else if (pMaterial->pInternalData == nullptr) {
+      FLOG_ERROR("DrawGeometry: pMaterial->pInternalData is nullptr — set 1 will not be bound");
+    } else {
+      const MaterialData *pMatData = FeCast<MaterialData>(pMaterial->pInternalData);
+      FLOG_DEBUG("DrawGeometry: binding descriptor set {:p}", (void *)pMatData->descriptorSet);
+      vkCmdBindDescriptorSets(cmdBuffer.handle,
+                              VK_PIPELINE_BIND_POINT_GRAPHICS,
+                              _ctx.objectShader.pipeline.layout,
+                              1,
+                              1,
+                              &pMatData->descriptorSet,
+                              0,
+                              nullptr);
+    }
   }
 
   // Prepare viewport and scissor
@@ -785,6 +789,65 @@ void VulkanBackend::DrawGeometry(uint32 id, math::Mat4D model) {
                        VK_INDEX_TYPE_UINT32);
 
   vkCmdDrawIndexed(cmdBuffer.handle, pGeom->indexCount, 1, 0, 0, 0);
+}
+
+FeExpect<void, Error> VulkanBackend::CreateMaterial(resources::Material *pMaterial,
+                                                    const resources::Texture *pTexture) {
+  if (pTexture == nullptr) {
+    FLOG_WARN("cannot create material on nullptr texture");
+    return {};
+  }
+
+  const TextureData *pData = FeCast<TextureData>(pTexture->pInternalData);
+  MaterialData *pMatData = FeCast<MaterialData>(
+      _memoryManager.RawAlloc(sizeof(MaterialData), alignof(MaterialData), memory::Tag::Renderer));
+  pMaterial->pInternalData = pMatData;
+
+  VkDescriptorSetAllocateInfo allocInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+  allocInfo.descriptorPool = _ctx.objectShader.textureDescriptorPool;
+  allocInfo.descriptorSetCount = 1;
+  allocInfo.pSetLayouts = &_ctx.objectShader.textureDescriptorSetLayout;
+  if (auto res = VkCheck(vkAllocateDescriptorSets(
+          _ctx.device.logicalDevice, &allocInfo, &pMatData->descriptorSet));
+      !res.has_value()) {
+    FLOG_ERROR("failed to allocate descriptor sets for material");
+    return FeErr{res.error()};
+  }
+
+  VkDescriptorImageInfo imageInfo{};
+  imageInfo.sampler = pData->sampler;
+  imageInfo.imageView = pData->image.view;
+  imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+  VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+  write.dstSet = pMatData->descriptorSet;
+  write.dstBinding = 0;
+  write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  write.descriptorCount = 1;
+  write.pImageInfo = &imageInfo;
+
+  vkUpdateDescriptorSets(_ctx.device.logicalDevice, 1, &write, 0, nullptr);
+  return {};
+}
+
+FeExpect<void, Error> VulkanBackend::DestroyMaterial(resources::Material *pMaterial) {
+  if (pMaterial == nullptr || pMaterial->pInternalData == nullptr) {
+    return {};
+  }
+
+  MaterialData *pMatData = FeCast<MaterialData>(pMaterial->pInternalData);
+  if (auto res = VkCheck(vkFreeDescriptorSets(_ctx.device.logicalDevice,
+                                              _ctx.objectShader.textureDescriptorPool,
+                                              1,
+                                              &pMatData->descriptorSet));
+      !res.has_value()) {
+    FLOG_ERROR("failed to free descriptor set for material");
+    return FeErr{res.error()};
+  }
+
+  _memoryManager.RawFree(pMatData, sizeof(MaterialData), memory::Tag::Renderer);
+  pMaterial->pInternalData = nullptr;
+  return {};
 }
 
 // PRIVATE MEMBERS

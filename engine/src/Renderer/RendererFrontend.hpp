@@ -38,6 +38,10 @@ public:
                                       resources::Texture *pTexture);
   FeExpect<void, Error> DestroyTexture(resources::Texture *pTexture);
 
+  FEAPI FeExpect<void, Error> CreateMaterial(resources::Material *pMaterial,
+                                             const resources::Texture *pTexture);
+  FEAPI FeExpect<void, Error> DestroyMaterial(resources::Material *pMaterial);
+
   FEAPI FeExpect<void, Error> CreateGeometry(uint32 id,
                                              uint32 vertexCount,
                                              const math::Vertex3D *pVertices,

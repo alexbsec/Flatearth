@@ -5,6 +5,7 @@
 #include <Defines.hpp>
 #include <Math/FeMath.hpp>
 #include <Renderer/RendererFrontend.hpp>
+#include <Resources/MaterialSystem.hpp>
 #include <Resources/TextureSystem.hpp>
 #include <Renderer/RendererTypes.hpp>
 
@@ -70,6 +71,32 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
   }
 
   _state.texHandle = texRes.value();
+
+  auto matRes = gameInstance->pMaterialSystem->AcquireMaterial("quad_material", _state.texHandle);
+  if (!matRes.has_value()) {
+    FLOG_ERROR("failed to acquire material");
+    return FeFalse;
+  }
+
+  _state.matHandle = matRes.value();
+  _state.pMaterial = gameInstance->pMaterialSystem->GetMaterial(_state.matHandle);
+
+  auto tex2Res = gameInstance->pTextureSystem->AcquireTexture("assets/textures/rugtexture.jpg");
+  if (!tex2Res.has_value()) {
+    FLOG_ERROR("failed to load rug texture");
+    return FeFalse;
+  }
+
+  _state.tex2Handle = tex2Res.value();
+
+  auto mat2Res = gameInstance->pMaterialSystem->AcquireMaterial("rug_material", _state.tex2Handle);
+  if (!mat2Res.has_value()) {
+    FLOG_ERROR("failed to acquire rug material");
+    return FeFalse;
+  }
+
+  _state.mat2Handle = mat2Res.value();
+  _state.pMaterial2 = gameInstance->pMaterialSystem->GetMaterial(_state.mat2Handle);
   return FeTrue;
 }
 
@@ -110,19 +137,24 @@ bool GameTest::GameRender(flatearth::Game *, renderer::RenderPacket &packet) {
 
   _state.angle += packet.deltaTime * 1.5f;
   math::Mat4D model = math::Mat4D::RotationZ(_state.angle);
-  packet.objects.Push({_state.quadGeometry, model});
+  packet.objects.Push({_state.quadGeometry, model, _state.pMaterial});
 
   _state.angle2 -= packet.deltaTime * 2.0f;
   math::Mat4D model2 =
       math::Mat4D::Translation(0.0f, 1.2f, 0.0f) * math::Mat4D::RotationZ(_state.angle2);
-  packet.objects.Push({_state.quad2Geometry, model2});
+  packet.objects.Push({_state.quad2Geometry, model2, _state.pMaterial2});
 
   return FeTrue;
 }
 
 void GameTest::GameUnload(flatearth::Game *gameInstance) {
+  if (gameInstance->pMaterialSystem) {
+    gameInstance->pMaterialSystem->ReleaseMaterial(_state.matHandle);
+    gameInstance->pMaterialSystem->ReleaseMaterial(_state.mat2Handle);
+  }
   if (gameInstance->pTextureSystem) {
     gameInstance->pTextureSystem->ReleaseTexture(_state.texHandle);
+    gameInstance->pTextureSystem->ReleaseTexture(_state.tex2Handle);
   }
 }
 

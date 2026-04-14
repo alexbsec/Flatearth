@@ -273,6 +273,10 @@ struct Context {
 #endif
 };
 
+struct MaterialData {
+  VkDescriptorSet descriptorSet;
+};
+
 struct TextureData {
   Image image;
   VkSampler sampler;

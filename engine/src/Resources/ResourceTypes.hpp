@@ -5,6 +5,16 @@
 
 namespace flatearth::resources {
 
+using TextureHandle = uint32;
+using MaterialHandle = uint32;
+
+struct Material {
+  uint32 id;
+  string name;
+  TextureHandle texHandle;
+  void *pInternalData;
+};
+
 struct Texture {
   uint32 id;
   uint32 width;
@@ -14,8 +24,6 @@ struct Texture {
   bool hasTransparency;
   void *pInternalData;
 };
-
-using TextureHandle = uint32;
 
 };
 

@@ -10,6 +10,8 @@
 
 namespace flatearth::renderer::vulkan::shaders {
 
+static constexpr uint32 scMaxMaterials = 1024;
+
 FeExpect<void, Error> CreateDescriptorSetLayout(VkDevice logicalDevice,
                                                 VkDescriptorSetLayout *pLayout,
                                                 VkAllocationCallbacks *pAllocator,
@@ -24,7 +26,8 @@ FeExpect<void, Error> CreateDescriptorPool(VkDevice logicalDevice,
                                            VkAllocationCallbacks *pAllocator,
                                            uint32 imageCount,
                                            uint32 poolSizeCount,
-                                           VkDescriptorType type);
+                                           VkDescriptorType type,
+                                           VkDescriptorPoolCreateFlags flags = 0);
 
 FeExpect<void, Error>
 MakeLayoutBinding(const Context &ctx, ObjectShader *pObjShader, DescriptorBinding layout) {
@@ -64,9 +67,10 @@ MakeDescriptorPool(const Context &ctx, ObjectShader *pObjectShader, DescriptorBi
       return CreateDescriptorPool(ctx.device.logicalDevice,
                                   &pObjectShader->textureDescriptorPool,
                                   ctx.pAllocator,
-                                  ctx.swapchain.imageCount,
+                                  scMaxMaterials,
                                   1,
-                                  VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                                  VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                  VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
   }
 }
 
@@ -403,7 +407,8 @@ FeExpect<void, Error> CreateDescriptorPool(VkDevice logicalDevice,
                                            VkAllocationCallbacks *pAllocator,
                                            uint32 imageCount,
                                            uint32 poolSizeCount,
-                                           VkDescriptorType type) {
+                                           VkDescriptorType type,
+                                           VkDescriptorPoolCreateFlags flags) {
   VkDescriptorPoolSize poolSize{};
   poolSize.type = type;
   poolSize.descriptorCount = imageCount;
@@ -412,6 +417,7 @@ FeExpect<void, Error> CreateDescriptorPool(VkDevice logicalDevice,
   createInfo.poolSizeCount = poolSizeCount;
   createInfo.pPoolSizes = &poolSize;
   createInfo.maxSets = imageCount;
+  createInfo.flags = flags;
   return VkCheck(vkCreateDescriptorPool(logicalDevice, &createInfo, pAllocator, pPool));
 }
 

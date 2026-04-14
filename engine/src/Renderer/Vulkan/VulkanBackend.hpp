@@ -46,8 +46,10 @@ public:
                                        uint32 indexCount,
                                        const uint32 *pIndices) override;
   FeExpect<void, Error> DestroyGeometry(uint32 id) override;
+  void DrawGeometry(uint32 id, math::Mat4D model, const resources::Material *pMaterial) override;
 
-  void DrawGeometry(uint32 id, math::Mat4D model) override;
+  FeExpect<void, Error> CreateMaterial(resources::Material *pMaterial, const resources::Texture *pTexture) override;
+  FeExpect<void, Error> DestroyMaterial(resources::Material *pMaterial) override;
 
 private:
   FeExpect<void, Error> CreateFence(Fence *pFence, bool signaled);
