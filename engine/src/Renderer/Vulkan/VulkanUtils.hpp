@@ -15,6 +15,8 @@ FeExpect<bool, Error> CreateShaderModule(Context &ctx,
                                          uint32 stageIndex,
                                          ShaderStage *pShaderStage);
 
+VkSamplerCreateInfo SamplerInfoByFilter(resources::TextureFilter filter);
+
 } // namespace flatearth::renderer::vulkan
 
 #endif // _FLATEARTH_ENGINE_RENDERER_VULKAN_UTILS_HPP

@@ -2,6 +2,8 @@
 
 #include "Core/Logger.hpp"
 #include "Platform/Filesystem.hpp"
+#include "Resources/ResourceTypes.hpp"
+#include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan {
 
@@ -98,6 +100,35 @@ FeExpect<bool, Error> CreateShaderModule(Context &ctx,
   pShaderStage[stageIndex].shaderModuleCreateInfo.pCode = nullptr;
   pShaderStage[stageIndex].shaderModuleCreateInfo.codeSize = 0;
   return FeTrue;
+}
+
+VkSamplerCreateInfo SamplerInfoByFilter(resources::TextureFilter filter) {
+  VkSamplerCreateInfo samplerInfo = {VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+  samplerInfo.magFilter = VK_FILTER_LINEAR;
+  samplerInfo.minFilter = VK_FILTER_LINEAR;
+  samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerInfo.anisotropyEnable = VK_TRUE;
+  samplerInfo.maxAnisotropy = 16;
+  samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+  samplerInfo.unnormalizedCoordinates = VK_FALSE;
+  samplerInfo.compareEnable = VK_FALSE;
+  samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+  samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  samplerInfo.mipLodBias = 0.0f;
+  samplerInfo.minLod = 0.0f;
+  samplerInfo.maxLod = 0.0f;
+
+  if (filter == resources::TextureFilter::Nearest) {
+    samplerInfo.magFilter = VK_FILTER_NEAREST;
+    samplerInfo.minFilter = VK_FILTER_NEAREST;
+    samplerInfo.anisotropyEnable = VK_FALSE;
+    samplerInfo.maxAnisotropy = 1;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+  }
+
+  return samplerInfo;
 }
 
 } // namespace flatearth::renderer::vulkan

@@ -1,10 +1,10 @@
 #ifndef _FLATEARTH_ENGINE_RENDERER_VULKAN_BACKEND_HPP
 #define _FLATEARTH_ENGINE_RENDERER_VULKAN_BACKEND_HPP
 
+#include "Containers/HashMap.hpp"
 #include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Platform/Filesystem.hpp"
-#include "Containers/HashMap.hpp"
 #include "Renderer/RendererInterface.hpp"
 #include "Renderer/Vulkan/Shaders/ObjectShader.hpp"
 #include "Renderer/Vulkan/VulkanBuffer.hpp"
@@ -14,6 +14,7 @@
 #include "Renderer/Vulkan/VulkanRenderpassManager.hpp"
 #include "Renderer/Vulkan/VulkanSwapchainManager.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
+#include "Resources/ResourceTypes.hpp"
 
 namespace flatearth::renderer::vulkan {
 
@@ -38,7 +39,8 @@ public:
                                       int32 channelCount,
                                       const uint8 *pPixels,
                                       bool hasTransparency,
-                                      resources::Texture *pTexture) override;
+                                      resources::Texture *pTexture,
+                                      resources::TextureFilter filter) override;
   FeExpect<void, Error> DestroyTexture(resources::Texture *pTexture) override;
   FeExpect<void, Error> CreateGeometry(uint32 id,
                                        uint32 vertexCount,
@@ -48,7 +50,8 @@ public:
   FeExpect<void, Error> DestroyGeometry(uint32 id) override;
   void DrawGeometry(uint32 id, math::Mat4D model, const resources::Material *pMaterial) override;
 
-  FeExpect<void, Error> CreateMaterial(resources::Material *pMaterial, const resources::Texture *pTexture) override;
+  FeExpect<void, Error> CreateMaterial(resources::Material *pMaterial,
+                                       const resources::Texture *pTexture) override;
   FeExpect<void, Error> DestroyMaterial(resources::Material *pMaterial) override;
 
 private:

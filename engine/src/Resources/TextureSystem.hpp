@@ -15,13 +15,15 @@ public:
                                renderer::FrontendRenderer &renderer,
                                platform::FileSystem &fs);
 
-  FEAPI FeExpect<TextureHandle, Error> AcquireTexture(const string &path);
+  FEAPI FeExpect<TextureHandle, Error>
+  AcquireTexture(const string &path, TextureFilter filter = TextureFilter::Nearest);
 
 protected:
   FeExpect<void, Error> Create(Texture *pTexture, uint32 handle, const string &path) override;
   FeExpect<void, Error> Destroy(Texture *pTexture) override;
 
 private:
+  TextureFilter _filterToUse{TextureFilter::Nearest};
   renderer::FrontendRenderer &_renderer;
   platform::FileSystem &_fs;
 };

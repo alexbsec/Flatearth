@@ -6,6 +6,7 @@
 #include "Defines.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererInterface.hpp"
+#include "Resources/ResourceTypes.hpp"
 
 namespace flatearth::renderer {
 
@@ -28,14 +29,16 @@ public:
   FeExpect<bool, Error> DrawFrame(RenderPacket *pRenderPacket);
   FeExpect<void, Error> OnResize(uint32 width, uint32 height);
 
-  FeExpect<void, Error> CreateTexture(const string &name,
-                                      bool autoRelease,
-                                      int32 width,
-                                      int32 height,
-                                      int32 channelCount,
-                                      const uint8 *pPixels,
-                                      bool hasTransparency,
-                                      resources::Texture *pTexture);
+  FeExpect<void, Error>
+  CreateTexture(const string &name,
+                bool autoRelease,
+                int32 width,
+                int32 height,
+                int32 channelCount,
+                const uint8 *pPixels,
+                bool hasTransparency,
+                resources::Texture *pTexture,
+                resources::TextureFilter filter = resources::TextureFilter::Nearest);
   FeExpect<void, Error> DestroyTexture(resources::Texture *pTexture);
 
   FEAPI FeExpect<void, Error> CreateMaterial(resources::Material *pMaterial,

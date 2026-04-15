@@ -1,4 +1,5 @@
 #include "VulkanImager.hpp"
+#include "Resources/ResourceTypes.hpp"
 
 #include <vulkan/vulkan_core.h>
 
@@ -14,7 +15,8 @@ FeExpect<void, Error> ImageManager::CreateImage(Context &ctx,
                                                 VkImageUsageFlags usageFlags,
                                                 VkMemoryPropertyFlags memoryFlags,
                                                 bool createView,
-                                                VkImageAspectFlags aspectFlags) {
+                                                VkImageAspectFlags aspectFlags,
+                                                resources::TextureFilter filter) {
   image.width = width;
   image.height = height;
 
@@ -22,9 +24,13 @@ FeExpect<void, Error> ImageManager::CreateImage(Context &ctx,
   imgCreateInfo.imageType = VK_IMAGE_TYPE_2D;
   imgCreateInfo.extent.width = width;
   imgCreateInfo.extent.height = height;
+  imgCreateInfo.mipLevels = 4;
+  if (filter == resources::TextureFilter::Nearest) {
+    imgCreateInfo.mipLevels = 1;
+  }
+
   // TODO: MAKE THESE CONFIGURABLE
   imgCreateInfo.extent.depth = 1;
-  imgCreateInfo.mipLevels = 4;
   imgCreateInfo.arrayLayers = 1;
   imgCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
   imgCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
