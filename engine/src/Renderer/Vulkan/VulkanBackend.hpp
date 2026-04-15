@@ -6,6 +6,7 @@
 #include "Core/FeMemory.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererInterface.hpp"
+#include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/Shaders/ObjectShader.hpp"
 #include "Renderer/Vulkan/VulkanBuffer.hpp"
 #include "Renderer/Vulkan/VulkanCommandBufferManager.hpp"
@@ -48,7 +49,7 @@ public:
                                        uint32 indexCount,
                                        const uint32 *pIndices) override;
   FeExpect<void, Error> DestroyGeometry(uint32 id) override;
-  void DrawGeometry(uint32 id, math::Mat4D model, const resources::Material *pMaterial) override;
+  void DrawGeometry(uint32 id, const PushConstantData &data, const resources::Material *pMaterial) override;
 
   FeExpect<void, Error> CreateMaterial(resources::Material *pMaterial,
                                        const resources::Texture *pTexture) override;

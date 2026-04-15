@@ -30,7 +30,7 @@ public:
   FeExpect<void, Error> UpdateGlobalState(Context &ctx, ObjectShader &objShader);
 
   // temp method
-  void UpdateObject(Context &ctx, ObjectShader &objShader, math::Mat4D model);
+  void UpdateObject(Context &ctx, ObjectShader &objShader, const PushConstantData &data);
 
   FeExpect<void, Error>
   AcquireTextureResources(Context &ctx, ObjectShader &objShader, TextureData *pTextureData);

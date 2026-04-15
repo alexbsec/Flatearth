@@ -12,7 +12,7 @@ class Vec3D {
 public:
   inline constexpr Vec3D() : _x(0.0f), _y(0.0f), _z(0.0f) {}
   inline constexpr Vec3D(float32 x, float32 y, float32 z) : _x(x), _y(y), _z(z) {}
-  inline Vec3D(const Vec3D &other) noexcept : _x(other._x), _y(other._y), _z(other._z) {}
+  inline Vec3D(const Vec3D &other) noexcept = default;
 
   // Static factories (do not depend on instance)
   FEINLINE constexpr Vec3D Zero() { return Vec3D(0.0f, 0.0f, 0.0f); }

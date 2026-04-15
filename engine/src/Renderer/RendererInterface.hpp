@@ -45,7 +45,7 @@ public:
                                                uint32 indexCount,
                                                const uint32 *pIndices) = 0;
   virtual FeExpect<void, Error> DestroyGeometry(uint32 id) = 0;
-  virtual void DrawGeometry(uint32 id, math::Mat4D model, const resources::Material *pMaterial) = 0;
+  virtual void DrawGeometry(uint32 id, const PushConstantData &data, const resources::Material *pMaterial) = 0;
 
   virtual FeExpect<void, Error> CreateMaterial(resources::Material *pMaterial,
                                                const resources::Texture *pTexture) = 0;
