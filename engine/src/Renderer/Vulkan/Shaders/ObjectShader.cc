@@ -51,6 +51,8 @@ MakeLayoutBinding(const Context &ctx, ObjectShader *pObjShader, DescriptorBindin
                                        nullptr,
                                        VK_SHADER_STAGE_FRAGMENT_BIT);
   }
+
+  return FeErr{Error("unknown descriptor binding", ErrorType::RendererVulkanError)};
 }
 
 FeExpect<void, Error>
@@ -72,6 +74,8 @@ MakeDescriptorPool(const Context &ctx, ObjectShader *pObjectShader, DescriptorBi
                                   VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                                   VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
   }
+
+  return FeErr{Error("unknown descriptor binding", ErrorType::RendererVulkanError)};
 }
 
 VulkanShader::VulkanShader(memory::MemoryManager &memManager, BufferManager &bufferManager)
@@ -336,7 +340,9 @@ FeExpect<void, Error> VulkanShader::UpdateGlobalState(Context &ctx, ObjectShader
   return {};
 }
 
-void VulkanShader::UpdateObject(Context &ctx, ObjectShader &objShader, math::Mat4D model) {
+void VulkanShader::UpdateObject(Context &ctx,
+                                ObjectShader &objShader,
+                                const PushConstantData &data) {
   uint32 imageIndex = ctx.imageIndex;
   VkCommandBuffer cmdBuffer = ctx.graphicsCommandBuffer[imageIndex].handle;
 
@@ -344,8 +350,8 @@ void VulkanShader::UpdateObject(Context &ctx, ObjectShader &objShader, math::Mat
                      objShader.pipeline.layout,
                      VK_SHADER_STAGE_VERTEX_BIT,
                      0,
-                     sizeof(math::Mat4D),
-                     &model);
+                     sizeof(PushConstantData),
+                     &data);
 }
 
 FeExpect<void, Error> VulkanShader::AcquireTextureResources(Context &ctx,

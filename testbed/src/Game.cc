@@ -132,17 +132,17 @@ bool GameTest::GameRender(flatearth::Game *, renderer::RenderPacket &packet) {
 
   _state.angle += packet.deltaTime * 1.5f;
   math::Mat4D model = math::Mat4D::RotationZ(_state.angle);
-  packet.objects.Push({_state.quadMesh, model, _state.pMaterial});
+  packet.objects.Push({_state.quadMesh, model, {}, {1.0f, 1.0f}, _state.pMaterial});
 
   _state.angle2 -= packet.deltaTime * 2.0f;
   math::Mat4D model2 =
       math::Mat4D::Translation(0.0f, 1.2f, 0.0f) * math::Mat4D::RotationZ(_state.angle2);
-  packet.objects.Push({_state.circleMesh, model2, _state.pMaterial});
+  packet.objects.Push({_state.circleMesh, model2, {}, {1.0f, 1.0f}, _state.pMaterial});
 
   _state.angle3 += packet.deltaTime * 1.0f;
   math::Mat4D model3 =
       math::Mat4D::Translation(-1.2f, 0.0f, 0.0f) * math::Mat4D::RotationZ(_state.angle3);
-  packet.objects.Push({_state.capsuleMesh, model3, _state.pMaterial2});
+  packet.objects.Push({_state.capsuleMesh, model3, {}, {1.0f, 1.0f}, _state.pMaterial2});
 
   return FeTrue;
 }

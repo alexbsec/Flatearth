@@ -1,6 +1,7 @@
 #include "VulkanPipeline.hpp"
 
 #include "Math/MathTypes.hpp"
+#include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
 
 #include <vulkan/vulkan_core.h>
@@ -128,8 +129,8 @@ PipelineManager::CreateGraphicsPipeline(Context &ctx,
   // Push constants
   VkPushConstantRange pushConstant;
   pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  pushConstant.offset = sizeof(math::Mat4D) * 0;
-  pushConstant.size = sizeof(math::Mat4D) * 2;
+  pushConstant.offset = sizeof(PushConstantData) * 0;
+  pushConstant.size = sizeof(PushConstantData) * 1;
 
   pipelineLayoutInfo.setLayoutCount = descriptorSetLayoutCount;
   pipelineLayoutInfo.pSetLayouts = pDescriptorLayouts;

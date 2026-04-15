@@ -10,7 +10,7 @@ class Vec2D {
 public:
   inline constexpr Vec2D() : _x(0.0f), _y(0.0f) {}
   inline constexpr Vec2D(float32 x, float32 y) : _x(x), _y(y) {}
-  inline Vec2D(const Vec2D &other) noexcept : _x(other._x), _y(other._y) {}
+  inline Vec2D(const Vec2D &other) noexcept = default;
 
   // Static factories (do not depend on instance)
   FEINLINE constexpr Vec2D Zero() { return Vec2D(0.0f, 0.0f); }

@@ -698,10 +698,12 @@ FeExpect<void, Error> VulkanBackend::DestroyGeometry(uint32 id) {
 }
 
 void VulkanBackend::DrawGeometry(uint32 id,
-                                 math::Mat4D model,
+                                 const PushConstantData &data,
                                  const resources::Material *pMaterial) {
   CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
-  _vulkanShader.UpdateObject(_ctx, _ctx.objectShader, model.ToGPUMatrix());
+  PushConstantData gpuData = data;
+  gpuData.model = data.model.ToGPUMatrix();
+  _vulkanShader.UpdateObject(_ctx, _ctx.objectShader, gpuData);
   _vulkanShader.UseShader(_ctx, _ctx.objectShader);
 
   {

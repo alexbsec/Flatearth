@@ -10,6 +10,8 @@ namespace flatearth::renderer {
 struct RenderObject {
   uint32 geometryId;
   math::Mat4D model;
+  math::Vec2D uvOffset;
+  math::Vec2D uvScale;
   resources::Material *pMaterial{nullptr};
 };
 
@@ -27,6 +29,12 @@ struct GlobalUniformObject {
   // These below are so that GlobalUniformObject always
   // has a size of 256 bytes
   math::Mat4D reservedSpace1, reservedSpace2;
+};
+
+struct PushConstantData {
+  math::Mat4D model;
+  math::Vec2D uvOffset;
+  math::Vec2D uvScale;
 };
 
 } // namespace flatearth::renderer

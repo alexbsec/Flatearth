@@ -11,11 +11,13 @@ layout(set = 0, binding = 0) uniform globalUniformObject {
 
 layout(push_constant) uniform pushConstants {
   layout(row_major) mat4 model;
+  vec2 uvOffset;
+  vec2 uvScale;
 } uPushConstants;
 
 layout(location = 0) out vec2 vTexCoord;
 
 void main() {
   gl_Position = globalUbo.projection * globalUbo.view * uPushConstants.model * vec4(inPosition, 1.0);
-  vTexCoord = inTexCoord;
+  vTexCoord = uPushConstants.uvOffset + inTexCoord * uPushConstants.uvScale;
 }
