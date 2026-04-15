@@ -1,5 +1,6 @@
 #include "Renderer/RendererFrontend.hpp"
 
+#include "Algorithms/StableSort.hpp"
 #include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
@@ -105,6 +106,11 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
     FLOG_ERROR("failed to update global state on frontend renderer");
     return FeErr{updateRes.error()};
   }
+
+  algorithms::StableSort(
+      _memoryManager, pRenderPacket->objects, [](const RenderObject &a, const RenderObject &b) {
+        return a.layer < b.layer;
+      });
 
   for (uint32 i = 0; i < pRenderPacket->objects.Length(); i++) {
     const RenderObject &object = pRenderPacket->objects[i];

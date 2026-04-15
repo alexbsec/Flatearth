@@ -7,11 +7,20 @@
 
 namespace flatearth::renderer {
 
+enum class RenderLayer : uint32 {
+  Background = 0,
+  Tiles = 1,
+  Entities = 2,
+  Effects = 3,
+  UI = 4,
+};
+
 struct RenderObject {
   uint32 geometryId;
   math::Mat4D model;
   math::Vec2D uvOffset;
   math::Vec2D uvScale;
+  RenderLayer layer{RenderLayer::Background};
   resources::Material *pMaterial{nullptr};
 };
 
