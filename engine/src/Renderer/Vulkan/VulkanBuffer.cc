@@ -196,7 +196,7 @@ FeExpect<void, Error> BufferManager::LoadData(Context &ctx,
     return FeErr{res.error()};
   }
 
-  ctx.memoryManager.CopyMemory(dataPtr, data, size);
+  ctx.memoryManager.FCopyMemory(dataPtr, data, size);
   vkUnmapMemory(ctx.device.logicalDevice, buffer.memory);
   return {};
 }

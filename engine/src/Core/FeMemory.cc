@@ -49,11 +49,11 @@ MemoryManager::~MemoryManager() {
 
 void *MemoryManager::RawAlloc(uint64 size, uint64 alignment, Tag tag) {
   void *block = nullptr;
+  alignment = NormalizeAlignment(alignment);
 
 #if defined(_MSC_VER)
   block = _aligned_malloc(size, alignment);
 #else
-  alignment = NormalizeAlignment(alignment);
   const int rc = posix_memalign(&block, static_cast<size_t>(alignment), static_cast<size_t>(size));
   if (rc != 0) {
     block = nullptr;
@@ -113,7 +113,7 @@ void MemoryManager::FZeroMemory(void *block, uint64 size) {
   std::memset(block, 0, size);
 }
 
-void MemoryManager::CopyMemory(void *dst, const void *src, uint64 size) {
+void MemoryManager::FCopyMemory(void *dst, const void *src, uint64 size) {
   if (src == nullptr || dst == nullptr || size == 0) {
     return;
   }

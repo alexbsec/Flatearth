@@ -15,7 +15,7 @@ static void Merge(T *arr,
                   uint64 right,
                   memory::MemoryManager &mem,
                   Comp comp) {
-  mem.CopyMemory(scratch + left, arr + left, (right - left) * sizeof(T));
+  mem.FCopyMemory(scratch + left, arr + left, (right - left) * sizeof(T));
 
   uint64 i = left, j = mid, k = left;
   while (i < mid && j < right) {
