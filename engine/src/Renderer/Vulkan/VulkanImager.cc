@@ -132,7 +132,7 @@ FeExpect<void, Error> ImageManager::TransitionImageLayout(Context &ctx,
   barrier.image = image.handle;
   barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   barrier.subresourceRange.baseMipLevel = 0;
-  barrier.subresourceRange.layerCount = 1;
+  barrier.subresourceRange.levelCount = 1;
   barrier.subresourceRange.baseArrayLayer = 0;
   barrier.subresourceRange.layerCount = 1;
 
