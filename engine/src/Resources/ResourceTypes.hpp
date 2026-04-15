@@ -15,6 +15,11 @@ enum class MeshShape {
   Capsule2D,
 };
 
+enum class TextureFilter {
+  Nearest,
+  Linear,
+};
+
 struct Mesh {
   uint32 id;
   string name;
@@ -37,6 +42,7 @@ struct Texture {
   uint32 generation;
   uint32 channelCount;
   bool hasTransparency;
+  TextureFilter filter;
   void *pInternalData;
 };
 

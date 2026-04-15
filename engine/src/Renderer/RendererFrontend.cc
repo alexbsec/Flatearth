@@ -145,10 +145,11 @@ FeExpect<void, Error> FrontendRenderer::CreateTexture(const string &name,
                                                       int32 channelCount,
                                                       const uint8 *pPixels,
                                                       bool hasTransparency,
-                                                      resources::Texture *pTexture) {
+                                                      resources::Texture *pTexture,
+                                                      resources::TextureFilter filter) {
   uint32 vulkanIndex = static_cast<uint32>(BackendType::Vulkan);
   return _pBackends[vulkanIndex]->CreateTexture(
-      name, autoRelease, width, height, channelCount, pPixels, hasTransparency, pTexture);
+      name, autoRelease, width, height, channelCount, pPixels, hasTransparency, pTexture, filter);
 }
 
 FeExpect<void, Error> FrontendRenderer::CreateGeometry(uint32 id,

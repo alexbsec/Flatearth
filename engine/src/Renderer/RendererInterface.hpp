@@ -35,7 +35,8 @@ public:
                                               int32 channelCount,
                                               const uint8 *pPixels,
                                               bool hasTransparency,
-                                              resources::Texture *pTexture) = 0;
+                                              resources::Texture *pTexture,
+                                              resources::TextureFilter filter) = 0;
   virtual FeExpect<void, Error> DestroyTexture(resources::Texture *pTexture) = 0;
 
   virtual FeExpect<void, Error> CreateGeometry(uint32 id,

@@ -3,6 +3,7 @@
 
 #include "Error.hpp"
 #include "Renderer/Vulkan/VulkanTypes.hpp"
+#include "Resources/ResourceTypes.hpp"
 
 namespace flatearth::renderer::vulkan {
 
@@ -18,7 +19,8 @@ public:
                                     VkImageUsageFlags usageFlags,
                                     VkMemoryPropertyFlags memoryFlags,
                                     bool createView,
-                                    VkImageAspectFlags aspectFlags);
+                                    VkImageAspectFlags aspectFlags,
+                                    resources::TextureFilter filter = resources::TextureFilter::Linear);
 
   FeExpect<void, Error> TransitionImageLayout(Context &ctx,
                                               CommandBuffer &cmdBuffer,

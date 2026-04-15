@@ -519,7 +519,8 @@ FeExpect<void, Error> VulkanBackend::CreateTexture(const string &name,
                                                    int32 channelCount,
                                                    const uint8 *pPixels,
                                                    bool hasTransparency,
-                                                   resources::Texture *pTexture) {
+                                                   resources::Texture *pTexture,
+                                                   resources::TextureFilter filter) {
   if (pTexture == nullptr) {
     FLOG_ERROR("cannot create a texture on a nullptr");
     return FeErr{Error("failed to create texture in vulkan backend", ErrorType::NullptrException)};
@@ -529,6 +530,7 @@ FeExpect<void, Error> VulkanBackend::CreateTexture(const string &name,
   pTexture->height = height;
   pTexture->channelCount = channelCount;
   pTexture->generation = 0;
+  pTexture->filter = filter;
 
   void *pData =
       _memoryManager.RawAlloc(sizeof(TextureData), alignof(TextureData), memory::Tag::Texture);
@@ -568,7 +570,8 @@ FeExpect<void, Error> VulkanBackend::CreateTexture(const string &name,
           VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
       FeTrue,
-      VK_IMAGE_ASPECT_COLOR_BIT);
+      VK_IMAGE_ASPECT_COLOR_BIT,
+      filter);
   if (!createRes.has_value()) {
     FLOG_ERROR("failed to create image for texture");
     return FeErr{Error("texture failed to create image", ErrorType::RendererVulkanError)};
@@ -593,23 +596,7 @@ FeExpect<void, Error> VulkanBackend::CreateTexture(const string &name,
     return FeErr{Error("texture creation failed during submit", ErrorType::RendererVulkanError)};
   }
 
-  VkSamplerCreateInfo samplerInfo = {VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
-  samplerInfo.magFilter = VK_FILTER_LINEAR;
-  samplerInfo.minFilter = VK_FILTER_LINEAR;
-  samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  samplerInfo.anisotropyEnable = VK_TRUE;
-  samplerInfo.maxAnisotropy = 16;
-  samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-  samplerInfo.unnormalizedCoordinates = VK_FALSE;
-  samplerInfo.compareEnable = VK_FALSE;
-  samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-  samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-  samplerInfo.mipLodBias = 0.0f;
-  samplerInfo.minLod = 0.0f;
-  samplerInfo.maxLod = 0.0f;
-
+  VkSamplerCreateInfo samplerInfo = SamplerInfoByFilter(filter);
   VkResult result = vkCreateSampler(
       _ctx.device.logicalDevice, &samplerInfo, _ctx.pAllocator, &pTextureData->sampler);
   if (!VkResultIsSuccess(result)) {

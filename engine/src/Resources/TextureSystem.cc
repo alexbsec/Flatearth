@@ -10,15 +10,17 @@ namespace flatearth::resources {
 TextureSystem::TextureSystem(memory::MemoryManager &memManager,
                              renderer::FrontendRenderer &renderer,
                              platform::FileSystem &fs)
-    : ResourceSystem(memManager), _renderer(renderer), _fs(fs) {}
+    : ResourceSystem(memManager), _renderer(renderer), _fs(fs) {
+}
 
-FeExpect<TextureHandle, Error> TextureSystem::AcquireTexture(const string &path) {
+FeExpect<TextureHandle, Error> TextureSystem::AcquireTexture(const string &path,
+                                                             TextureFilter filter) {
+  _filterToUse = filter;
   return this->ProtectedAcquire(path);
 }
 
-FeExpect<void, Error> TextureSystem::Create(Texture *pTexture,
-                                            uint32 /*handle*/,
-                                            const string &path) {
+FeExpect<void, Error>
+TextureSystem::Create(Texture *pTexture, uint32 /*handle*/, const string &path) {
   if (!_fs.Exists(path)) {
     FLOG_ERROR("texture file not found: {}", path);
     return FeErr{Error("texture file not found", ErrorType::FileOpenError)};
@@ -37,8 +39,7 @@ FeExpect<void, Error> TextureSystem::Create(Texture *pTexture,
   rawBytes.Resize(fileSize);
 
   auto readRes = _fs.ReadFromFile(
-      fileHandle,
-      std::span<std::byte>(reinterpret_cast<std::byte *>(rawBytes.Data()), fileSize));
+      fileHandle, std::span<std::byte>(reinterpret_cast<std::byte *>(rawBytes.Data()), fileSize));
 
   if (auto closeRes = _fs.CloseFile(fileHandle); !closeRes.has_value()) {
     FLOG_ERROR("failed to close texture file: {}", path);
@@ -60,8 +61,8 @@ FeExpect<void, Error> TextureSystem::Create(Texture *pTexture,
   }
 
   bool hasTransparency = channels == 4;
-  auto texRes =
-      _renderer.CreateTexture(path, false, width, height, 4, pPixels, hasTransparency, pTexture);
+  auto texRes = _renderer.CreateTexture(
+      path, false, width, height, 4, pPixels, hasTransparency, pTexture, _filterToUse);
 
   stbi_image_free(pPixels);
 
