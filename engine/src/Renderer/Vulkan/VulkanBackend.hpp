@@ -88,6 +88,9 @@ private:
 
   containers::HashMap<uint32, GeometryData> _geometries;
 
+  const resources::Material *_cpLastBoundMaterial{nullptr};
+  uint32 _lastBoundGeometry{UINT32_MAX};
+  bool _frameStatebound{FeFalse};
   uint32 _cachedFrameBufferWidth{0}, _cachedFrameBufferHeight{0};
 };
 
