@@ -10,6 +10,8 @@
 #include "Renderer/Vulkan/VulkanBackend.hpp"
 #include "Resources/ResourceTypes.hpp"
 
+#include <vulkan/vulkan_core.h>
+
 namespace flatearth::renderer {
 
 FrontendRenderer::FrontendRenderer(ApplicationState *appState,
@@ -109,7 +111,15 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
 
   algorithms::StableSort(
       _memoryManager, pRenderPacket->objects, [](const RenderObject &a, const RenderObject &b) {
-        return a.layer < b.layer;
+        if (a.layer != b.layer) {
+          return a.layer < b.layer;
+        }
+
+        if (a.pMaterial != b.pMaterial) {
+          return a.pMaterial < b.pMaterial;
+        }
+
+        return a.geometryId < b.geometryId;
       });
 
   for (uint32 i = 0; i < pRenderPacket->objects.Length(); i++) {

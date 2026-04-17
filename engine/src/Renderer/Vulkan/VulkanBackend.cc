@@ -10,6 +10,7 @@
 #include "Renderer/Vulkan/VulkanUtils.hpp"
 #include "Resources/ResourceTypes.hpp"
 
+#include <cstdint>
 #include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan {
@@ -354,6 +355,11 @@ FeExpect<bool, Error> VulkanBackend::OnResize(uint32 width, uint32 height) {
 
 FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
   Device &device = _ctx.device;
+
+  // Reset per-frame draw state
+  _cpLastBoundMaterial = nullptr;
+  _lastBoundGeometry = UINT32_MAX;
+  _frameStatebound = FeFalse;
 
   // check if recreating swapchain is happening
   if (_ctx.recreatingSwapchain) {
@@ -703,10 +709,14 @@ void VulkanBackend::DrawGeometry(uint32 id,
   CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
   PushConstantData gpuData = data;
   gpuData.model = data.model.ToGPUMatrix();
-  _vulkanShader.UpdateObject(_ctx, _ctx.objectShader, gpuData);
-  _vulkanShader.UseShader(_ctx, _ctx.objectShader);
 
-  {
+  // Push constants
+  _vulkanShader.UpdateObject(_ctx, _ctx.objectShader, gpuData);
+
+  // Pipeline + set0 + viewport/scissor
+  if (!_frameStatebound) {
+    _vulkanShader.UseShader(_ctx, _ctx.objectShader);
+
     VkDescriptorSet set0 = _ctx.objectShader.globalDescriptorSets[_ctx.imageIndex];
     vkCmdBindDescriptorSets(cmdBuffer.handle,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -716,16 +726,33 @@ void VulkanBackend::DrawGeometry(uint32 id,
                             &set0,
                             0,
                             nullptr);
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = static_cast<float32>(_ctx.framebufferHeight);
+    viewport.width = static_cast<float32>(_ctx.framebufferWidth);
+    viewport.height = -viewport.y;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = {0, 0};
+    scissor.extent = {_ctx.framebufferWidth, _ctx.framebufferHeight};
+
+    vkCmdSetViewport(cmdBuffer.handle, 0, 1, &viewport);
+    vkCmdSetScissor(cmdBuffer.handle, 0, 1, &scissor);
+
+    _frameStatebound = FeTrue;
   }
 
-  {
+  // Material descriptor set
+  if (pMaterial != _cpLastBoundMaterial) {
     if (pMaterial == nullptr) {
       FLOG_ERROR("DrawGeometry: pMaterial is nullptr — set 1 will not be bound");
     } else if (pMaterial->pInternalData == nullptr) {
       FLOG_ERROR("DrawGeometry: pMaterial->pInternalData is nullptr — set 1 will not be bound");
     } else {
       const MaterialData *pMatData = FeCast<MaterialData>(pMaterial->pInternalData);
-      FLOG_DEBUG("DrawGeometry: binding descriptor set {:p}", (void *)pMatData->descriptorSet);
       vkCmdBindDescriptorSets(cmdBuffer.handle,
                               VK_PIPELINE_BIND_POINT_GRAPHICS,
                               _ctx.objectShader.pipeline.layout,
@@ -734,48 +761,26 @@ void VulkanBackend::DrawGeometry(uint32 id,
                               &pMatData->descriptorSet,
                               0,
                               nullptr);
+      _cpLastBoundMaterial = pMaterial;
     }
   }
 
-  // Prepare viewport and scissor
-  VkViewport viewport = {};
-  viewport.x = 0.0f;
-  viewport.y = static_cast<float32>(_ctx.framebufferHeight);
-  viewport.width = static_cast<float32>(_ctx.framebufferWidth);
-  viewport.height = -viewport.y;
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
-
-  VkRect2D scissor = {};
-  scissor.offset = {0, 0};
-  scissor.extent = {_ctx.framebufferWidth, _ctx.framebufferHeight};
-
-  constexpr uint32 cFirstViewport = 0;
-  constexpr uint32 cViewportCount = 1;
-  constexpr uint32 cFirstScissor = 0;
-  constexpr uint32 cScissorCount = 1;
-
   const GeometryData *pGeom = _geometries.Retrieve(id);
   if (pGeom == nullptr) {
-    FLOG_WARN("failed to retrieve unexistent geometry for id {}", id);
+    FLOG_WARN("DrawGeometry: unknown geometry id {}", id);
     return;
   }
 
-  std::array<VkDeviceSize, 1> offsets = {pGeom->vertexBufferOffset};
-
-  vkCmdSetViewport(cmdBuffer.handle, cFirstViewport, cViewportCount, &viewport);
-  vkCmdSetScissor(cmdBuffer.handle, cFirstScissor, cScissorCount, &scissor);
-
-  vkCmdBindVertexBuffers(cmdBuffer.handle,
-                         0,
-                         1,
-                         &_ctx.objectVertexBuffer.handle,
-                         static_cast<VkDeviceSize *>(offsets.data()));
-
-  vkCmdBindIndexBuffer(cmdBuffer.handle,
-                       _ctx.objectIndexBuffer.handle,
-                       pGeom->indexBufferOffset,
-                       VK_INDEX_TYPE_UINT32);
+  // Vertex + index buffers: only on geometry change
+  if (id != _lastBoundGeometry) {
+    VkDeviceSize offset = pGeom->vertexBufferOffset;
+    vkCmdBindVertexBuffers(cmdBuffer.handle, 0, 1, &_ctx.objectVertexBuffer.handle, &offset);
+    vkCmdBindIndexBuffer(cmdBuffer.handle,
+                         _ctx.objectIndexBuffer.handle,
+                         pGeom->indexBufferOffset,
+                         VK_INDEX_TYPE_UINT32);
+    _lastBoundGeometry = id;
+  }
 
   vkCmdDrawIndexed(cmdBuffer.handle, pGeom->indexCount, 1, 0, 0, 0);
 }
