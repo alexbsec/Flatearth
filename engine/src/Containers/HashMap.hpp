@@ -57,10 +57,37 @@ public:
       }
     }
 
-    // Does not exist in map
     HashMapEntry<T, V> entry{key, val};
     FePtr<Node<HashMapEntry<T, V>>> newNode =
         _memoryManager.Allocate<Node<HashMapEntry<T, V>>>(memory::Tag::HashMap, entry);
+
+    if (newNode == nullptr) {
+      return FeErr{Error("allocation of HashMap node failed", ErrorType::NullptrException)};
+    }
+
+    newNode->pNext = std::move(head);
+    head = std::move(newNode);
+    _size++;
+    return FeTrue;
+  }
+
+  inline FeExpect<bool, Error> Insert(const T &key, V &&val) {
+    H hashFn{};
+    Eq eqFn{};
+
+    const uint64 index = hashFn(key) % _bucketCount;
+    FePtr<Node<HashMapEntry<T, V>>> &head = _ppBuckets[index];
+
+    for (Node<HashMapEntry<T, V>> *node = head.get(); node != nullptr; node = node->pNext.get()) {
+      if (eqFn(node->data.key, key)) {
+        node->data.value = std::move(val);
+        return FeTrue;
+      }
+    }
+
+    HashMapEntry<T, V> entry{key, std::move(val)};
+    FePtr<Node<HashMapEntry<T, V>>> newNode =
+        _memoryManager.Allocate<Node<HashMapEntry<T, V>>>(memory::Tag::HashMap, std::move(entry));
 
     if (newNode == nullptr) {
       return FeErr{Error("allocation of HashMap node failed", ErrorType::NullptrException)};
@@ -112,6 +139,17 @@ public:
     }
 
     return FeFalse;
+  }
+
+  template <typename Fn>
+  void ForEach(Fn &&fn) {
+    for (uint64 i = 0; i < _bucketCount; i++) {
+      for (Node<HashMapEntry<T, V>> *node = _ppBuckets[i].get();
+           node != nullptr;
+           node = node->pNext.get()) {
+        fn(node->data.key, node->data.value);
+      }
+    }
   }
 
   inline uint64 Size() const { return _size; }
