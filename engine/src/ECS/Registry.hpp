@@ -2,41 +2,12 @@
 #define _FLATEARTH_ENGINE_ECS_REGISTRY_HPP
 
 #include "Containers/HashMap.hpp"
-#include "Containers/SparseSet.hpp"
 #include "Core/FeMemory.hpp"
+#include "ECS/ComponentPool.hpp"
 #include "ECS/EntityManager.hpp"
+#include "ECS/View.hpp"
 
 namespace flatearth::ecs {
-
-class ISparseSetBase {
-public:
-  virtual ~ISparseSetBase() = default;
-  virtual void Remove(uint32 entityIndex) = 0;
-};
-
-template <typename T>
-class SparseSetHolder final : public ISparseSetBase {
-public:
-  explicit SparseSetHolder(memory::MemoryManager &memManager, uint32 maxEntities)
-      : sparseSet(memManager, maxEntities) {}
-
-  void Remove(uint32 entityIndex) override { sparseSet.Remove(entityIndex); };
-
-public:
-  containers::SparseSet<T> sparseSet;
-};
-
-struct ComponentTypeIdCounter {
-  inline static uint32 sCounter{0};
-};
-
-template <typename T>
-struct ComponentTypeId {
-  static uint32 Value() {
-    static uint32 id = ComponentTypeIdCounter::sCounter++;
-    return id;
-  }
-};
 
 class Registry {
 public:
@@ -93,6 +64,11 @@ public:
     const FePtr<ISparseSetBase> *ppBase = _poolsMap.Retrieve(typeId);
     if (ppBase == nullptr) return false;
     return static_cast<const SparseSetHolder<T> *>(ppBase->get())->sparseSet.Has(id);
+  }
+
+  template <typename ...Ts>
+  View<Ts...> ViewOf() {
+    return View<Ts...>(GetPool<Ts>()...);
   }
 
 private:

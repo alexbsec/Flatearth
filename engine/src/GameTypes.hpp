@@ -7,11 +7,12 @@
 
 #include <functional>
 
+// TODO: remove this once EngineContext exists
 namespace flatearth::resources {
 class TextureSystem;
 class MaterialSystem;
 class MeshSystem;
-}
+} // namespace flatearth::resources
 
 namespace flatearth::renderer {
 class FrontendRenderer;
@@ -33,18 +34,21 @@ public:
   std::function<bool(struct Game *gameInstance, uint32 width, uint32 height)> OnResize;
 
   Game()
-      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), Render(nullptr), OnResize(nullptr),
-        gameName(cGameName), windowStartWidth(scDefaultStartWidth),
+      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), Render(nullptr),
+        OnResize(nullptr), gameName(cGameName), windowStartWidth(scDefaultStartWidth),
         windowStartHeight(scDefaultStartHeight) {}
 
   Game(const string &name)
-      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), Render(nullptr), OnResize(nullptr),
-        gameName(name), windowStartWidth(scDefaultStartWidth),
+      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), Render(nullptr),
+        OnResize(nullptr), gameName(name), windowStartWidth(scDefaultStartWidth),
         windowStartHeight(scDefaultStartHeight) {}
 
 public:
   string gameName;
   int32 windowStartPosX, windowStartPosY, windowStartWidth, windowStartHeight;
+
+  // TODO: these are only here so that we can get it up and running. REMOVE
+  // LATER
   input::InputManager *pInputManager{nullptr};
   resources::TextureSystem *pTextureSystem{nullptr};
   resources::MaterialSystem *pMaterialSystem{nullptr};
