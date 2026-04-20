@@ -152,6 +152,13 @@ public:
     }
   }
 
+  void Clear() {
+    for (uint64 i = 0; i < _bucketCount; i++) {
+      _ppBuckets[i].reset();
+    }
+    _size = 0;
+  }
+
   inline uint64 Size() const { return _size; }
   inline bool Empty() const { return _size == 0; }
 

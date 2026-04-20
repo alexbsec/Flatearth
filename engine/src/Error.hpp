@@ -16,6 +16,7 @@ enum class ErrorType {
   NoBackendRenderer,
   GameInitializeUndefined,
   RendererVulkanError,
+  SystemError,
   RendererSelectPhysicalDevice,
   GameUpdateUndefined,
   PlatformCreateSurface,

@@ -8,7 +8,7 @@ template <typename T>
 struct Node {
   T data;
   FePtr<Node<T>> pNext;
-  Node(T data) : data(data), pNext(nullptr) {}
+  Node(T data) : data(std::move(data)), pNext(nullptr) {}
 };
 
 } // namespace flatearth::containers
