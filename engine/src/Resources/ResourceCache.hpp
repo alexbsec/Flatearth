@@ -1,5 +1,5 @@
-#ifndef _FLATEARTH_ENGINE_RESOURCES_RESOURCE_SYSTEM_HPP
-#define _FLATEARTH_ENGINE_RESOURCES_RESOURCE_SYSTEM_HPP
+#ifndef _FLATEARTH_ENGINE_RESOURCES_RESOURCE_CACHE_HPP
+#define _FLATEARTH_ENGINE_RESOURCES_RESOURCE_CACHE_HPP
 
 #include "Containers/DArray.hpp"
 #include "Containers/HashMap.hpp"
@@ -11,7 +11,7 @@
 namespace flatearth::resources {
 
 template <typename TResource>
-class ResourceSystem {
+class ResourceCache {
 public:
   void Release(uint32 handle) {
     Entry *pEntry = _handleEntryMap.Retrieve(handle);
@@ -54,13 +54,13 @@ public:
       }
 
       if (pEntry->refCount > 0) {
-        FLOG_WARN("ResourceSystem::Shutdown — '{}' still has {} reference(s), force destroying",
+        FLOG_WARN("ResourceCache::Shutdown — '{}' still has {} reference(s), force destroying",
                   pEntry->name,
                   pEntry->refCount);
       }
 
       if (auto res = Destroy(&pEntry->resource); !res.has_value()) {
-        FLOG_FATAL("ResourceSystem::Shutdown — failed to destroy '{}'", pEntry->name);
+        FLOG_FATAL("ResourceCache::Shutdown — failed to destroy '{}'", pEntry->name);
       }
 
       _nameHandleMap.Erase(pEntry->name);
@@ -71,11 +71,11 @@ public:
   }
 
 protected:
-  explicit ResourceSystem(memory::MemoryManager &memoryManager)
+  explicit ResourceCache(memory::MemoryManager &memoryManager)
       : _memoryManager(memoryManager), _nameHandleMap(memoryManager),
         _handleEntryMap(memoryManager), _activeHandles(memoryManager) {}
 
-  virtual ~ResourceSystem() = default;
+  virtual ~ResourceCache() = default;
 
   // Called by each derived system's own public Acquire method
   FeExpect<uint32, Error> ProtectedAcquire(const string &name) {

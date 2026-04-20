@@ -1,17 +1,17 @@
-#ifndef _FLATEARTH_ENGINE_RESOURCES_MESH_SYSTEM_HPP
-#define _FLATEARTH_ENGINE_RESOURCES_MESH_SYSTEM_HPP
+#ifndef _FLATEARTH_ENGINE_RESOURCES_MESH_CACHE_HPP
+#define _FLATEARTH_ENGINE_RESOURCES_MESH_CACHE_HPP
 
 #include "Core/FeMemory.hpp"
 #include "Renderer/RendererFrontend.hpp"
-#include "Resources/ResourceSystem.hpp"
+#include "Resources/ResourceCache.hpp"
 #include "Resources/ResourceTypes.hpp"
 
 namespace flatearth::resources {
 
-class MeshSystem : public ResourceSystem<Mesh> {
+class MeshCache : public ResourceCache<Mesh> {
 public:
-  FEAPI explicit MeshSystem(memory::MemoryManager &memManager,
-                            renderer::FrontendRenderer &renderer);
+  FEAPI explicit MeshCache(memory::MemoryManager &memManager,
+                           renderer::FrontendRenderer &renderer);
 
   FEAPI FeExpect<MeshHandle, Error> AcquireMesh(MeshShape shape);
 
@@ -26,4 +26,4 @@ private:
 
 } // namespace flatearth::resources
 
-#endif // _FLATEARTH_ENGINE_RESOURCES_MESH_SYSTEM_HPP
+#endif // _FLATEARTH_ENGINE_RESOURCES_MESH_CACHE_HPP

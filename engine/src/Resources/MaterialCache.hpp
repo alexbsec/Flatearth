@@ -1,19 +1,19 @@
-#ifndef _FLATEARTH_ENGINE_RESOURCES_MATERIAL_SYSTEM_HPP
-#define _FLATEARTH_ENGINE_RESOURCES_MATERIAL_SYSTEM_HPP
+#ifndef _FLATEARTH_ENGINE_RESOURCES_MATERIAL_CACHE_HPP
+#define _FLATEARTH_ENGINE_RESOURCES_MATERIAL_CACHE_HPP
 
 #include "Core/FeMemory.hpp"
 #include "Renderer/RendererFrontend.hpp"
-#include "Resources/ResourceSystem.hpp"
+#include "Resources/ResourceCache.hpp"
 #include "Resources/ResourceTypes.hpp"
-#include "Resources/TextureSystem.hpp"
+#include "Resources/TextureCache.hpp"
 
 namespace flatearth::resources {
 
-class MaterialSystem : public ResourceSystem<Material> {
+class MaterialCache : public ResourceCache<Material> {
 public:
-  FEAPI explicit MaterialSystem(memory::MemoryManager &memManager,
-                                renderer::FrontendRenderer &renderer,
-                                TextureSystem &textureSystem);
+  FEAPI explicit MaterialCache(memory::MemoryManager &memManager,
+                               renderer::FrontendRenderer &renderer,
+                               TextureCache &textureCache);
 
   FEAPI FeExpect<MaterialHandle, Error> AcquireMaterial(const string &name,
                                                         TextureHandle texHandle);
@@ -24,10 +24,10 @@ protected:
 
 private:
   renderer::FrontendRenderer &_renderer;
-  TextureSystem &_textureSystem;
+  TextureCache &_textureCache;
   TextureHandle _pendingTexHandle{0};
 };
 
 } // namespace flatearth::resources
 
-#endif // _FLATEARTH_ENGINE_RESOURCES_MATERIAL_SYSTEM_HPP
+#endif // _FLATEARTH_ENGINE_RESOURCES_MATERIAL_CACHE_HPP

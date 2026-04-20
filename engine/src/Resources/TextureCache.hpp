@@ -1,19 +1,19 @@
-#ifndef _FLATEARTH_ENGINE_RESOURCES_TEXTURE_SYSTEM_HPP
-#define _FLATEARTH_ENGINE_RESOURCES_TEXTURE_SYSTEM_HPP
+#ifndef _FLATEARTH_ENGINE_RESOURCES_TEXTURE_CACHE_HPP
+#define _FLATEARTH_ENGINE_RESOURCES_TEXTURE_CACHE_HPP
 
 #include "Core/FeMemory.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererFrontend.hpp"
-#include "Resources/ResourceSystem.hpp"
+#include "Resources/ResourceCache.hpp"
 #include "Resources/ResourceTypes.hpp"
 
 namespace flatearth::resources {
 
-class TextureSystem : public ResourceSystem<Texture> {
+class TextureCache : public ResourceCache<Texture> {
 public:
-  FEAPI explicit TextureSystem(memory::MemoryManager &memManager,
-                               renderer::FrontendRenderer &renderer,
-                               platform::FileSystem &fs);
+  FEAPI explicit TextureCache(memory::MemoryManager &memManager,
+                              renderer::FrontendRenderer &renderer,
+                              platform::FileSystem &fs);
 
   FEAPI FeExpect<TextureHandle, Error>
   AcquireTexture(const string &path, TextureFilter filter = TextureFilter::Nearest);
@@ -30,4 +30,4 @@ private:
 
 } // namespace flatearth::resources
 
-#endif // _FLATEARTH_ENGINE_RESOURCES_TEXTURE_SYSTEM_HPP
+#endif // _FLATEARTH_ENGINE_RESOURCES_TEXTURE_CACHE_HPP

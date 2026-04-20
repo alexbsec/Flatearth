@@ -9,9 +9,9 @@
 
 // TODO: remove this once EngineContext exists
 namespace flatearth::resources {
-class TextureSystem;
-class MaterialSystem;
-class MeshSystem;
+class TextureCache;
+class MaterialCache;
+class MeshCache;
 } // namespace flatearth::resources
 
 namespace flatearth::renderer {
@@ -50,9 +50,9 @@ public:
   // TODO: these are only here so that we can get it up and running. REMOVE
   // LATER
   input::InputManager *pInputManager{nullptr};
-  resources::TextureSystem *pTextureSystem{nullptr};
-  resources::MaterialSystem *pMaterialSystem{nullptr};
-  resources::MeshSystem *pMeshSystem{nullptr};
+  resources::TextureCache *pTextureCache{nullptr};
+  resources::MaterialCache *pMaterialCache{nullptr};
+  resources::MeshCache *pMeshCache{nullptr};
   renderer::FrontendRenderer *pRenderer{nullptr};
 };
 

@@ -14,9 +14,9 @@ namespace flatearth {
 Engine::Engine(Game *pGame)
     : _appState(pGame), _eventManager(_memoryManager), _inputManager(_eventManager),
       _frontendRenderer(&_appState, _memoryManager, _filesystem), _filesystem(_memoryManager),
-      _textureSystem(_memoryManager, _frontendRenderer, _filesystem),
-      _materialSystem(_memoryManager, _frontendRenderer, _textureSystem),
-      _meshSystem(_memoryManager, _frontendRenderer) {
+      _textureCache(_memoryManager, _frontendRenderer, _filesystem),
+      _materialCache(_memoryManager, _frontendRenderer, _textureCache),
+      _meshCache(_memoryManager, _frontendRenderer) {
   _engineListener = _memoryManager.Allocate<event::IEventListener, EngineListener>(
       memory::Tag::Application, _eventManager, _appState, _frontendRenderer);
 }
@@ -25,9 +25,9 @@ Engine::~Engine() {
   if (_appState.pGameInstance->Unload) {
     _appState.pGameInstance->Unload(_appState.pGameInstance);
   }
-  _meshSystem.Shutdown();
-  _materialSystem.Shutdown();
-  _textureSystem.Shutdown();
+  _meshCache.Shutdown();
+  _materialCache.Shutdown();
+  _textureCache.Shutdown();
   FLOG_INFO("engine shutdown gracefully");
 }
 
@@ -83,9 +83,9 @@ FeExpect<void, Error> Engine::Initialize() {
   _appState.isSuspended = FeFalse;
   _appState.platformState = _pPlatform->State();
   _appState.pGameInstance->pInputManager = &_inputManager;
-  _appState.pGameInstance->pTextureSystem = &_textureSystem;
-  _appState.pGameInstance->pMaterialSystem = &_materialSystem;
-  _appState.pGameInstance->pMeshSystem = &_meshSystem;
+  _appState.pGameInstance->pTextureCache = &_textureCache;
+  _appState.pGameInstance->pMaterialCache = &_materialCache;
+  _appState.pGameInstance->pMeshCache = &_meshCache;
   _appState.pGameInstance->pRenderer = &_frontendRenderer;
 
   if (_appState.pGameInstance->Load) {
