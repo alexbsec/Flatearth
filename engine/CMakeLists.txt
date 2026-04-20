@@ -78,6 +78,7 @@ set_target_properties(
     ${BINARY_NAME} PROPERTIES
     VERSION ${LIBRARY_VERSION_STRING}
     SOVERSION ${LIBRARY_VERSION_MAJOR}
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
 
 ############################################################################
