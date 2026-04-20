@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/alexbsec/Projects/FlatearthEngine/tests/build-debug/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
