@@ -6,6 +6,7 @@
 namespace flatearth::ecs::reflect {
 
 enum class FieldType : uint8 {
+  Null,
   Bool,
   Int8,
   Int16,
