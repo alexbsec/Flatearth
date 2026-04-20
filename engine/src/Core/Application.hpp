@@ -7,9 +7,9 @@
 #include "GameTypes.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Platform/Platform.hpp"
-#include "Resources/MaterialSystem.hpp"
-#include "Resources/MeshSystem.hpp"
-#include "Resources/TextureSystem.hpp"
+#include "Resources/MaterialCache.hpp"
+#include "Resources/MeshCache.hpp"
+#include "Resources/TextureCache.hpp"
 #include "Renderer/RendererFrontend.hpp"
 
 namespace flatearth {
@@ -32,9 +32,9 @@ private:
   input::InputManager _inputManager;
   platform::FileSystem _filesystem;
   renderer::FrontendRenderer _frontendRenderer;
-  resources::TextureSystem _textureSystem;
-  resources::MaterialSystem _materialSystem;
-  resources::MeshSystem _meshSystem;
+  resources::TextureCache _textureCache;
+  resources::MaterialCache _materialCache;
+  resources::MeshCache _meshCache;
   FePtr<event::IEventListener> _engineListener;
 };
 

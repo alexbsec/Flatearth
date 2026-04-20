@@ -1,4 +1,4 @@
-#include "MeshSystem.hpp"
+#include "MeshCache.hpp"
 
 #include "Core/Logger.hpp"
 #include "Math/MathTypes.hpp"
@@ -91,16 +91,16 @@ static void GenerateCapsule2D(std::vector<math::Vertex3D> &verts, std::vector<ui
 
 // ----
 
-MeshSystem::MeshSystem(memory::MemoryManager &memManager, renderer::FrontendRenderer &renderer)
-    : ResourceSystem(memManager), _renderer(renderer) {
+MeshCache::MeshCache(memory::MemoryManager &memManager, renderer::FrontendRenderer &renderer)
+    : ResourceCache(memManager), _renderer(renderer) {
 }
 
-FeExpect<MeshHandle, Error> MeshSystem::AcquireMesh(MeshShape shape) {
+FeExpect<MeshHandle, Error> MeshCache::AcquireMesh(MeshShape shape) {
   _pendingShape = shape;
   return this->ProtectedAcquire(ShapeToString(shape));
 }
 
-FeExpect<void, Error> MeshSystem::Create(Mesh *pMesh, uint32 handle, const string &name) {
+FeExpect<void, Error> MeshCache::Create(Mesh *pMesh, uint32 handle, const string &name) {
   std::vector<math::Vertex3D> verts;
   std::vector<uint32> indices;
 
@@ -125,7 +125,7 @@ FeExpect<void, Error> MeshSystem::Create(Mesh *pMesh, uint32 handle, const strin
       handle, pMesh->vertexCount, verts.data(), pMesh->indexCount, indices.data());
 }
 
-FeExpect<void, Error> MeshSystem::Destroy(Mesh *pMesh) {
+FeExpect<void, Error> MeshCache::Destroy(Mesh *pMesh) {
   return _renderer.DestroyGeometry(pMesh->id);
 }
 

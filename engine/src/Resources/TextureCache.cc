@@ -1,4 +1,4 @@
-#include "TextureSystem.hpp"
+#include "TextureCache.hpp"
 
 #include "Core/Logger.hpp"
 
@@ -7,20 +7,20 @@
 
 namespace flatearth::resources {
 
-TextureSystem::TextureSystem(memory::MemoryManager &memManager,
-                             renderer::FrontendRenderer &renderer,
-                             platform::FileSystem &fs)
-    : ResourceSystem(memManager), _renderer(renderer), _fs(fs) {
+TextureCache::TextureCache(memory::MemoryManager &memManager,
+                           renderer::FrontendRenderer &renderer,
+                           platform::FileSystem &fs)
+    : ResourceCache(memManager), _renderer(renderer), _fs(fs) {
 }
 
-FeExpect<TextureHandle, Error> TextureSystem::AcquireTexture(const string &path,
-                                                             TextureFilter filter) {
+FeExpect<TextureHandle, Error> TextureCache::AcquireTexture(const string &path,
+                                                            TextureFilter filter) {
   _filterToUse = filter;
   return this->ProtectedAcquire(path);
 }
 
 FeExpect<void, Error>
-TextureSystem::Create(Texture *pTexture, uint32 /*handle*/, const string &path) {
+TextureCache::Create(Texture *pTexture, uint32 /*handle*/, const string &path) {
   if (!_fs.Exists(path)) {
     FLOG_ERROR("texture file not found: {}", path);
     return FeErr{Error("texture file not found", ErrorType::FileOpenError)};
@@ -74,7 +74,7 @@ TextureSystem::Create(Texture *pTexture, uint32 /*handle*/, const string &path) 
   return {};
 }
 
-FeExpect<void, Error> TextureSystem::Destroy(Texture *pTexture) {
+FeExpect<void, Error> TextureCache::Destroy(Texture *pTexture) {
   return _renderer.DestroyTexture(pTexture);
 }
 

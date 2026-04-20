@@ -5,9 +5,9 @@
 #include <Defines.hpp>
 #include <Math/FeMath.hpp>
 #include <Renderer/RendererFrontend.hpp>
-#include <Resources/MaterialSystem.hpp>
-#include <Resources/MeshSystem.hpp>
-#include <Resources/TextureSystem.hpp>
+#include <Resources/MaterialCache.hpp>
+#include <Resources/MeshCache.hpp>
+#include <Resources/TextureCache.hpp>
 #include <Renderer/RendererTypes.hpp>
 
 namespace flatearth::testbed {
@@ -38,28 +38,28 @@ bool GameTest::GameInitialize(flatearth::Game *gameInstance) {
 }
 
 bool GameTest::GameLoad(flatearth::Game *gameInstance) {
-  auto meshRes = gameInstance->pMeshSystem->AcquireMesh(resources::MeshShape::Quad);
+  auto meshRes = gameInstance->pMeshCache->AcquireMesh(resources::MeshShape::Quad);
   if (!meshRes.has_value()) {
     FLOG_ERROR("failed to acquire quad mesh");
     return FeFalse;
   }
   _state.quadMesh = meshRes.value();
 
-  auto circleRes = gameInstance->pMeshSystem->AcquireMesh(resources::MeshShape::Circle);
+  auto circleRes = gameInstance->pMeshCache->AcquireMesh(resources::MeshShape::Circle);
   if (!circleRes.has_value()) {
     FLOG_ERROR("failed to acquire circle mesh");
     return FeFalse;
   }
   _state.circleMesh = circleRes.value();
 
-  auto capsuleRes = gameInstance->pMeshSystem->AcquireMesh(resources::MeshShape::Capsule2D);
+  auto capsuleRes = gameInstance->pMeshCache->AcquireMesh(resources::MeshShape::Capsule2D);
   if (!capsuleRes.has_value()) {
     FLOG_ERROR("failed to acquire capsule mesh");
     return FeFalse;
   }
   _state.capsuleMesh = capsuleRes.value();
 
-  auto texRes = gameInstance->pTextureSystem->AcquireTexture("assets/textures/texture.jpg");
+  auto texRes = gameInstance->pTextureCache->AcquireTexture("assets/textures/texture.jpg");
   if (!texRes.has_value()) {
     FLOG_ERROR("failed to load texture");
     return FeFalse;
@@ -67,16 +67,16 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
 
   _state.texHandle = texRes.value();
 
-  auto matRes = gameInstance->pMaterialSystem->AcquireMaterial("quad_material", _state.texHandle);
+  auto matRes = gameInstance->pMaterialCache->AcquireMaterial("quad_material", _state.texHandle);
   if (!matRes.has_value()) {
     FLOG_ERROR("failed to acquire material");
     return FeFalse;
   }
 
   _state.matHandle = matRes.value();
-  _state.pMaterial = gameInstance->pMaterialSystem->Get(_state.matHandle);
+  _state.pMaterial = gameInstance->pMaterialCache->Get(_state.matHandle);
 
-  auto tex2Res = gameInstance->pTextureSystem->AcquireTexture("assets/textures/rugtexture.jpg");
+  auto tex2Res = gameInstance->pTextureCache->AcquireTexture("assets/textures/rugtexture.jpg");
   if (!tex2Res.has_value()) {
     FLOG_ERROR("failed to load rug texture");
     return FeFalse;
@@ -84,14 +84,14 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
 
   _state.tex2Handle = tex2Res.value();
 
-  auto mat2Res = gameInstance->pMaterialSystem->AcquireMaterial("rug_material", _state.tex2Handle);
+  auto mat2Res = gameInstance->pMaterialCache->AcquireMaterial("rug_material", _state.tex2Handle);
   if (!mat2Res.has_value()) {
     FLOG_ERROR("failed to acquire rug material");
     return FeFalse;
   }
 
   _state.mat2Handle = mat2Res.value();
-  _state.pMaterial2 = gameInstance->pMaterialSystem->Get(_state.mat2Handle);
+  _state.pMaterial2 = gameInstance->pMaterialCache->Get(_state.mat2Handle);
   return FeTrue;
 }
 
@@ -148,18 +148,18 @@ bool GameTest::GameRender(flatearth::Game *, renderer::RenderPacket &packet) {
 }
 
 void GameTest::GameUnload(flatearth::Game *gameInstance) {
-  if (gameInstance->pMeshSystem) {
-    gameInstance->pMeshSystem->Release(_state.quadMesh);
-    gameInstance->pMeshSystem->Release(_state.circleMesh);
-    gameInstance->pMeshSystem->Release(_state.capsuleMesh);
+  if (gameInstance->pMeshCache) {
+    gameInstance->pMeshCache->Release(_state.quadMesh);
+    gameInstance->pMeshCache->Release(_state.circleMesh);
+    gameInstance->pMeshCache->Release(_state.capsuleMesh);
   }
-  if (gameInstance->pMaterialSystem) {
-    gameInstance->pMaterialSystem->Release(_state.matHandle);
-    gameInstance->pMaterialSystem->Release(_state.mat2Handle);
+  if (gameInstance->pMaterialCache) {
+    gameInstance->pMaterialCache->Release(_state.matHandle);
+    gameInstance->pMaterialCache->Release(_state.mat2Handle);
   }
-  if (gameInstance->pTextureSystem) {
-    gameInstance->pTextureSystem->Release(_state.texHandle);
-    gameInstance->pTextureSystem->Release(_state.tex2Handle);
+  if (gameInstance->pTextureCache) {
+    gameInstance->pTextureCache->Release(_state.texHandle);
+    gameInstance->pTextureCache->Release(_state.tex2Handle);
   }
 }
 

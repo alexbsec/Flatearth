@@ -5,7 +5,7 @@
 #include <GameTypes.hpp>
 #include <Math/Matrix4D.hpp>
 #include <Renderer/RendererTypes.hpp>
-#include <Resources/MeshSystem.hpp>
+#include <Resources/MeshCache.hpp>
 #include <Resources/ResourceTypes.hpp>
 
 namespace flatearth::testbed {
