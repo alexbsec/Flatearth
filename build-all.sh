@@ -28,3 +28,7 @@ popd >/dev/null
 pushd testbed >/dev/null
 ./run.sh "$mode" "$OUT_ROOT"
 popd >/dev/null
+
+pushd tests >/dev/null
+./run.sh "$mode" "$OUT_ROOT"
+popd >/dev/null

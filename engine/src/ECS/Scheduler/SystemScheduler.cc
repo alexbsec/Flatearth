@@ -56,13 +56,16 @@ FeExpect<void, Error> SystemScheduler::Build() {
   uint32 processed = 0;
   while (!queue.Empty()) {
     const uint32 *pTypeId = queue.Front();
-    queue.Pop();
     if (pTypeId == nullptr) {
       FLOG_WARN("failed to get const ptr reference of queue");
+      queue.Pop();
       continue;
     }
+    // Copy value before Pop() frees the node.
+    const uint32 typeId = *pTypeId;
+    queue.Pop();
 
-    FePtr<SystemNode> *ppNode = _nodesMap.Retrieve(*pTypeId);
+    FePtr<SystemNode> *ppNode = _nodesMap.Retrieve(typeId);
     if (ppNode == nullptr) {
       FLOG_WARN("failed to get ptr to FePtr<SystemNode>: no reference found");
       continue;
@@ -71,7 +74,7 @@ FeExpect<void, Error> SystemScheduler::Build() {
     _sortedSystems.Push(pRawSystem);
     processed++;
 
-    DArray<uint32> *pNeighbors = edges.Retrieve(*pTypeId);
+    DArray<uint32> *pNeighbors = edges.Retrieve(typeId);
     if (pNeighbors == nullptr) {
       // no neighbors
       continue;

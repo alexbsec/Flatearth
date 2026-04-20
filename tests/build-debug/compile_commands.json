@@ -1,0 +1,50 @@
+[
+{
+  "directory": "/home/alexbsec/Projects/FlatearthEngine/tests/build-debug",
+  "command": "/usr/bin/c++  -isystem /home/alexbsec/Projects/FlatearthEngine/tests/../engine/src -g -std=c++23 -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g -o CMakeFiles/flatearth_tests.dir/src/Containers/Test_DArray.cc.o -c /home/alexbsec/Projects/FlatearthEngine/tests/src/Containers/Test_DArray.cc",
+  "file": "/home/alexbsec/Projects/FlatearthEngine/tests/src/Containers/Test_DArray.cc",
+  "output": "CMakeFiles/flatearth_tests.dir/src/Containers/Test_DArray.cc.o"
+},
+{
+  "directory": "/home/alexbsec/Projects/FlatearthEngine/tests/build-debug",
+  "command": "/usr/bin/c++  -isystem /home/alexbsec/Projects/FlatearthEngine/tests/../engine/src -g -std=c++23 -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g -o CMakeFiles/flatearth_tests.dir/src/Containers/Test_HashMap.cc.o -c /home/alexbsec/Projects/FlatearthEngine/tests/src/Containers/Test_HashMap.cc",
+  "file": "/home/alexbsec/Projects/FlatearthEngine/tests/src/Containers/Test_HashMap.cc",
+  "output": "CMakeFiles/flatearth_tests.dir/src/Containers/Test_HashMap.cc.o"
+},
+{
+  "directory": "/home/alexbsec/Projects/FlatearthEngine/tests/build-debug",
+  "command": "/usr/bin/c++  -isystem /home/alexbsec/Projects/FlatearthEngine/tests/../engine/src -g -std=c++23 -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g -o CMakeFiles/flatearth_tests.dir/src/ECS/Test_EntityManager.cc.o -c /home/alexbsec/Projects/FlatearthEngine/tests/src/ECS/Test_EntityManager.cc",
+  "file": "/home/alexbsec/Projects/FlatearthEngine/tests/src/ECS/Test_EntityManager.cc",
+  "output": "CMakeFiles/flatearth_tests.dir/src/ECS/Test_EntityManager.cc.o"
+},
+{
+  "directory": "/home/alexbsec/Projects/FlatearthEngine/tests/build-debug",
+  "command": "/usr/bin/c++  -isystem /home/alexbsec/Projects/FlatearthEngine/tests/../engine/src -g -std=c++23 -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g -o CMakeFiles/flatearth_tests.dir/src/ECS/Test_Registry.cc.o -c /home/alexbsec/Projects/FlatearthEngine/tests/src/ECS/Test_Registry.cc",
+  "file": "/home/alexbsec/Projects/FlatearthEngine/tests/src/ECS/Test_Registry.cc",
+  "output": "CMakeFiles/flatearth_tests.dir/src/ECS/Test_Registry.cc.o"
+},
+{
+  "directory": "/home/alexbsec/Projects/FlatearthEngine/tests/build-debug",
+  "command": "/usr/bin/c++  -isystem /home/alexbsec/Projects/FlatearthEngine/tests/../engine/src -g -std=c++23 -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g -o CMakeFiles/flatearth_tests.dir/src/ECS/Test_SystemScheduler.cc.o -c /home/alexbsec/Projects/FlatearthEngine/tests/src/ECS/Test_SystemScheduler.cc",
+  "file": "/home/alexbsec/Projects/FlatearthEngine/tests/src/ECS/Test_SystemScheduler.cc",
+  "output": "CMakeFiles/flatearth_tests.dir/src/ECS/Test_SystemScheduler.cc.o"
+},
+{
+  "directory": "/home/alexbsec/Projects/FlatearthEngine/tests/build-debug",
+  "command": "/usr/bin/c++  -isystem /home/alexbsec/Projects/FlatearthEngine/tests/../engine/src -g -std=c++23 -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g -o CMakeFiles/flatearth_tests.dir/src/ECS/Test_View.cc.o -c /home/alexbsec/Projects/FlatearthEngine/tests/src/ECS/Test_View.cc",
+  "file": "/home/alexbsec/Projects/FlatearthEngine/tests/src/ECS/Test_View.cc",
+  "output": "CMakeFiles/flatearth_tests.dir/src/ECS/Test_View.cc.o"
+},
+{
+  "directory": "/home/alexbsec/Projects/FlatearthEngine/tests/build-debug",
+  "command": "/usr/bin/c++  -isystem /home/alexbsec/Projects/FlatearthEngine/tests/../engine/src -g -std=c++23 -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g -o CMakeFiles/flatearth_tests.dir/src/TestRunner.cc.o -c /home/alexbsec/Projects/FlatearthEngine/tests/src/TestRunner.cc",
+  "file": "/home/alexbsec/Projects/FlatearthEngine/tests/src/TestRunner.cc",
+  "output": "CMakeFiles/flatearth_tests.dir/src/TestRunner.cc.o"
+},
+{
+  "directory": "/home/alexbsec/Projects/FlatearthEngine/tests/build-debug",
+  "command": "/usr/bin/c++  -isystem /home/alexbsec/Projects/FlatearthEngine/tests/../engine/src -g -std=c++23 -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g -o CMakeFiles/flatearth_tests.dir/src/main.cc.o -c /home/alexbsec/Projects/FlatearthEngine/tests/src/main.cc",
+  "file": "/home/alexbsec/Projects/FlatearthEngine/tests/src/main.cc",
+  "output": "CMakeFiles/flatearth_tests.dir/src/main.cc.o"
+}
+]

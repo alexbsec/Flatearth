@@ -8,8 +8,15 @@
 
 namespace flatearth::containers {
 
+struct ISparseSetBase {
+  virtual ~ISparseSetBase() = default;
+  virtual void     Remove(uint32 entityIndex) = 0;
+  virtual uint32  *Entities() = 0;
+  virtual uint64   Length() const = 0;
+};
+
 template <typename T>
-class SparseSet {
+class SparseSet : public ISparseSetBase {
   static_assert(std::is_trivially_copyable_v<T>,
                 "SparseSet<T> is byte-wise; T must be trivially copyable");
 
@@ -35,7 +42,7 @@ public:
     _denseEntities.Push(entityIndex);
   }
 
-  void Remove(uint32 entityIndex) {
+  void Remove(uint32 entityIndex) override {
     if (!Has(entityIndex)) {
       return;
     }
@@ -78,11 +85,11 @@ public:
     return _dense.Data();
   }
 
-  uint32 *Entities() {
+  uint32 *Entities() override {
     return _denseEntities.Data();
   }
 
-  uint64 Length() const {
+  uint64 Length() const override {
     return _dense.Length();
   }
 

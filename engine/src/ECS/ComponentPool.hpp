@@ -6,13 +6,7 @@
 
 namespace flatearth::ecs {
 
-class ISparseSetBase {
-public:
-  virtual ~ISparseSetBase() = default;
-  virtual void Remove(uint32 entityIndex) = 0;
-  virtual uint32 *Entities() = 0;
-  virtual uint64 Length() const = 0;
-};
+using ISparseSetBase = containers::ISparseSetBase;
 
 template <typename T>
 class SparseSetHolder final : public ISparseSetBase {

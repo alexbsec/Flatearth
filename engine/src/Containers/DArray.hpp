@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstring>
 #include <expected>
+#include <utility>
 
 namespace flatearth::containers {
 
@@ -46,6 +47,27 @@ public:
   }
 
   ~DArray() = default;
+
+  DArray(DArray &&other) noexcept
+      : _array(std::move(other._array)),
+        _capacity(std::exchange(other._capacity, 0)),
+        _length(std::exchange(other._length, 0)),
+        _stride(other._stride),
+        _bufferSize(std::exchange(other._bufferSize, 0)),
+        _memoryManager(other._memoryManager) {}
+
+  // Move-assign: steal the buffer; keep _memoryManager (reference can't be rebound).
+  // The stolen _array carries its own deleter pointing to other's MemoryManager,
+  // so the memory is always freed through the right allocator.
+  DArray &operator=(DArray &&other) noexcept {
+    if (this == &other) return *this;
+    _array       = std::move(other._array);
+    _capacity    = std::exchange(other._capacity, 0);
+    _length      = std::exchange(other._length, 0);
+    _stride      = other._stride;
+    _bufferSize  = std::exchange(other._bufferSize, 0);
+    return *this;
+  }
 
   uint64 Capacity() const { return _capacity; }
   uint64 Length() const { return _length; }

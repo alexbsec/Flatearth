@@ -50,7 +50,7 @@ public:
       return &static_cast<SparseSetHolder<T> *>(ppBase->get())->sparseSet;
     }
 
-    FePtr<SparseSetHolder<T>> pHolder = _memoryManager.Allocate<ISparseSetBase, SparseSetHolder<T>>(
+    FePtr<ISparseSetBase> pHolder = _memoryManager.Allocate<ISparseSetBase, SparseSetHolder<T>>(
         memory::Tag::Entity, _memoryManager, cMaxEntities);
 
     containers::SparseSet<T> *pSet = &static_cast<SparseSetHolder<T> *>(pHolder.get())->sparseSet;

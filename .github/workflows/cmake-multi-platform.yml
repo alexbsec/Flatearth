@@ -87,3 +87,6 @@ jobs:
       # ---------- Shared ----------
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: Run tests
+        run: build/flatearth_tests
