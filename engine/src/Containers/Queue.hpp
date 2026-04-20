@@ -35,7 +35,10 @@ public:
       return;
     }
 
-    _pFront = std::move(_pFront->pNext);
+    // Must hoist pNext out before assigning _pFront: the move-assignment
+    // frees the current front node, but the source deleter lives inside it.
+    FePtr<Node<T>> next = std::move(_pFront->pNext);
+    _pFront = std::move(next);
     if (_pFront == nullptr) {
       _pBack = nullptr;
     }

@@ -35,6 +35,7 @@ public:
       return {id, _view.Get<Ts>(id)...};
     }
 
+    friend class View;
   private:
     void Advance() {
       while (_index < _view._pDriver->Length() &&

@@ -87,3 +87,7 @@ jobs:
       # ---------- Shared ----------
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: Run tests
+        if: runner.os == 'Linux'
+        run: LD_LIBRARY_PATH=build/engine build/tests/flatearth_tests

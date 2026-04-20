@@ -1,4 +1,4 @@
-.PHONY: run build format release
+.PHONY: run build format release test
 
 run:
 	LSAN_OPTIONS=suppressions=lsan.supp ./debug/bin/flatearth_testbed
@@ -12,3 +12,6 @@ format:
 
 release:
 	./build-all.sh release && ./post-build.sh release
+
+test:
+	./build-all.sh && ./debug/bin/flatearth_tests

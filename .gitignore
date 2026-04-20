@@ -9,6 +9,8 @@ testbed/.cache
 testbed/.cache/*
 testbed/compile_commands.json
 tests/build/*
+tests/build-debug/*
+tests/build-release/*
 tests/.cache
 tests/.cache/*
 tests/compile_commands.json
