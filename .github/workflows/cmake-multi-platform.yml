@@ -90,4 +90,4 @@ jobs:
 
       - name: Run tests
         if: runner.os == 'Linux'
-        run: build/tests/flatearth_tests
+        run: LD_LIBRARY_PATH=build/engine build/tests/flatearth_tests
