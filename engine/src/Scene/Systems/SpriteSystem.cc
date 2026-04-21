@@ -1,30 +1,40 @@
 #include "SpriteSystem.hpp"
 
-#include "Scene/Components/Children.hpp"
 #include "Scene/Components/Sprite.hpp"
+#include "Scene/Components/SpriteAnimator.hpp"
 
 namespace flatearth::systems {
+using namespace scene;
 
 void SpriteSystem::Update(ecs::Registry &registry, float32 deltaTime) {
-  using namespace scene;
-  ecs::View<Sprite> view = registry.ViewOf<Sprite>();
+  ecs::View<Sprite, SpriteAnimator> view = registry.ViewOf<Sprite, SpriteAnimator>();
 
-  for (auto [entity, sprite] : view) {
-    if (!sprite.dirty) {
+  for (auto &&[entity, sprite, animator] : view) {
+    if (!animator.playing || animator.frameCount == 0) {
       continue;
     }
 
-    if (!registry.Has<Children>(entity)) {
-      continue;
-    }
+    UpdateAnimator(animator, sprite, deltaTime);
+  }
+}
 
-    Children &children = registry.Get<Children>(entity);
-    for (uint8 i = 0; i < children.count; i++) {
-      ecs::EntityId child = children.ids[i];
-      if (registry.Has<Sprite>(child)) {
-        registry.Get<Sprite>(child).dirty = FeTrue;
+void SpriteSystem::UpdateAnimator(SpriteAnimator &animator, Sprite &sprite, float32 deltaTime) {
+  animator.elapsed += deltaTime;
+  if (animator.elapsed >= animator.frames[animator.currentFrame].duration) {
+    animator.elapsed = 0.0f;
+    animator.currentFrame++;
+
+    if (animator.currentFrame >= animator.frameCount) {
+      animator.currentFrame = animator.loop ? 0 : animator.frameCount - 1;
+      if (!animator.loop) {
+        animator.playing = FeFalse;
       }
     }
+
+    const AnimationFrame &frame = animator.frames[animator.currentFrame];
+    sprite.uvOffset = frame.uvOffset;
+    sprite.uvScale = frame.uvScale;
+    sprite.dirty = FeTrue;
   }
 }
 
