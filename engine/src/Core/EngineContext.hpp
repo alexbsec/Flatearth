@@ -5,6 +5,7 @@
 #include "Core/FeMemory.hpp"
 #include "Core/Input.hpp"
 #include "ECS/Registry.hpp"
+#include "Scene/SceneManager.hpp"
 
 namespace flatearth {
 
@@ -13,13 +14,15 @@ struct EngineContext {
   memory::MemoryManager &memoryManager;
   input::InputManager &inputManager;
   ecs::Registry &registry;
+  scene::SceneManager &sceneManager;
 
   explicit EngineContext(memory::MemoryManager &memManager,
                          assets::AssetManager &assetManager,
                          input::InputManager &inputManager,
-                         ecs::Registry &registry)
+                         ecs::Registry &registry,
+                         scene::SceneManager &sceneManager)
       : assetManager(assetManager), memoryManager(memManager), inputManager(inputManager),
-        registry(registry) {}
+        registry(registry), sceneManager(sceneManager) {}
 };
 
 } // namespace flatearth

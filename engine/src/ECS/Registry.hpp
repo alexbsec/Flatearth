@@ -62,11 +62,12 @@ public:
   bool Has(EntityId id) const {
     uint32 typeId = ComponentTypeId<T>::Value();
     const FePtr<ISparseSetBase> *ppBase = _poolsMap.Retrieve(typeId);
-    if (ppBase == nullptr) return false;
+    if (ppBase == nullptr)
+      return false;
     return static_cast<const SparseSetHolder<T> *>(ppBase->get())->sparseSet.Has(id);
   }
 
-  template <typename ...Ts>
+  template <typename... Ts>
   View<Ts...> ViewOf() {
     return View<Ts...>(GetPool<Ts>()...);
   }

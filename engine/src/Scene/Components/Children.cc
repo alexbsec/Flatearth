@@ -1,4 +1,5 @@
 #include "Children.hpp"
+
 #include "ECS/ECSTypes.hpp"
 
 namespace flatearth::scene {
@@ -34,5 +35,4 @@ bool Children::Has(ecs::EntityId id) const {
   return FeFalse;
 }
 
-
-}
+} // namespace flatearth::scene

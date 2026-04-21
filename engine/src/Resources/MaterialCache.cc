@@ -7,7 +7,8 @@ namespace flatearth::resources {
 
 MaterialCache::MaterialCache(memory::MemoryManager &memManager,
                              renderer::FrontendRenderer &renderer)
-    : ResourceCache(memManager), _renderer(renderer) {}
+    : ResourceCache(memManager), _renderer(renderer) {
+}
 
 FeExpect<MaterialHandle, Error> MaterialCache::AcquireMaterial(const string &name,
                                                                Texture *pTexture) {
@@ -15,9 +16,8 @@ FeExpect<MaterialHandle, Error> MaterialCache::AcquireMaterial(const string &nam
   return this->ProtectedAcquire(name);
 }
 
-FeExpect<void, Error> MaterialCache::Create(Material *pMaterial,
-                                            uint32 handle,
-                                            const string &name) {
+FeExpect<void, Error>
+MaterialCache::Create(Material *pMaterial, uint32 handle, const string &name) {
   if (_pendingTexture == nullptr) {
     FLOG_ERROR("nullptr texture passed for material '{}'", name);
     return FeErr{Error("texture pointer is null", ErrorType::NullptrException)};

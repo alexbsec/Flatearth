@@ -13,8 +13,7 @@ namespace flatearth::assets {
 
 class AssetManager {
 public:
-  explicit AssetManager(memory::MemoryManager &memManager,
-                        platform::FileSystem &fs);
+  explicit AssetManager(memory::MemoryManager &memManager, platform::FileSystem &fs);
 
   void Initialize(renderer::FrontendRenderer *pRenderer);
 

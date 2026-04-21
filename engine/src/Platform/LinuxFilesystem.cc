@@ -63,7 +63,7 @@ FileSystem::OpenFile(const stdfs::path &path, FileMode mode, bool binary) {
     return FeErr{Error("invalid file mode", ErrorType::InvalidFileMode)};
   }
 
-  stdfs::path absolutePath = ResolvePath(_rootDir, path); 
+  stdfs::path absolutePath = ResolvePath(_rootDir, path);
   FLOG_INFO("absolute path is {}", absolutePath.string());
 
   int32 fd = open(absolutePath.c_str(), flags, S_IRUSR | S_IWUSR);

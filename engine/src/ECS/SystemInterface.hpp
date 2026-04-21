@@ -11,6 +11,6 @@ public:
   virtual void Update(Registry &registry, float32 deltaTime) = 0;
 };
 
-}
+} // namespace flatearth::ecs
 
 #endif // _FLATEARTH_ENGINE_ECS_SYSTEM_INTERFACE_HPP

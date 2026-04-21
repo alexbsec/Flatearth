@@ -20,7 +20,7 @@ struct GameState {
 
   float32 ballVx{1.5f};
   float32 ballVy{0.8f};
-  bool    serveRight{true};
+  bool serveRight{true};
 };
 
 class GameTest {

@@ -102,5 +102,4 @@ bool InputManager::WasButtonUp(Button button) {
   return !_state.mousePrevious.buttons[ButtonIndex(button)];
 }
 
-
 } // namespace flatearth::input

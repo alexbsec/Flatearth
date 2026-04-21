@@ -1,8 +1,8 @@
 #ifndef _FLATEARTH_ENGINE_ECS_REFLECT_TYPE_DESCRIPTOR_HPP
 #define _FLATEARTH_ENGINE_ECS_REFLECT_TYPE_DESCRIPTOR_HPP
 
-#include "FieldType.hpp"
 #include "Authority.hpp"
+#include "FieldType.hpp"
 
 #include <vector>
 

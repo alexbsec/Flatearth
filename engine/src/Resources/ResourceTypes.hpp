@@ -46,6 +46,6 @@ struct Texture {
   void *pInternalData;
 };
 
-};
+}; // namespace flatearth::resources
 
 #endif // _FLATEARTH_ENGINE_RESOURCES_RESOURCE_TYPES_HPP

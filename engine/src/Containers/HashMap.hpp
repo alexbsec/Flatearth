@@ -132,7 +132,7 @@ public:
         FePtr<Node<HashMapEntry<T, V>>> toDelete = std::move(*ppOwner); // take ownership
         *ppOwner = std::move(toDelete->pNext);                          // splice successor in
         _size--;
-        return FeTrue;                                                  // toDelete frees node
+        return FeTrue; // toDelete frees node
       }
 
       ppOwner = &node->pNext;
@@ -144,8 +144,7 @@ public:
   template <typename Fn>
   void ForEach(Fn &&fn) {
     for (uint64 i = 0; i < _bucketCount; i++) {
-      for (Node<HashMapEntry<T, V>> *node = _ppBuckets[i].get();
-           node != nullptr;
+      for (Node<HashMapEntry<T, V>> *node = _ppBuckets[i].get(); node != nullptr;
            node = node->pNext.get()) {
         fn(node->data.key, node->data.value);
       }

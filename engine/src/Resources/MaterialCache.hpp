@@ -5,7 +5,9 @@
 #include "Resources/ResourceCache.hpp"
 #include "Resources/ResourceTypes.hpp"
 
-namespace flatearth::renderer { class FrontendRenderer; }
+namespace flatearth::renderer {
+class FrontendRenderer;
+}
 
 namespace flatearth::resources {
 

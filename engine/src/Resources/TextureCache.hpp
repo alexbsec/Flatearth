@@ -11,8 +11,7 @@ namespace flatearth::resources {
 
 class TextureCache : public ResourceCache<Texture> {
 public:
-  FEAPI explicit TextureCache(memory::MemoryManager &memManager,
-                              platform::FileSystem &fs);
+  FEAPI explicit TextureCache(memory::MemoryManager &memManager, platform::FileSystem &fs);
 
   void Initialize(renderer::FrontendRenderer *pRenderer);
 

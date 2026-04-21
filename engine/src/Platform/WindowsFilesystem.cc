@@ -14,9 +14,9 @@ stdfs::path WorkDirectory() {
 }
 
 stdfs::path GetExecutableDir() {
-    wchar_t buffer[MAX_PATH];
-    GetModuleFileNameW(nullptr, buffer, MAX_PATH);
-    return std::filesystem::path(buffer).parent_path();
+  wchar_t buffer[MAX_PATH];
+  GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+  return std::filesystem::path(buffer).parent_path();
 }
 
 static HANDLE GetHandle(FileHandle &handle) {

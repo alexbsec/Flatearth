@@ -15,6 +15,6 @@ private:
   memory::MemoryManager &_memoryManager;
 };
 
-}
+} // namespace flatearth::systems
 
 #endif // _FLATEARTH_ENGINE_SCENE_SYSTEMS_TRANSFORM_SYSTEM_HPP

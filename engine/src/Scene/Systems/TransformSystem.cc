@@ -1,4 +1,5 @@
 #include "Scene/Systems/TransformSystem.hpp"
+
 #include "Scene/Components/Children.hpp"
 #include "Scene/Components/Transform2D.hpp"
 
@@ -7,8 +8,8 @@ namespace flatearth::systems {
 using scene::Children;
 using scene::Transform2D;
 
-TransformSystem::TransformSystem(memory::MemoryManager &memManager)
-  : _memoryManager(memManager) {}
+TransformSystem::TransformSystem(memory::MemoryManager &memManager) : _memoryManager(memManager) {
+}
 
 void TransformSystem::Update(ecs::Registry &registry, float32 deltaTime) {
   ecs::View<Transform2D> view = registry.ViewOf<Transform2D>();
@@ -32,4 +33,4 @@ void TransformSystem::Update(ecs::Registry &registry, float32 deltaTime) {
   }
 }
 
-}
+} // namespace flatearth::systems

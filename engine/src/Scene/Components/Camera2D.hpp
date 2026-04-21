@@ -9,6 +9,6 @@ struct Camera2D {
   float32 zoom{1.0f};
 };
 
-}
+} // namespace flatearth::scene
 
 #endif // _FLATEARTH_ENGINE_SCENE_COMPONENTS_CAMERA2D_HPP

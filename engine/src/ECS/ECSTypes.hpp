@@ -19,6 +19,6 @@ inline constexpr uint32 NewEntityId(uint16 index, uint16 generation) {
   return (static_cast<uint32>(generation) << 16) | index;
 }
 
-}
+} // namespace flatearth::ecs
 
 #endif // _FLATEARTH_ENGINE_ECS_ECS_TYPES_HPP
