@@ -1,16 +1,16 @@
 #include "EngineListener.hpp"
 
 #include "Core/Logger.hpp"
-#include "Renderer/RendererFrontend.hpp"
+#include "Renderer/GameRenderer.hpp"
 
 namespace flatearth {
 
 const char *KeyToString(input::Keys key);
 
 EngineListener::EngineListener(event::EventManager &eventManager,
-                               ApplicationState &appState,
-                               renderer::FrontendRenderer &renderer)
-    : _eventManager(eventManager), _appState(appState), _frontendRenderer(renderer) {
+                               renderer::GameRenderer &renderer,
+                               ApplicationState &appState)
+    : _eventManager(eventManager), _appState(appState), _renderer(renderer) {
 }
 
 EngineListener::~EngineListener() {
@@ -106,7 +106,7 @@ FeExpect<bool, Error> EngineListener::OnResize(const event::EventDispatchContext
     return FeErr{Error("game failed to resize", ErrorType::GameResizeError)};
   }
 
-  auto res = _frontendRenderer.OnResize(width, height);
+  auto res = _renderer.FrontendReference().OnResize(width, height);
   if (!res.has_value()) {
     FLOG_ERROR("renderer failed to resize to {}x{}", width, height);
     return FeFalse;
@@ -128,11 +128,15 @@ FeExpect<bool, Error> EngineListener::OnKey(const event::EventDispatchContext &c
 
 FeExpect<bool, Error> EngineListener::OnEvent(const event::EventDispatchContext &ctx,
                                               const event::EventContext &eventCtx) {
-  if (ctx.code != event::SystemEventCode::ApplicationQuit) {
+  if (ctx.code == event::SystemEventCode::ApplicationQuit) {
+    _appState.isRunning = FeFalse;
+    return FeTrue;
+  }
+
+  if (ctx.code != event::SystemEventCode::FileLoaded) {
     return FeFalse;
   }
 
-  _appState.isRunning = FeFalse;
   return FeTrue;
 }
 

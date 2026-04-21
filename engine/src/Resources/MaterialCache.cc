@@ -1,34 +1,33 @@
 #include "MaterialCache.hpp"
 
 #include "Core/Logger.hpp"
+#include "Renderer/RendererFrontend.hpp"
 
 namespace flatearth::resources {
 
 MaterialCache::MaterialCache(memory::MemoryManager &memManager,
-                             renderer::FrontendRenderer &renderer,
-                             TextureCache &textureCache)
-    : ResourceCache(memManager), _renderer(renderer), _textureCache(textureCache) {}
+                             renderer::FrontendRenderer &renderer)
+    : ResourceCache(memManager), _renderer(renderer) {}
 
 FeExpect<MaterialHandle, Error> MaterialCache::AcquireMaterial(const string &name,
-                                                               TextureHandle texHandle) {
-  _pendingTexHandle = texHandle;
+                                                               Texture *pTexture) {
+  _pendingTexture = pTexture;
   return this->ProtectedAcquire(name);
 }
 
 FeExpect<void, Error> MaterialCache::Create(Material *pMaterial,
                                             uint32 handle,
                                             const string &name) {
-  Texture *pTexture = _textureCache.Get(_pendingTexHandle);
-  if (pTexture == nullptr) {
-    FLOG_ERROR("failed to resolve texture handle {} for material '{}'", _pendingTexHandle, name);
-    return FeErr{Error("texture handle could not be resolved", ErrorType::NullptrException)};
+  if (_pendingTexture == nullptr) {
+    FLOG_ERROR("nullptr texture passed for material '{}'", name);
+    return FeErr{Error("texture pointer is null", ErrorType::NullptrException)};
   }
 
   pMaterial->id = handle;
   pMaterial->name = name;
-  pMaterial->texHandle = _pendingTexHandle;
+  pMaterial->texHandle = _pendingTexture->id;
 
-  return _renderer.CreateMaterial(pMaterial, pTexture);
+  return _renderer.CreateMaterial(pMaterial, _pendingTexture);
 }
 
 FeExpect<void, Error> MaterialCache::Destroy(Material *pMaterial) {

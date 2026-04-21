@@ -3,17 +3,18 @@
 
 #include "ApplicationConfig.hpp"
 #include "Core/Event.hpp"
-#include "Renderer/RendererFrontend.hpp"
+#include "Renderer/GameRenderer.hpp"
 
 namespace flatearth {
 
 class EngineListener final : public event::ListenerAdapter {
 public:
   explicit EngineListener(event::EventManager &eventManager,
-                          ApplicationState &appState,
-                          renderer::FrontendRenderer &renderer);
+                          renderer::GameRenderer &renderer,
+                          ApplicationState &appState);
 
   ~EngineListener();
+
   // Inherited overrrides
   FeExpect<void, Error> Initialize() override;
   FeExpect<bool, Error> OnResize(const event::EventDispatchContext &ctx,
@@ -41,8 +42,8 @@ private:
 
 private:
   ApplicationState &_appState;
-  renderer::FrontendRenderer &_frontendRenderer;
   event::EventManager &_eventManager;
+  renderer::GameRenderer &_renderer;
 };
 
 } // namespace flatearth

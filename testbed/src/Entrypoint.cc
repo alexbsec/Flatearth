@@ -12,7 +12,6 @@ bool CreateGame(flatearth::Game *pGame) {
   pGame->Load = GameTest::GameLoad;
   pGame->Unload = GameTest::GameUnload;
   pGame->Update = GameTest::GameUpdate;
-  pGame->Render = GameTest::GameRender;
   pGame->OnResize = GameTest::GameOnResize;
   return true;
 }

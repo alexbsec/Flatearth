@@ -1,0 +1,86 @@
+#include "AssetManager.hpp"
+
+#include "Core/FeMemory.hpp"
+#include "Platform/Filesystem.hpp"
+#include "Renderer/RendererFrontend.hpp"
+#include "Resources/ResourceTypes.hpp"
+#include "Scene/Components/Sprite.hpp"
+
+namespace flatearth::assets {
+
+AssetManager::AssetManager(memory::MemoryManager &memManager,
+                           platform::FileSystem &fs)
+    : _textureCache(memManager, fs), _memoryManager(memManager),
+      _fs(fs) {
+}
+
+void AssetManager::Initialize(renderer::FrontendRenderer *pRenderer) {
+  if (pRenderer == nullptr) {
+    return;
+  }
+
+  _textureCache.Initialize(pRenderer);
+  _pRenderer = pRenderer;
+}
+
+FeExpect<resources::TextureHandle, Error>
+AssetManager::LoadTexture(stringv path, resources::TextureFilter filter) {
+  return _textureCache.AcquireTexture(string(path), filter);
+}
+
+void AssetManager::ReleaseTexture(resources::TextureHandle handle) {
+  _textureCache.Release(handle);
+}
+
+resources::Texture *AssetManager::GetTexture(resources::TextureHandle handle) {
+  return _textureCache.Get(handle);
+}
+
+FeExpect<scene::Sprite, Error> AssetManager::LoadSprite(stringv path,
+                                                        resources::MeshShape shape,
+                                                        resources::TextureFilter filter) {
+  auto loadRes = LoadTexture(path, filter);
+  if (!loadRes.has_value()) {
+    return FeErr{loadRes.error()};
+  }
+
+  resources::TextureHandle handle = loadRes.value();
+  scene::Sprite sprite{};
+  sprite.texHandle = handle;
+
+  resources::Texture *pTexture = GetTexture(handle);
+  if (pTexture == nullptr) {
+    return FeErr{Error("cannot create sprite with nullptr texture", ErrorType::NullptrException)};
+  }
+
+  auto acMatRes = _pRenderer->AcquireMaterial(string(path), pTexture);
+  if (!acMatRes.has_value()) {
+    return FeErr{acMatRes.error()};
+  }
+  sprite.matHandle = acMatRes.value();
+
+  auto acMeshRes = _pRenderer->AcquireMesh(shape);
+  if (!acMeshRes.has_value()) {
+    return FeErr{acMeshRes.error()};
+  }
+  sprite.meshHandle = acMeshRes.value();
+
+  return std::move(sprite);
+}
+
+void AssetManager::ReleaseSprite(scene::Sprite &sprite) {
+  _pRenderer->ReleaseMaterial(sprite.matHandle);
+  _pRenderer->ReleaseMesh(sprite.meshHandle);
+  ReleaseTexture(sprite.texHandle);
+  sprite = scene::Sprite{};
+}
+
+void AssetManager::Shutdown() {
+  _textureCache.Shutdown();
+}
+
+bool AssetManager::Initialized() const {
+  return _pRenderer != nullptr;
+}
+
+} // namespace flatearth::assets

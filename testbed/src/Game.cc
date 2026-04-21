@@ -1,166 +1,185 @@
 #include "Game.hpp"
 
+#include <Core/EngineContext.hpp>
 #include <Core/Input.hpp>
 #include <Core/Logger.hpp>
 #include <Defines.hpp>
 #include <Math/FeMath.hpp>
-#include <Renderer/RendererFrontend.hpp>
-#include <Resources/MaterialCache.hpp>
-#include <Resources/MeshCache.hpp>
-#include <Resources/TextureCache.hpp>
-#include <Renderer/RendererTypes.hpp>
+#include <Scene/Components/Camera2D.hpp>
+#include <Scene/Components/Transform2D.hpp>
 
 namespace flatearth::testbed {
 
+// ── field dimensions (orthographic: x in [-aspect,aspect], y in [-1,1]) ─────
+static constexpr float32 cAspect       = 1280.0f / 720.0f;
+static constexpr float32 cPaddleX      = 1.5f;
+static constexpr float32 cPaddleScaleX = 0.08f;
+static constexpr float32 cPaddleScaleY = 0.35f;
+static constexpr float32 cPaddleHalfW  = cPaddleScaleX * 0.5f;
+static constexpr float32 cPaddleHalfH  = cPaddleScaleY * 0.5f;
+static constexpr float32 cBallScale    = 0.08f;
+static constexpr float32 cBallHalf     = cBallScale * 0.5f;
+static constexpr float32 cWallY        = 1.0f;
+static constexpr float32 cPlayerSpeed  = 2.5f;
+static constexpr float32 cAISpeed      = 2.2f;
+static constexpr float32 cBallInitVx   = 1.5f;
+static constexpr float32 cBallInitVy   = 0.8f;
+static constexpr float32 cSpeedupRate  = 1.05f;
+
 GameState GameTest::_state = GameState{};
 
-static void RecalculateCameraView(GameState &state) {
-  if (!state.cameraViewDirty)
-    return;
+// ── helpers ──────────────────────────────────────────────────────────────────
 
-  state.view = math::Mat4D::Translation(-state.cameraPosition.x(), -state.cameraPosition.y(), 0.0f);
-
-  state.cameraViewDirty = FeFalse;
+static inline float32 Clamp(float32 v, float32 lo, float32 hi) {
+  return v < lo ? lo : (v > hi ? hi : v);
 }
 
-bool GameTest::GameInitialize(flatearth::Game *gameInstance) {
-  gameInstance->windowStartWidth = 1280;
-  gameInstance->windowStartHeight = 720;
-  gameInstance->windowStartPosX = 100;
-  gameInstance->windowStartPosY = 100;
-  gameInstance->gameName = "Testbed";
+static inline bool AABBOverlap(float32 ax, float32 ay, float32 ahw, float32 ahh,
+                                float32 bx, float32 by, float32 bhw, float32 bhh) {
+  return math::Abs(ax - bx) < ahw + bhw && math::Abs(ay - by) < ahh + bhh;
+}
 
-  _state.cameraPosition = math::Vec3D(0.0f, 0.0f, -5.0f);
-  _state.cameraEuler = math::Vec3D::Zero();
-  _state.view = math::Mat4D::Identity();
-  _state.cameraViewDirty = FeTrue;
+void GameTest::ResetBall(flatearth::Game *gameInstance) {
+  EngineContext &ctx = *gameInstance->pCtx;
+  auto &t = ctx.registry.Get<scene::Transform2D>(_state.ballEntity);
+  t.x = 0.0f;
+  t.y = 0.0f;
+  t.dirty = FeTrue;
+
+  _state.serveRight = !_state.serveRight;
+  _state.ballVx = _state.serveRight ? cBallInitVx : -cBallInitVx;
+  _state.ballVy = cBallInitVy;
+}
+
+// ── lifecycle ─────────────────────────────────────────────────────────────────
+
+bool GameTest::GameInitialize(flatearth::Game *gameInstance) {
+  gameInstance->windowStartWidth  = 1280;
+  gameInstance->windowStartHeight = 720;
+  gameInstance->windowStartPosX   = 100;
+  gameInstance->windowStartPosY   = 100;
+  gameInstance->gameName          = "Pong";
   return FeTrue;
 }
 
 bool GameTest::GameLoad(flatearth::Game *gameInstance) {
-  auto meshRes = gameInstance->pMeshCache->AcquireMesh(resources::MeshShape::Quad);
-  if (!meshRes.has_value()) {
-    FLOG_ERROR("failed to acquire quad mesh");
+  EngineContext &ctx = *gameInstance->pCtx;
+
+  // Camera — static, centered
+  _state.cameraEntity = ctx.registry.Create();
+  ctx.registry.Insert(_state.cameraEntity, scene::Transform2D{});
+  ctx.registry.Insert(_state.cameraEntity, scene::Camera2D{});
+
+  // Paddle sprite (shared by both paddles)
+  auto paddleRes = ctx.assetManager.LoadSprite("assets/textures/texture.jpg",
+                                               resources::MeshShape::Quad);
+  if (!paddleRes.has_value()) {
+    FLOG_ERROR("failed to load paddle sprite");
     return FeFalse;
   }
-  _state.quadMesh = meshRes.value();
+  _state.paddleSprite = paddleRes.value();
 
-  auto circleRes = gameInstance->pMeshCache->AcquireMesh(resources::MeshShape::Circle);
-  if (!circleRes.has_value()) {
-    FLOG_ERROR("failed to acquire circle mesh");
+  // Player paddle — left side
+  _state.playerEntity = ctx.registry.Create();
+  ctx.registry.Insert(_state.playerEntity,
+      scene::Transform2D{-cPaddleX, 0.0f, 0.0f, cPaddleScaleX, cPaddleScaleY});
+  ctx.registry.Insert(_state.playerEntity, _state.paddleSprite);
+
+  // AI paddle — right side (same sprite, different entity)
+  _state.aiEntity = ctx.registry.Create();
+  ctx.registry.Insert(_state.aiEntity,
+      scene::Transform2D{cPaddleX, 0.0f, 0.0f, cPaddleScaleX, cPaddleScaleY});
+  ctx.registry.Insert(_state.aiEntity, _state.paddleSprite);
+
+  // Ball sprite
+  auto ballRes = ctx.assetManager.LoadSprite("assets/textures/rugtexture.jpg",
+                                             resources::MeshShape::Circle);
+  if (!ballRes.has_value()) {
+    FLOG_ERROR("failed to load ball sprite");
     return FeFalse;
   }
-  _state.circleMesh = circleRes.value();
+  _state.ballSprite = ballRes.value();
+  _state.ballEntity = ctx.registry.Create();
+  ctx.registry.Insert(_state.ballEntity,
+      scene::Transform2D{0.0f, 0.0f, 0.0f, cBallScale, cBallScale});
+  ctx.registry.Insert(_state.ballEntity, _state.ballSprite);
 
-  auto capsuleRes = gameInstance->pMeshCache->AcquireMesh(resources::MeshShape::Capsule2D);
-  if (!capsuleRes.has_value()) {
-    FLOG_ERROR("failed to acquire capsule mesh");
-    return FeFalse;
-  }
-  _state.capsuleMesh = capsuleRes.value();
-
-  auto texRes = gameInstance->pTextureCache->AcquireTexture("assets/textures/texture.jpg");
-  if (!texRes.has_value()) {
-    FLOG_ERROR("failed to load texture");
-    return FeFalse;
-  }
-
-  _state.texHandle = texRes.value();
-
-  auto matRes = gameInstance->pMaterialCache->AcquireMaterial("quad_material", _state.texHandle);
-  if (!matRes.has_value()) {
-    FLOG_ERROR("failed to acquire material");
-    return FeFalse;
-  }
-
-  _state.matHandle = matRes.value();
-  _state.pMaterial = gameInstance->pMaterialCache->Get(_state.matHandle);
-
-  auto tex2Res = gameInstance->pTextureCache->AcquireTexture("assets/textures/rugtexture.jpg");
-  if (!tex2Res.has_value()) {
-    FLOG_ERROR("failed to load rug texture");
-    return FeFalse;
-  }
-
-  _state.tex2Handle = tex2Res.value();
-
-  auto mat2Res = gameInstance->pMaterialCache->AcquireMaterial("rug_material", _state.tex2Handle);
-  if (!mat2Res.has_value()) {
-    FLOG_ERROR("failed to acquire rug material");
-    return FeFalse;
-  }
-
-  _state.mat2Handle = mat2Res.value();
-  _state.pMaterial2 = gameInstance->pMaterialCache->Get(_state.mat2Handle);
   return FeTrue;
 }
+
+// ── update ────────────────────────────────────────────────────────────────────
 
 bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
-  using namespace input;
-  if (!gameInstance->pInputManager)
-    return FeFalse;
+  if (!gameInstance->pCtx) return FeFalse;
+  EngineContext &ctx = *gameInstance->pCtx;
+  input::InputManager &input = ctx.inputManager;
 
-  const float32 dy = 3.0f * deltaTime;
-  const float32 dx = 3.0f * deltaTime;
+  auto &player = ctx.registry.Get<scene::Transform2D>(_state.playerEntity);
+  auto &ai     = ctx.registry.Get<scene::Transform2D>(_state.aiEntity);
+  auto &ball   = ctx.registry.Get<scene::Transform2D>(_state.ballEntity);
 
-  if (gameInstance->pInputManager->IsKeyDown(Keys::KEY_W)) {
-    _state.cameraPosition = _state.cameraPosition + math::Vec3D(0.0f, +dy, 0.0f);
-    _state.cameraViewDirty = FeTrue;
+  // ── player input ──────────────────────────────────────────────────────────
+  if (input.IsKeyDown(input::Keys::KEY_W)) {
+    player.y = Clamp(player.y + cPlayerSpeed * deltaTime,
+                     -(cWallY - cPaddleHalfH), cWallY - cPaddleHalfH);
+    player.dirty = FeTrue;
+  }
+  if (input.IsKeyDown(input::Keys::KEY_S)) {
+    player.y = Clamp(player.y - cPlayerSpeed * deltaTime,
+                     -(cWallY - cPaddleHalfH), cWallY - cPaddleHalfH);
+    player.dirty = FeTrue;
   }
 
-  if (gameInstance->pInputManager->IsKeyDown(Keys::KEY_S)) {
-    _state.cameraPosition = _state.cameraPosition + math::Vec3D(0.0f, -dy, 0.0f);
-    _state.cameraViewDirty = FeTrue;
+  // ── AI paddle tracks ball ─────────────────────────────────────────────────
+  float32 aiDiff = ball.y - ai.y;
+  float32 aiMove = Clamp(aiDiff, -cAISpeed * deltaTime, cAISpeed * deltaTime);
+  ai.y = Clamp(ai.y + aiMove, -(cWallY - cPaddleHalfH), cWallY - cPaddleHalfH);
+  ai.dirty = FeTrue;
+
+  // ── move ball ─────────────────────────────────────────────────────────────
+  ball.x += _state.ballVx * deltaTime;
+  ball.y += _state.ballVy * deltaTime;
+  ball.dirty = FeTrue;
+
+  // ── wall bounce (top / bottom) ────────────────────────────────────────────
+  if (ball.y + cBallHalf >= cWallY) {
+    ball.y = cWallY - cBallHalf;
+    _state.ballVy = -math::Abs(_state.ballVy);
+  } else if (ball.y - cBallHalf <= -cWallY) {
+    ball.y = -cWallY + cBallHalf;
+    _state.ballVy = math::Abs(_state.ballVy);
   }
 
-  if (gameInstance->pInputManager->IsKeyDown(Keys::KEY_A)) {
-    _state.cameraPosition = _state.cameraPosition + math::Vec3D(+dx, 0.0f, 0.0f);
-    _state.cameraViewDirty = FeTrue;
+  // ── paddle collision ──────────────────────────────────────────────────────
+  auto PaddleHit = [&](scene::Transform2D &paddle) {
+    if (!AABBOverlap(ball.x, ball.y, cBallHalf, cBallHalf,
+                     paddle.x, paddle.y, cPaddleHalfW, cPaddleHalfH)) return;
+
+    float32 relHit = (ball.y - paddle.y) / cPaddleHalfH;
+    _state.ballVx  = -_state.ballVx * cSpeedupRate;
+    _state.ballVy  = Clamp(_state.ballVy + relHit * 1.5f, -3.0f, 3.0f);
+
+    // push ball out of paddle to prevent tunnelling
+    ball.x = paddle.x + ((_state.ballVx > 0) ? 1.0f : -1.0f) * (cPaddleHalfW + cBallHalf);
+  };
+
+  if (_state.ballVx < 0) PaddleHit(player);
+  else                    PaddleHit(ai);
+
+  // ── out of bounds → reset ─────────────────────────────────────────────────
+  if (ball.x > cAspect + cBallHalf || ball.x < -(cAspect + cBallHalf)) {
+    FLOG_INFO("point scored — resetting ball");
+    ResetBall(gameInstance);
   }
-
-  if (gameInstance->pInputManager->IsKeyDown(Keys::KEY_D)) {
-    _state.cameraPosition = _state.cameraPosition + math::Vec3D(-dx, 0.0f, 0.0f);
-    _state.cameraViewDirty = FeTrue;
-  }
-
-  return FeTrue;
-}
-
-bool GameTest::GameRender(flatearth::Game *, renderer::RenderPacket &packet) {
-  RecalculateCameraView(_state);
-  packet.view = _state.view;
-
-  _state.angle += packet.deltaTime * 1.5f;
-  math::Mat4D model = math::Mat4D::RotationZ(_state.angle);
-  packet.objects.Push({_state.quadMesh, model, {}, {1.0f, 1.0f}, renderer::RenderLayer::Entities, _state.pMaterial});
-
-  _state.angle2 -= packet.deltaTime * 2.0f;
-  math::Mat4D model2 =
-      math::Mat4D::Translation(0.0f, 1.2f, 0.0f) * math::Mat4D::RotationZ(_state.angle2);
-  packet.objects.Push({_state.circleMesh, model2, {}, {1.0f, 1.0f}, renderer::RenderLayer::Entities, _state.pMaterial});
-
-  _state.angle3 += packet.deltaTime * 1.0f;
-  math::Mat4D model3 =
-      math::Mat4D::Translation(-1.2f, 0.0f, 0.0f) * math::Mat4D::RotationZ(_state.angle3);
-  packet.objects.Push({_state.capsuleMesh, model3, {}, {1.0f, 1.0f}, renderer::RenderLayer::Entities, _state.pMaterial2});
 
   return FeTrue;
 }
 
 void GameTest::GameUnload(flatearth::Game *gameInstance) {
-  if (gameInstance->pMeshCache) {
-    gameInstance->pMeshCache->Release(_state.quadMesh);
-    gameInstance->pMeshCache->Release(_state.circleMesh);
-    gameInstance->pMeshCache->Release(_state.capsuleMesh);
-  }
-  if (gameInstance->pMaterialCache) {
-    gameInstance->pMaterialCache->Release(_state.matHandle);
-    gameInstance->pMaterialCache->Release(_state.mat2Handle);
-  }
-  if (gameInstance->pTextureCache) {
-    gameInstance->pTextureCache->Release(_state.texHandle);
-    gameInstance->pTextureCache->Release(_state.tex2Handle);
-  }
+  if (!gameInstance->pCtx) return;
+  EngineContext &ctx = *gameInstance->pCtx;
+  ctx.assetManager.ReleaseSprite(_state.paddleSprite);
+  ctx.assetManager.ReleaseSprite(_state.ballSprite);
 }
 
 bool GameTest::GameOnResize(flatearth::Game *, uint32, uint32) {

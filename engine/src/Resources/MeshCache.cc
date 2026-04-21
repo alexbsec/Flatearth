@@ -2,6 +2,7 @@
 
 #include "Core/Logger.hpp"
 #include "Math/MathTypes.hpp"
+#include "Renderer/RendererFrontend.hpp"
 
 #include <cmath>
 #include <vector>

@@ -2,9 +2,10 @@
 #define _FLATEARTH_ENGINE_RESOURCES_MESH_CACHE_HPP
 
 #include "Core/FeMemory.hpp"
-#include "Renderer/RendererFrontend.hpp"
 #include "Resources/ResourceCache.hpp"
 #include "Resources/ResourceTypes.hpp"
+
+namespace flatearth::renderer { class FrontendRenderer; }
 
 namespace flatearth::resources {
 

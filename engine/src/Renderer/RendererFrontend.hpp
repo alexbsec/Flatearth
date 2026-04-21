@@ -6,6 +6,8 @@
 #include "Defines.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererInterface.hpp"
+#include "Resources/MaterialCache.hpp"
+#include "Resources/MeshCache.hpp"
 #include "Resources/ResourceTypes.hpp"
 
 namespace flatearth::renderer {
@@ -52,6 +54,19 @@ public:
                                              const uint32 *pIndices);
   FEAPI FeExpect<void, Error> DestroyGeometry(uint32 id);
 
+  // Mesh cache public API
+  FEAPI FeExpect<resources::MeshHandle, Error> AcquireMesh(resources::MeshShape shape);
+  FEAPI void ReleaseMesh(resources::MeshHandle handle);
+  FEAPI resources::Mesh *GetMesh(resources::MeshHandle handle);
+
+  // Material cache public API
+  FEAPI FeExpect<resources::MaterialHandle, Error> AcquireMaterial(const string &name,
+                                                                    resources::Texture *pTexture);
+  FEAPI void ReleaseMaterial(resources::MaterialHandle handle);
+  FEAPI resources::Material *GetMaterial(resources::MaterialHandle handle);
+
+  FEAPI void Shutdown();
+
 private:
   FeExpect<void, Error> MakeBackends();
 
@@ -63,6 +78,8 @@ private:
   ApplicationState *_pAppState;
   string _applicationName;
   platform::FileSystem &_filesystem;
+  resources::MeshCache _meshCache;
+  resources::MaterialCache _materialCache;
 };
 
 } // namespace flatearth::renderer

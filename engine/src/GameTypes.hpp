@@ -1,21 +1,12 @@
 #ifndef _FLATEARTH_ENGINE_GAME_TYPES_HPP
 #define _FLATEARTH_ENGINE_GAME_TYPES_HPP
 
-#include "Core/Input.hpp"
 #include "Defines.hpp"
-#include "Renderer/RendererTypes.hpp"
 
 #include <functional>
 
-// TODO: remove this once EngineContext exists
-namespace flatearth::resources {
-class TextureCache;
-class MaterialCache;
-class MeshCache;
-} // namespace flatearth::resources
-
-namespace flatearth::renderer {
-class FrontendRenderer;
+namespace flatearth {
+struct EngineContext;
 }
 
 namespace flatearth {
@@ -30,30 +21,22 @@ public:
   std::function<bool(struct Game *gameInstance)> Load;
   std::function<void(struct Game *gameInstance)> Unload;
   std::function<bool(struct Game *gameInstance, float32 deltaTime)> Update;
-  std::function<bool(struct Game *gameInstance, renderer::RenderPacket &packet)> Render;
   std::function<bool(struct Game *gameInstance, uint32 width, uint32 height)> OnResize;
 
-  Game()
-      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), Render(nullptr),
+  explicit Game()
+      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr),
         OnResize(nullptr), gameName(cGameName), windowStartWidth(scDefaultStartWidth),
         windowStartHeight(scDefaultStartHeight) {}
 
   Game(const string &name)
-      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), Render(nullptr),
+      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr),
         OnResize(nullptr), gameName(name), windowStartWidth(scDefaultStartWidth),
         windowStartHeight(scDefaultStartHeight) {}
 
 public:
   string gameName;
   int32 windowStartPosX, windowStartPosY, windowStartWidth, windowStartHeight;
-
-  // TODO: these are only here so that we can get it up and running. REMOVE
-  // LATER
-  input::InputManager *pInputManager{nullptr};
-  resources::TextureCache *pTextureCache{nullptr};
-  resources::MaterialCache *pMaterialCache{nullptr};
-  resources::MeshCache *pMeshCache{nullptr};
-  renderer::FrontendRenderer *pRenderer{nullptr};
+  EngineContext *pCtx{nullptr};
 };
 
 } // namespace flatearth

@@ -11,9 +11,9 @@ namespace flatearth::ecs {
 
 class Registry {
 public:
-  explicit Registry(memory::MemoryManager &memManager);
+  FEAPI explicit Registry(memory::MemoryManager &memManager);
 
-  EntityId Create();
+  FEAPI EntityId Create();
   void Destroy(EntityId id);
 
   template <typename T>

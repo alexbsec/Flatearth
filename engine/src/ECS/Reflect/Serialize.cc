@@ -12,6 +12,7 @@ using json = nlohmann::json;
 
 static json FieldToJson(const void *ptr, FieldType type) {
   switch (type) {
+    case FieldType::Null: return nullptr;
     case FieldType::Bool:    { bool    v; std::memcpy(&v, ptr, 1); return v; }
     case FieldType::Int8:    { int8_t  v; std::memcpy(&v, ptr, 1); return v; }
     case FieldType::Int16:   { int16_t v; std::memcpy(&v, ptr, 2); return v; }
@@ -23,6 +24,12 @@ static json FieldToJson(const void *ptr, FieldType type) {
     case FieldType::Uint64:  { uint64_t v; std::memcpy(&v, ptr, 8); return v; }
     case FieldType::Float32: { float  v; std::memcpy(&v, ptr, 4); return v; }
     case FieldType::Float64: { double v; std::memcpy(&v, ptr, 8); return v; }
+    case FieldType::Vec2D: {
+      float x, y;
+      std::memcpy(&x, ptr, 4);
+      std::memcpy(&y, static_cast<const char *>(ptr) + 4, 4);
+      return json{{"x", x}, {"y", y}};
+    }
   }
   return nullptr;
 }
@@ -32,6 +39,7 @@ static json FieldToJson(const void *ptr, FieldType type) {
 static bool FieldFromJson(void *ptr, FieldType type, const json &val) {
   try {
     switch (type) {
+      case FieldType::Null: return false;
       case FieldType::Bool:    { bool    v = val.get<bool>();    std::memcpy(ptr, &v, 1); return true; }
       case FieldType::Int8:    { int8_t  v = val.get<int8_t>();  std::memcpy(ptr, &v, 1); return true; }
       case FieldType::Int16:   { int16_t v = val.get<int16_t>(); std::memcpy(ptr, &v, 2); return true; }
@@ -43,6 +51,14 @@ static bool FieldFromJson(void *ptr, FieldType type, const json &val) {
       case FieldType::Uint64:  { uint64_t v = val.get<uint64_t>(); std::memcpy(ptr, &v, 8); return true; }
       case FieldType::Float32: { float  v = val.get<float>();  std::memcpy(ptr, &v, 4); return true; }
       case FieldType::Float64: { double v = val.get<double>(); std::memcpy(ptr, &v, 8); return true; }
+      case FieldType::Vec2D: {
+        if (!val.is_object()) return false;
+        float x = val.at("x").get<float>();
+        float y = val.at("y").get<float>();
+        std::memcpy(ptr, &x, 4);
+        std::memcpy(static_cast<char *>(ptr) + 4, &y, 4);
+        return true;
+      }
     }
   } catch (...) {
     return false;
