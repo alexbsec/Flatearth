@@ -11,13 +11,13 @@ namespace flatearth::ecs {
 
 class Registry {
 public:
-  explicit Registry(memory::MemoryManager &memManager);
+  FEAPI explicit Registry(memory::MemoryManager &memManager);
 
-  EntityId Create();
+  FEAPI EntityId Create();
   void Destroy(EntityId id);
 
   template <typename T>
-  void Insert(EntityId id, const T &component) {
+  FEAPI void Insert(EntityId id, const T &component) {
     if (!_entityManager.IsAlive(id)) {
       return;
     }
@@ -27,7 +27,7 @@ public:
   }
 
   template <typename T>
-  void Remove(EntityId id) {
+  FEAPI void Remove(EntityId id) {
     if (!_entityManager.IsAlive(id)) {
       return;
     }
@@ -37,13 +37,13 @@ public:
   }
 
   template <typename T>
-  T &Get(EntityId id) {
+  FEAPI T &Get(EntityId id) {
     containers::SparseSet<T> *pSet = GetPool<T>();
     return pSet->Get(id);
   }
 
   template <typename T>
-  containers::SparseSet<T> *GetPool() {
+  FEAPI containers::SparseSet<T> *GetPool() {
     uint32 typeId = ComponentTypeId<T>::Value();
     FePtr<ISparseSetBase> *ppBase = _poolsMap.Retrieve(typeId);
     if (ppBase != nullptr) {
@@ -59,7 +59,7 @@ public:
   }
 
   template <typename T>
-  bool Has(EntityId id) const {
+  FEAPI bool Has(EntityId id) const {
     uint32 typeId = ComponentTypeId<T>::Value();
     const FePtr<ISparseSetBase> *ppBase = _poolsMap.Retrieve(typeId);
     if (ppBase == nullptr) return false;
@@ -67,7 +67,7 @@ public:
   }
 
   template <typename ...Ts>
-  View<Ts...> ViewOf() {
+  FEAPI View<Ts...> ViewOf() {
     return View<Ts...>(GetPool<Ts>()...);
   }
 

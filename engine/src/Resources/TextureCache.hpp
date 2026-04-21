@@ -12,11 +12,14 @@ namespace flatearth::resources {
 class TextureCache : public ResourceCache<Texture> {
 public:
   FEAPI explicit TextureCache(memory::MemoryManager &memManager,
-                              renderer::FrontendRenderer &renderer,
                               platform::FileSystem &fs);
+
+  void Initialize(renderer::FrontendRenderer *pRenderer);
 
   FEAPI FeExpect<TextureHandle, Error>
   AcquireTexture(const string &path, TextureFilter filter = TextureFilter::Nearest);
+
+  bool Initialized() const;
 
 protected:
   FeExpect<void, Error> Create(Texture *pTexture, uint32 handle, const string &path) override;
@@ -24,8 +27,8 @@ protected:
 
 private:
   TextureFilter _filterToUse{TextureFilter::Nearest};
-  renderer::FrontendRenderer &_renderer;
   platform::FileSystem &_fs;
+  renderer::FrontendRenderer *_pRenderer;
 };
 
 } // namespace flatearth::resources

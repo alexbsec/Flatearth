@@ -17,11 +17,14 @@ enum class FieldType : uint8 {
   Uint32,
   Uint64,
   Float32,
-  Float64
+  Float64,
+  Vec2D,
 };
 
 constexpr uint8 FieldSize(FieldType t) {
   switch (t) {
+    case FieldType::Null:
+      return 0;
     case FieldType::Bool:
       return 1;
     case FieldType::Int8:
@@ -44,11 +47,15 @@ constexpr uint8 FieldSize(FieldType t) {
       return 4;
     case FieldType::Float64:
       return 8;
+    case FieldType::Vec2D:
+      return 8;
   }
 }
 
 constexpr const char *FieldTypeName(FieldType t) {
   switch (t) {
+    case FieldType::Null:
+      return "null";
     case FieldType::Bool:
       return "bool";
     case FieldType::Int8:
@@ -71,6 +78,8 @@ constexpr const char *FieldTypeName(FieldType t) {
       return "float32";
     case FieldType::Float64:
       return "float64";
+    case FieldType::Vec2D:
+      return "vec2d";
   }
   return "unknown";
 }

@@ -18,11 +18,16 @@ FrontendRenderer::FrontendRenderer(ApplicationState *appState,
                                    memory::MemoryManager &memManager,
                                    platform::FileSystem &fs)
     : _applicationName(appState->appConfig.name), _memoryManager(memManager), _pAppState(appState),
-      _filesystem(fs) {
+      _filesystem(fs), _meshCache(memManager, *this), _materialCache(memManager, *this) {
 }
 
 FrontendRenderer::~FrontendRenderer() {
   FLOG_INFO("frontend renderer exited gracefully");
+}
+
+void FrontendRenderer::Shutdown() {
+  _meshCache.Shutdown();
+  _materialCache.Shutdown();
 }
 
 FeExpect<bool, Error> FrontendRenderer::Initialize() {
@@ -194,6 +199,31 @@ FeExpect<void, Error> FrontendRenderer::CreateMaterial(resources::Material *pMat
 
 FeExpect<void, Error> FrontendRenderer::DestroyMaterial(resources::Material *pMaterial) {
   return _rendererState.pActiveBackend->DestroyMaterial(pMaterial);
+}
+
+FeExpect<resources::MeshHandle, Error> FrontendRenderer::AcquireMesh(resources::MeshShape shape) {
+  return _meshCache.AcquireMesh(shape);
+}
+
+void FrontendRenderer::ReleaseMesh(resources::MeshHandle handle) {
+  _meshCache.Release(handle);
+}
+
+resources::Mesh *FrontendRenderer::GetMesh(resources::MeshHandle handle) {
+  return _meshCache.Get(handle);
+}
+
+FeExpect<resources::MaterialHandle, Error>
+FrontendRenderer::AcquireMaterial(const string &name, resources::Texture *pTexture) {
+  return _materialCache.AcquireMaterial(name, pTexture);
+}
+
+void FrontendRenderer::ReleaseMaterial(resources::MaterialHandle handle) {
+  _materialCache.Release(handle);
+}
+
+resources::Material *FrontendRenderer::GetMaterial(resources::MaterialHandle handle) {
+  return _materialCache.Get(handle);
 }
 
 FeExpect<void, Error> FrontendRenderer::MakeBackends() {

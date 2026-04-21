@@ -9,7 +9,7 @@ using TextureHandle = uint32;
 using MaterialHandle = uint32;
 using MeshHandle = uint32;
 
-enum class MeshShape {
+enum class MeshShape : uint16 {
   Quad,
   Circle,
   Capsule2D,

@@ -1,16 +1,17 @@
 #ifndef _FLATEARTH_ENGINE_CORE_APPLICATION_HPP
 #define _FLATEARTH_ENGINE_CORE_APPLICATION_HPP
 
+#include "Assets/AssetManager.hpp"
 #include "Core/ApplicationConfig.hpp"
 #include "Core/Event.hpp"
 #include "Core/Input.hpp"
+#include "ECS/Registry.hpp"
+#include "ECS/Scheduler/SystemScheduler.hpp"
 #include "GameTypes.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Platform/Platform.hpp"
-#include "Resources/MaterialCache.hpp"
-#include "Resources/MeshCache.hpp"
-#include "Resources/TextureCache.hpp"
-#include "Renderer/RendererFrontend.hpp"
+#include "Renderer/GameRenderer.hpp"
+#include "Core/EngineContext.hpp"
 
 namespace flatearth {
 
@@ -31,11 +32,12 @@ private:
   event::EventManager _eventManager;
   input::InputManager _inputManager;
   platform::FileSystem _filesystem;
-  renderer::FrontendRenderer _frontendRenderer;
-  resources::TextureCache _textureCache;
-  resources::MaterialCache _materialCache;
-  resources::MeshCache _meshCache;
+  assets::AssetManager _assetManager;
+  ecs::SystemScheduler _scheduler;
+  ecs::Registry _registry;
+  renderer::GameRenderer _renderer;
   FePtr<event::IEventListener> _engineListener;
+  EngineContext _ctx;
 };
 
 } // namespace flatearth

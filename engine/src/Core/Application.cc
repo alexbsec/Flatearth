@@ -8,26 +8,27 @@
 #include "Core/Logger.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
+#include "Scene/Systems/SpriteSystem.hpp"
+#include "Scene/Systems/TransformSystem.hpp"
 
 namespace flatearth {
 
 Engine::Engine(Game *pGame)
     : _appState(pGame), _eventManager(_memoryManager), _inputManager(_eventManager),
-      _frontendRenderer(&_appState, _memoryManager, _filesystem), _filesystem(_memoryManager),
-      _textureCache(_memoryManager, _frontendRenderer, _filesystem),
-      _materialCache(_memoryManager, _frontendRenderer, _textureCache),
-      _meshCache(_memoryManager, _frontendRenderer) {
+      _renderer(&_appState, _memoryManager, _registry, _filesystem), _filesystem(_memoryManager),
+      _assetManager(_memoryManager, _filesystem), _scheduler(_memoryManager),
+      _registry(_memoryManager),
+      _ctx(_memoryManager, _assetManager, _inputManager, _registry) {
   _engineListener = _memoryManager.Allocate<event::IEventListener, EngineListener>(
-      memory::Tag::Application, _eventManager, _appState, _frontendRenderer);
+      memory::Tag::Application, _eventManager, _renderer, _appState);
 }
 
 Engine::~Engine() {
   if (_appState.pGameInstance->Unload) {
     _appState.pGameInstance->Unload(_appState.pGameInstance);
   }
-  _meshCache.Shutdown();
-  _materialCache.Shutdown();
-  _textureCache.Shutdown();
+  _renderer.Shutdown();
+  _assetManager.Shutdown();
   FLOG_INFO("engine shutdown gracefully");
 }
 
@@ -37,6 +38,8 @@ FeExpect<void, Error> Engine::Initialize() {
     FLOG_ERROR("game has undefined callbacks: {}", checkRes.error().message);
     return FeErr{checkRes.error()};
   }
+
+  _appState.pGameInstance->pCtx = &_ctx;
 
   // initialize game
   if (!_appState.pGameInstance->Initialize(_appState.pGameInstance)) {
@@ -73,26 +76,41 @@ FeExpect<void, Error> Engine::Initialize() {
     return FeErr{listenerInitRes.error()};
   }
 
-  FeExpect<bool, Error> frontendInitRes = _frontendRenderer.Initialize();
-  if (!frontendInitRes.has_value()) {
-    FLOG_ERROR("frontend renderer failed to initialize: {}", frontendInitRes.error().message);
-    return FeErr{frontendInitRes.error()};
+  FeExpect<bool, Error> renderInitRes = _renderer.Initialize();
+  if (!renderInitRes.has_value()) {
+    FLOG_ERROR("game renderer failed to initialize: {}", renderInitRes.error().message);
+    return FeErr{renderInitRes.error()};
   }
+
+  _assetManager.Initialize(&_renderer.FrontendReference());
 
   _appState.isRunning = FeTrue;
   _appState.isSuspended = FeFalse;
   _appState.platformState = _pPlatform->State();
-  _appState.pGameInstance->pInputManager = &_inputManager;
-  _appState.pGameInstance->pTextureCache = &_textureCache;
-  _appState.pGameInstance->pMaterialCache = &_materialCache;
-  _appState.pGameInstance->pMeshCache = &_meshCache;
-  _appState.pGameInstance->pRenderer = &_frontendRenderer;
 
   if (_appState.pGameInstance->Load) {
     if (!_appState.pGameInstance->Load(_appState.pGameInstance)) {
       FLOG_FATAL("game failed to load resources");
       return FeErr{Error("game Load() failed", ErrorType::GameInitializeError)};
     }
+  }
+
+  auto registerRes = _scheduler.Register<systems::TransformSystem>(_memoryManager);
+  if (!registerRes.has_value()) {
+    FLOG_ERROR("could not register TransformSystem into scheduler");
+    return FeErr{registerRes.error()};
+  }
+
+  auto spriteRes = _scheduler.Register<systems::SpriteSystem>();
+  if (!spriteRes.has_value()) {
+    FLOG_ERROR("could not register SpriteSystem into scheduler");
+    return FeErr{spriteRes.error()};
+  }
+
+  auto buildRes = _scheduler.Build();
+  if (!buildRes.has_value()) {
+    FLOG_ERROR("failed to build scheduler");
+    return FeErr{buildRes.error()};
   }
 
   FLOG_INFO("engine successfully initialized");
@@ -134,18 +152,11 @@ FeExpect<void, Error> Engine::Start() {
       break;
     }
 
-    // Hardcoded just to make it up and running
-    // TODO: remove
-    renderer::RenderPacket packet(_memoryManager);
-    packet.deltaTime = deltaTime;
-    if (!_appState.pGameInstance->Render(_appState.pGameInstance, packet)) {
-      FLOG_FATAL("could not populate render packet inside game instance");
-      break;
-    }
+    _scheduler.Update(_registry, deltaTime);
 
-    auto drawRes = _frontendRenderer.DrawFrame(&packet);
+    auto drawRes = _renderer.Draw(deltaTime);
     if (!drawRes.has_value()) {
-      FLOG_ERROR("frontend renderer failed to draw frame: {}", drawRes.error().message);
+      FLOG_ERROR("game renderer failed to draw frame: {}", drawRes.error().message);
       return FeErr{drawRes.error()};
     }
 
@@ -182,11 +193,6 @@ FeExpect<void, Error> Engine::CheckGamePrerequisites() {
   if (_appState.pGameInstance->Update == nullptr) {
     return FeErr{
         Error("game instance Update() function is not defined", ErrorType::GameUpdateUndefined)};
-  }
-
-  if (_appState.pGameInstance->Render == nullptr) {
-    return FeErr{
-        Error("game instance Render() function is not defined", ErrorType::GameUpdateUndefined)};
   }
 
   if (_appState.pGameInstance->OnResize == nullptr) {

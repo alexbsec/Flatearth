@@ -7,16 +7,26 @@
 
 namespace flatearth::resources {
 
-TextureCache::TextureCache(memory::MemoryManager &memManager,
-                           renderer::FrontendRenderer &renderer,
-                           platform::FileSystem &fs)
-    : ResourceCache(memManager), _renderer(renderer), _fs(fs) {
+TextureCache::TextureCache(memory::MemoryManager &memManager, platform::FileSystem &fs)
+    : ResourceCache(memManager), _fs(fs) {
+}
+
+void TextureCache::Initialize(renderer::FrontendRenderer *pRenderer) {
+  if (pRenderer == nullptr) {
+    return;
+  }
+
+  _pRenderer = pRenderer;
 }
 
 FeExpect<TextureHandle, Error> TextureCache::AcquireTexture(const string &path,
                                                             TextureFilter filter) {
   _filterToUse = filter;
   return this->ProtectedAcquire(path);
+}
+
+bool TextureCache::Initialized() const {
+  return _pRenderer != nullptr;
 }
 
 FeExpect<void, Error>
@@ -61,7 +71,7 @@ TextureCache::Create(Texture *pTexture, uint32 /*handle*/, const string &path) {
   }
 
   bool hasTransparency = channels == 4;
-  auto texRes = _renderer.CreateTexture(
+  auto texRes = _pRenderer->CreateTexture(
       path, false, width, height, 4, pPixels, hasTransparency, pTexture, _filterToUse);
 
   stbi_image_free(pPixels);
@@ -75,7 +85,7 @@ TextureCache::Create(Texture *pTexture, uint32 /*handle*/, const string &path) {
 }
 
 FeExpect<void, Error> TextureCache::Destroy(Texture *pTexture) {
-  return _renderer.DestroyTexture(pTexture);
+  return _pRenderer->DestroyTexture(pTexture);
 }
 
 } // namespace flatearth::resources

@@ -19,6 +19,7 @@ enum class SystemEventCode : uint16 {
   MouseMoved = 0x06,
   MouseWheel = 0x07,
   WindowResized = 0x08,
+  FileLoaded = 0x09,
 };
 
 inline constexpr uint16 ToUnderlying(SystemEventCode code) {
