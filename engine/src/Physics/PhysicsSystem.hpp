@@ -13,6 +13,8 @@ public:
 
 private:
   void CreateBodies(ecs::Registry &registry);
+  void ProcessTeleports(ecs::Registry &registry);
+  void ApplyKinematicVelocities(ecs::Registry &registry);
   void SyncTransforms(ecs::Registry &registry);
 
 private:

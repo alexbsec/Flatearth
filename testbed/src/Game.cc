@@ -5,57 +5,54 @@
 #include <Core/Logger.hpp>
 #include <Defines.hpp>
 #include <Math/FeMath.hpp>
+#include <Physics/BoxCollider.hpp>
+#include <Physics/CircleCollider.hpp>
+#include <Physics/RigidBody.hpp>
 #include <Scene/Components/Camera2D.hpp>
 #include <Scene/Components/Transform2D.hpp>
 #include <Scene/Scene.hpp>
 
 namespace flatearth::testbed {
 
-// ── field dimensions (orthographic: x in [-aspect,aspect], y in [-1,1]) ─────
+// World dimensions (orthographic): x in [-aspect, aspect], y in [-1, 1]
 static constexpr float32 cAspect = 1280.0f / 720.0f;
-static constexpr float32 cPaddleX = 1.5f;
-static constexpr float32 cPaddleScaleX = 0.08f;
-static constexpr float32 cPaddleScaleY = 0.35f;
-static constexpr float32 cPaddleHalfW = cPaddleScaleX * 0.5f;
-static constexpr float32 cPaddleHalfH = cPaddleScaleY * 0.5f;
-static constexpr float32 cBallScale = 0.08f;
-static constexpr float32 cBallHalf = cBallScale * 0.5f;
-static constexpr float32 cWallY = 1.0f;
-static constexpr float32 cPlayerSpeed = 2.5f;
-static constexpr float32 cAISpeed = 2.2f;
-static constexpr float32 cBallInitVx = 1.5f;
-static constexpr float32 cBallInitVy = 0.8f;
-static constexpr float32 cSpeedupRate = 1.05f;
+
+// Platform
+static constexpr float32 cPlatformY = -0.75f;
+static constexpr float32 cPlatformHalfW = 0.25f;
+static constexpr float32 cPlatformHalfH = 0.03f;
+static constexpr float32 cPlatformSpeed = 2.5f;
+static constexpr float32 cPlatformScaleX = cPlatformHalfW * 2.0f;
+static constexpr float32 cPlatformScaleY = cPlatformHalfH * 2.0f;
+
+// Ball
+static constexpr float32 cBallRadius = 0.05f;
+static constexpr float32 cBallScale = cBallRadius * 2.0f;
+static constexpr float32 cBallStartX = 0.0f;
+static constexpr float32 cBallStartY = 0.3f;
+static constexpr float32 cBallInitVx = 0.5f;
+static constexpr float32 cBallInitVy = -1.5f;
+
+// Walls
+static constexpr float32 cWallThick = 0.05f;
+
+// Ball falls below this y → reset
+static constexpr float32 cDeathY = -1.1f;
 
 GameState GameTest::_state = GameState{};
 
-// ── helpers ──────────────────────────────────────────────────────────────────
-
-static inline float32 Clamp(float32 v, float32 lo, float32 hi) {
-  return v < lo ? lo : (v > hi ? hi : v);
-}
-
-static inline bool AABBOverlap(float32 ax,
-                               float32 ay,
-                               float32 ahw,
-                               float32 ahh,
-                               float32 bx,
-                               float32 by,
-                               float32 bhw,
-                               float32 bhh) {
-  return math::Abs(ax - bx) < ahw + bhw && math::Abs(ay - by) < ahh + bhh;
-}
+// ── helpers ───────────────────────────────────────────────────────────────────
 
 void GameTest::ResetBall(flatearth::Game *gameInstance) {
   EngineContext &ctx = *gameInstance->pCtx;
-  auto &t = ctx.registry.Get<scene::Transform2D>(_state.ballEntity);
-  t.x = 0.0f;
-  t.y = 0.0f;
-  t.dirty = FeTrue;
+  auto &ballT = ctx.registry.Get<scene::Transform2D>(_state.ballEntity);
+  auto &ballB = ctx.registry.Get<physics::RigidBody>(_state.ballEntity);
 
-  _state.serveRight = !_state.serveRight;
-  _state.ballVx = _state.serveRight ? cBallInitVx : -cBallInitVx;
-  _state.ballVy = cBallInitVy;
+  ballT.x = cBallStartX;
+  ballT.y = cBallStartY;
+  ballT.dirty = FeTrue;
+  ballB.velocity = math::Vec2D{cBallInitVx, cBallInitVy};
+  ballB.teleport = FeTrue;
 }
 
 // ── lifecycle ─────────────────────────────────────────────────────────────────
@@ -65,53 +62,36 @@ bool GameTest::GameInitialize(flatearth::Game *gameInstance) {
   gameInstance->windowStartHeight = 720;
   gameInstance->windowStartPosX = 100;
   gameInstance->windowStartPosY = 100;
-  gameInstance->gameName = "Pong";
+  gameInstance->gameName = "KeepItUp";
   return FeTrue;
 }
 
 bool GameTest::GameLoad(flatearth::Game *gameInstance) {
   EngineContext &ctx = *gameInstance->pCtx;
 
-  auto sceneRes = ctx.sceneManager.Load("pong");
+  auto sceneRes = ctx.sceneManager.Load("keepitup");
   if (!sceneRes.has_value()) {
-    FLOG_ERROR("failed to create pong scene");
+    FLOG_ERROR("failed to create keepitup scene");
     return FeFalse;
   }
   scene::Scene *pScene = sceneRes.value();
 
-  // Camera — static, centered
+  // ── camera ───────────────────────────────────────────────────────────────
   _state.cameraEntity = ctx.registry.Create();
   ctx.registry.Insert(_state.cameraEntity, scene::Transform2D{});
   ctx.registry.Insert(_state.cameraEntity, scene::Camera2D{});
   pScene->roots.push_back(_state.cameraEntity);
   pScene->allEntities.push_back(_state.cameraEntity);
 
-  // Paddle sprite (shared by both paddles)
-  auto paddleRes =
+  // ── sprites ───────────────────────────────────────────────────────────────
+  auto platRes =
       ctx.assetManager.LoadSprite("assets/textures/texture.jpg", resources::MeshShape::Quad);
-  if (!paddleRes.has_value()) {
-    FLOG_ERROR("failed to load paddle sprite");
+  if (!platRes.has_value()) {
+    FLOG_ERROR("failed to load platform sprite");
     return FeFalse;
   }
-  _state.paddleSprite = paddleRes.value();
+  _state.platformSprite = platRes.value();
 
-  // Player paddle — left side
-  _state.playerEntity = ctx.registry.Create();
-  ctx.registry.Insert(_state.playerEntity,
-                      scene::Transform2D{-cPaddleX, 0.0f, 0.0f, cPaddleScaleX, cPaddleScaleY});
-  ctx.registry.Insert(_state.playerEntity, _state.paddleSprite);
-  pScene->roots.push_back(_state.playerEntity);
-  pScene->allEntities.push_back(_state.playerEntity);
-
-  // AI paddle — right side (same sprite, different entity)
-  _state.aiEntity = ctx.registry.Create();
-  ctx.registry.Insert(_state.aiEntity,
-                      scene::Transform2D{cPaddleX, 0.0f, 0.0f, cPaddleScaleX, cPaddleScaleY});
-  ctx.registry.Insert(_state.aiEntity, _state.paddleSprite);
-  pScene->roots.push_back(_state.aiEntity);
-  pScene->allEntities.push_back(_state.aiEntity);
-
-  // Ball sprite
   auto ballRes =
       ctx.assetManager.LoadSprite("assets/textures/rugtexture.jpg", resources::MeshShape::Circle);
   if (!ballRes.has_value()) {
@@ -119,12 +99,51 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
     return FeFalse;
   }
   _state.ballSprite = ballRes.value();
+
+  // ── platform (kinematic) ──────────────────────────────────────────────────
+  _state.platformEntity = ctx.registry.Create();
+  ctx.registry.Insert(_state.platformEntity,
+                      scene::Transform2D{0.0f, cPlatformY, 0.0f, cPlatformScaleX, cPlatformScaleY});
+  ctx.registry.Insert(
+      _state.platformEntity,
+      physics::RigidBody{.type = physics::BodyType::Kinematic, .fixedRotation = FeTrue});
+  ctx.registry.Insert(
+      _state.platformEntity,
+      physics::BoxCollider{.halfWidth = cPlatformHalfW, .halfHeight = cPlatformHalfH});
+  ctx.registry.Insert(_state.platformEntity, _state.platformSprite);
+  pScene->roots.push_back(_state.platformEntity);
+  pScene->allEntities.push_back(_state.platformEntity);
+
+  // ── ball (dynamic) ────────────────────────────────────────────────────────
   _state.ballEntity = ctx.registry.Create();
   ctx.registry.Insert(_state.ballEntity,
-                      scene::Transform2D{0.0f, 0.0f, 0.0f, cBallScale, cBallScale});
+                      scene::Transform2D{cBallStartX, cBallStartY, 0.0f, cBallScale, cBallScale});
+  ctx.registry.Insert(_state.ballEntity,
+                      physics::RigidBody{.type = physics::BodyType::Dynamic,
+                                         .friction = 0.1f,
+                                         .restitution = 0.7f,
+                                         .fixedRotation = FeTrue,
+                                         .velocity = math::Vec2D{cBallInitVx, cBallInitVy}});
+  ctx.registry.Insert(_state.ballEntity, physics::CircleCollider{.radius = cBallRadius});
   ctx.registry.Insert(_state.ballEntity, _state.ballSprite);
   pScene->roots.push_back(_state.ballEntity);
   pScene->allEntities.push_back(_state.ballEntity);
+
+  // ── static walls ─────────────────────────────────────────────────────────
+  auto MakeWall = [&](float32 x, float32 y, float32 hw, float32 hh) {
+    auto e = ctx.registry.Create();
+    ctx.registry.Insert(e, scene::Transform2D{x, y});
+    ctx.registry.Insert(e, physics::RigidBody{.type = physics::BodyType::Static});
+    ctx.registry.Insert(e, physics::BoxCollider{.halfWidth = hw, .halfHeight = hh});
+    pScene->allEntities.push_back(e);
+  };
+
+  // Left wall — inner edge at x = -cAspect
+  MakeWall(-(cAspect + cWallThick), 0.0f, cWallThick, 1.1f);
+  // Right wall — inner edge at x = +cAspect
+  MakeWall((cAspect + cWallThick), 0.0f, cWallThick, 1.1f);
+  // Top wall — inner edge at y = +1
+  MakeWall(0.0f, 1.0f + cWallThick, cAspect + cWallThick, cWallThick);
 
   return FeTrue;
 }
@@ -134,67 +153,33 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
 bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
   if (!gameInstance->pCtx)
     return FeFalse;
+
   EngineContext &ctx = *gameInstance->pCtx;
   input::InputManager &input = ctx.inputManager;
 
-  auto &player = ctx.registry.Get<scene::Transform2D>(_state.playerEntity);
-  auto &ai = ctx.registry.Get<scene::Transform2D>(_state.aiEntity);
-  auto &ball = ctx.registry.Get<scene::Transform2D>(_state.ballEntity);
+  auto &platT = ctx.registry.Get<scene::Transform2D>(_state.platformEntity);
+  auto &platB = ctx.registry.Get<physics::RigidBody>(_state.platformEntity);
+  auto &ballT = ctx.registry.Get<scene::Transform2D>(_state.ballEntity);
+  auto &ballB = ctx.registry.Get<physics::RigidBody>(_state.ballEntity);
 
-  // ── player input ──────────────────────────────────────────────────────────
-  if (input.IsKeyDown(input::Keys::KEY_W)) {
-    player.y =
-        Clamp(player.y + cPlayerSpeed * deltaTime, -(cWallY - cPaddleHalfH), cWallY - cPaddleHalfH);
-    player.dirty = FeTrue;
-  }
-  if (input.IsKeyDown(input::Keys::KEY_S)) {
-    player.y =
-        Clamp(player.y - cPlayerSpeed * deltaTime, -(cWallY - cPaddleHalfH), cWallY - cPaddleHalfH);
-    player.dirty = FeTrue;
-  }
+  // ── platform movement ─────────────────────────────────────────────────────
+  float32 vx = 0.0f;
+  if (input.IsKeyDown(input::Keys::KEY_LEFT) || input.IsKeyDown(input::Keys::KEY_A))
+    vx = -cPlatformSpeed;
+  if (input.IsKeyDown(input::Keys::KEY_RIGHT) || input.IsKeyDown(input::Keys::KEY_D))
+    vx = cPlatformSpeed;
 
-  // ── AI paddle tracks ball ─────────────────────────────────────────────────
-  float32 aiDiff = ball.y - ai.y;
-  float32 aiMove = Clamp(aiDiff, -cAISpeed * deltaTime, cAISpeed * deltaTime);
-  ai.y = Clamp(ai.y + aiMove, -(cWallY - cPaddleHalfH), cWallY - cPaddleHalfH);
-  ai.dirty = FeTrue;
+  // Clamp: stop at screen edges
+  if (platT.x - cPlatformHalfW <= -cAspect && vx < 0.0f)
+    vx = 0.0f;
+  if (platT.x + cPlatformHalfW >= cAspect && vx > 0.0f)
+    vx = 0.0f;
 
-  // ── move ball ─────────────────────────────────────────────────────────────
-  ball.x += _state.ballVx * deltaTime;
-  ball.y += _state.ballVy * deltaTime;
-  ball.dirty = FeTrue;
+  platB.velocity = math::Vec2D{vx, 0.0f};
 
-  // ── wall bounce (top / bottom) ────────────────────────────────────────────
-  if (ball.y + cBallHalf >= cWallY) {
-    ball.y = cWallY - cBallHalf;
-    _state.ballVy = -math::Abs(_state.ballVy);
-  } else if (ball.y - cBallHalf <= -cWallY) {
-    ball.y = -cWallY + cBallHalf;
-    _state.ballVy = math::Abs(_state.ballVy);
-  }
-
-  // ── paddle collision ──────────────────────────────────────────────────────
-  auto PaddleHit = [&](scene::Transform2D &paddle) {
-    if (!AABBOverlap(
-            ball.x, ball.y, cBallHalf, cBallHalf, paddle.x, paddle.y, cPaddleHalfW, cPaddleHalfH))
-      return;
-
-    float32 relHit = (ball.y - paddle.y) / cPaddleHalfH;
-    _state.ballVx = -_state.ballVx * cSpeedupRate;
-    _state.ballVy = Clamp(_state.ballVy + relHit * 1.5f, -3.0f, 3.0f);
-
-    // push ball out of paddle to prevent tunnelling
-    ball.x = paddle.x + ((_state.ballVx > 0) ? 1.0f : -1.0f) * (cPaddleHalfW + cBallHalf);
-  };
-
-  if (_state.ballVx < 0)
-    PaddleHit(player);
-  else
-    PaddleHit(ai);
-
-  // ── out of bounds → reset ─────────────────────────────────────────────────
-  if (ball.x > cAspect + cBallHalf || ball.x < -(cAspect + cBallHalf)) {
-    FLOG_INFO("point scored — resetting ball");
+  // ── reset ball if it falls off the bottom ─────────────────────────────────
+  if (ballT.y < cDeathY) {
+    FLOG_INFO("ball fell — resetting");
     ResetBall(gameInstance);
   }
 
@@ -205,9 +190,9 @@ void GameTest::GameUnload(flatearth::Game *gameInstance) {
   if (!gameInstance->pCtx)
     return;
   EngineContext &ctx = *gameInstance->pCtx;
-  ctx.assetManager.ReleaseSprite(_state.paddleSprite);
+  ctx.assetManager.ReleaseSprite(_state.platformSprite);
   ctx.assetManager.ReleaseSprite(_state.ballSprite);
-  ctx.sceneManager.Unload("pong");
+  ctx.sceneManager.Unload("keepitup");
 }
 
 bool GameTest::GameOnResize(flatearth::Game *, uint32, uint32) {

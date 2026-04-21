@@ -11,16 +11,11 @@ namespace flatearth::testbed {
 
 struct GameState {
   ecs::EntityId cameraEntity{UINT32_MAX};
-  ecs::EntityId playerEntity{UINT32_MAX};
-  ecs::EntityId aiEntity{UINT32_MAX};
   ecs::EntityId ballEntity{UINT32_MAX};
+  ecs::EntityId platformEntity{UINT32_MAX};
 
-  scene::Sprite paddleSprite{};
+  scene::Sprite platformSprite{};
   scene::Sprite ballSprite{};
-
-  float32 ballVx{1.5f};
-  float32 ballVy{0.8f};
-  bool serveRight{true};
 };
 
 class GameTest {
