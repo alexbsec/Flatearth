@@ -5,14 +5,15 @@
 #include "Resources/ResourceCache.hpp"
 #include "Resources/ResourceTypes.hpp"
 
-namespace flatearth::renderer { class FrontendRenderer; }
+namespace flatearth::renderer {
+class FrontendRenderer;
+}
 
 namespace flatearth::resources {
 
 class MeshCache : public ResourceCache<Mesh> {
 public:
-  FEAPI explicit MeshCache(memory::MemoryManager &memManager,
-                           renderer::FrontendRenderer &renderer);
+  FEAPI explicit MeshCache(memory::MemoryManager &memManager, renderer::FrontendRenderer &renderer);
 
   FEAPI FeExpect<MeshHandle, Error> AcquireMesh(MeshShape shape);
 

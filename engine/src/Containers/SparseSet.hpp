@@ -10,9 +10,9 @@ namespace flatearth::containers {
 
 struct ISparseSetBase {
   virtual ~ISparseSetBase() = default;
-  virtual void     Remove(uint32 entityIndex) = 0;
-  virtual uint32  *Entities() = 0;
-  virtual uint64   Length() const = 0;
+  virtual void Remove(uint32 entityIndex) = 0;
+  virtual uint32 *Entities() = 0;
+  virtual uint64 Length() const = 0;
 };
 
 template <typename T>
@@ -73,29 +73,17 @@ public:
     _denseEntities.Clear();
   }
 
-  T &Get(uint32 entityIndex) {
-    return _dense[_sparse[entityIndex]];
-  }
+  T &Get(uint32 entityIndex) { return _dense[_sparse[entityIndex]]; }
 
-  const T &Get(uint32 entityIndex) const {
-    return _dense[_sparse[entityIndex]];
-  }
+  const T &Get(uint32 entityIndex) const { return _dense[_sparse[entityIndex]]; }
 
-  T *Data() {
-    return _dense.Data();
-  }
+  T *Data() { return _dense.Data(); }
 
-  uint32 *Entities() override {
-    return _denseEntities.Data();
-  }
+  uint32 *Entities() override { return _denseEntities.Data(); }
 
-  uint64 Length() const override {
-    return _dense.Length();
-  }
+  uint64 Length() const override { return _dense.Length(); }
 
-  bool Empty() const {
-    return _dense.Empty();
-  }
+  bool Empty() const { return _dense.Empty(); }
 
 private:
   DArray<T> _dense;

@@ -4,6 +4,7 @@
 #include "Defines.hpp"
 #include "ECS/ComponentPool.hpp"
 #include "ECS/Reflect/TypeDescriptor.hpp"
+
 #include <unordered_map>
 
 namespace flatearth::ecs::reflect {
@@ -48,6 +49,6 @@ private:
   std::unordered_map<stringv, uint32> _byName;
 };
 
-}
+} // namespace flatearth::ecs::reflect
 
 #endif // _FLATEARTH_ENGINE_ECS_REFLECT_TYPE_REGISTRY_HPP

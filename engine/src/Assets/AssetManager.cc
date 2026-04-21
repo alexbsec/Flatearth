@@ -8,10 +8,8 @@
 
 namespace flatearth::assets {
 
-AssetManager::AssetManager(memory::MemoryManager &memManager,
-                           platform::FileSystem &fs)
-    : _textureCache(memManager, fs), _memoryManager(memManager),
-      _fs(fs) {
+AssetManager::AssetManager(memory::MemoryManager &memManager, platform::FileSystem &fs)
+    : _textureCache(memManager, fs), _memoryManager(memManager), _fs(fs) {
 }
 
 void AssetManager::Initialize(renderer::FrontendRenderer *pRenderer) {

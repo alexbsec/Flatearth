@@ -1,4 +1,5 @@
 #include "SpriteSystem.hpp"
+
 #include "Scene/Components/Children.hpp"
 #include "Scene/Components/Sprite.hpp"
 
@@ -27,4 +28,4 @@ void SpriteSystem::Update(ecs::Registry &registry, float32 deltaTime) {
   }
 }
 
-}
+} // namespace flatearth::systems

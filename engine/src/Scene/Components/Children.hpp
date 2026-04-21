@@ -15,6 +15,6 @@ struct Children {
   bool Has(ecs::EntityId id) const;
 };
 
-}
+} // namespace flatearth::scene
 
 #endif // _FLATEARTH_ENGINE_SCENE_COMPONENTS_CHILDREN_HPP

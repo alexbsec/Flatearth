@@ -13,13 +13,10 @@ namespace flatearth::ecs {
 template <typename... Ts>
 class View {
 public:
-  explicit View(containers::SparseSet<Ts> *...sets)
-      : _sets(sets...) {
-    _pDriver = FindSmallest();
-  }
+  explicit View(containers::SparseSet<Ts> *...sets) : _sets(sets...) { _pDriver = FindSmallest(); }
 
   struct Iterator {
-    View  &_view;
+    View &_view;
     uint32 _index;
 
     bool operator!=(const Iterator &other) const { return _index != other._index; }
@@ -36,10 +33,10 @@ public:
     }
 
     friend class View;
+
   private:
     void Advance() {
-      while (_index < _view._pDriver->Length() &&
-             !_view.HasAll(_view._pDriver->Entities()[_index]))
+      while (_index < _view._pDriver->Length() && !_view.HasAll(_view._pDriver->Entities()[_index]))
         ++_index;
     }
   };
@@ -64,7 +61,9 @@ private:
   }
 
   template <typename T>
-  T &Get(EntityId id) { return GetSet<T>()->Get(id); }
+  T &Get(EntityId id) {
+    return GetSet<T>()->Get(id);
+  }
 
   bool HasAll(EntityId id) {
     return (... && std::get<containers::SparseSet<Ts> *>(_sets)->Has(id));
@@ -73,9 +72,11 @@ private:
   ISparseSetBase *FindSmallest() {
     ISparseSetBase *pSmallest = nullptr;
     uint64 minLen = std::numeric_limits<uint64>::max();
-    std::apply([&](auto *...sets) {
-      ((sets->Length() < minLen ? (minLen = sets->Length(), pSmallest = sets) : nullptr), ...);
-    }, _sets);
+    std::apply(
+        [&](auto *...sets) {
+          ((sets->Length() < minLen ? (minLen = sets->Length(), pSmallest = sets) : nullptr), ...);
+        },
+        _sets);
     return pSmallest;
   }
 };

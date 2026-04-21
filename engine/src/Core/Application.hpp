@@ -3,6 +3,7 @@
 
 #include "Assets/AssetManager.hpp"
 #include "Core/ApplicationConfig.hpp"
+#include "Core/EngineContext.hpp"
 #include "Core/Event.hpp"
 #include "Core/Input.hpp"
 #include "ECS/Registry.hpp"
@@ -11,7 +12,7 @@
 #include "Platform/Filesystem.hpp"
 #include "Platform/Platform.hpp"
 #include "Renderer/GameRenderer.hpp"
-#include "Core/EngineContext.hpp"
+#include "Scene/SceneManager.hpp"
 
 namespace flatearth {
 
@@ -36,6 +37,7 @@ private:
   ecs::SystemScheduler _scheduler;
   ecs::Registry _registry;
   renderer::GameRenderer _renderer;
+  scene::SceneManager _sceneManager;
   FePtr<event::IEventListener> _engineListener;
   EngineContext _ctx;
 };

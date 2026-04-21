@@ -25,6 +25,6 @@ private:
   uint32 _aliveCount{0};
 };
 
-};
+}; // namespace flatearth::ecs
 
 #endif // _FLATEARTH_ENGINE_ECS_ENTITY_MANAGER_HPP
