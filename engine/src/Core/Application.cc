@@ -8,6 +8,7 @@
 #include "Core/Logger.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
+#include "Physics/PhysicsSystem.hpp"
 #include "Scene/Systems/SpriteSystem.hpp"
 #include "Scene/Systems/TransformSystem.hpp"
 
@@ -17,8 +18,8 @@ Engine::Engine(Game *pGame)
     : _appState(pGame), _eventManager(_memoryManager), _inputManager(_eventManager),
       _renderer(&_appState, _memoryManager, _registry, _filesystem), _filesystem(_memoryManager),
       _assetManager(_memoryManager, _filesystem), _scheduler(_memoryManager),
-      _registry(_memoryManager), _sceneManager(_memoryManager, _registry),
-      _ctx(_memoryManager, _assetManager, _inputManager, _registry, _sceneManager) {
+      _registry(_memoryManager), _sceneManager(_memoryManager, _registry), _world(_memoryManager),
+      _ctx(_memoryManager, _assetManager, _inputManager, _registry, _sceneManager, _world) {
   _engineListener = _memoryManager.Allocate<event::IEventListener, EngineListener>(
       memory::Tag::Application, _eventManager, _renderer, _appState);
 }
@@ -29,6 +30,7 @@ Engine::~Engine() {
   }
   _renderer.Shutdown();
   _assetManager.Shutdown();
+  _world.Shutdown();
   FLOG_INFO("engine shutdown gracefully");
 }
 
@@ -95,6 +97,7 @@ FeExpect<void, Error> Engine::Initialize() {
     }
   }
 
+  _world.Initialize();
   auto registerRes = _scheduler.Register<systems::TransformSystem>(_memoryManager);
   if (!registerRes.has_value()) {
     FLOG_ERROR("could not register TransformSystem into scheduler");
@@ -105,6 +108,12 @@ FeExpect<void, Error> Engine::Initialize() {
   if (!spriteRes.has_value()) {
     FLOG_ERROR("could not register SpriteSystem into scheduler");
     return FeErr{spriteRes.error()};
+  }
+
+  auto physicsRes = _scheduler.Register<physics::PhysicsSystem>(_world);
+  if (!physicsRes.has_value()) {
+    FLOG_ERROR("could not register PhysicsSystem into scheduler");
+    return FeErr{physicsRes.error()};
   }
 
   auto buildRes = _scheduler.Build();

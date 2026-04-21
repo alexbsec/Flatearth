@@ -22,6 +22,25 @@ include(GNUInstallDirs)
 set(LIBRARY_BASE_PATH "${PROJECT_SOURCE_DIR}/src")
 
 ############################################################################
+#   DEPENDENCIES
+
+include(FetchContent)
+
+FetchContent_Declare(
+    box2d
+    GIT_REPOSITORY https://github.com/erincatto/box2d.git
+    GIT_TAG        v3.0.0
+    GIT_SHALLOW    TRUE
+)
+
+set(BOX2D_BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
+set(BOX2D_BUILD_TESTBED    OFF CACHE BOOL "" FORCE)
+set(BOX2D_BUILD_DOCS       OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(box2d)
+set_target_properties(box2d PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+############################################################################
 #   PROJECT DEFINITIONS
 
 file(GLOB_RECURSE SOURCE_FILES "${LIBRARY_BASE_PATH}/*.cc")
@@ -62,13 +81,16 @@ if(UNIX AND NOT MSVC)
             X11-xcb
             xcb-keysyms
             Vulkan::Vulkan
+            box2d
     )
 elseif(WIN32)
     if(MSVC)
         target_compile_options(${BINARY_NAME} PRIVATE /W4 /permissive-)
-        target_link_libraries(${BINARY_NAME} PRIVATE Vulkan::Vulkan)
+        target_link_libraries(${BINARY_NAME} PRIVATE Vulkan::Vulkan box2d)
     endif()
 endif()
+
+target_include_directories(${BINARY_NAME} PRIVATE $<TARGET_PROPERTY:box2d,INTERFACE_INCLUDE_DIRECTORIES>)
 
 # Define FEXPORT so your code can detect and handle export logic internally
 target_compile_definitions(${BINARY_NAME} PRIVATE FEXPORT)
