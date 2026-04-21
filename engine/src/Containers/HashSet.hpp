@@ -25,20 +25,23 @@ public:
   explicit HashSet(memory::MemoryManager &memManager, uint64 bucketCount = 64)
       : _memoryManager(memManager), _bucketCount(bucketCount) {
     assert(bucketCount > 0);
-    _ppBuckets = FeCast<FePtr<Node<T>> *>(_memoryManager.RawAlloc(
+    _ppBuckets = FeCast<FePtr<Node<T>>>(_memoryManager.RawAlloc(
         sizeof(FePtr<Node<T>>) * _bucketCount, alignof(FePtr<Node<T>>), memory::Tag::HashSet));
 
-    // initialize to null
     for (uint64 i = 0; i < _bucketCount; i++) {
-      _ppBuckets[i] = nullptr;
+      new (&_ppBuckets[i]) FePtr<Node<T>>();
     }
   }
 
   ~HashSet() {
-    if (_ppBuckets != nullptr) {
-      _memoryManager.RawFree(
-          _ppBuckets, sizeof(FePtr<Node<T>>) * _bucketCount, memory::Tag::HashSet);
+    if (_ppBuckets == nullptr) return;
+
+    for (uint64 i = 0; i < _bucketCount; i++) {
+      _ppBuckets[i].~FePtr<Node<T>>();
     }
+
+    _memoryManager.RawFree(
+        _ppBuckets, sizeof(FePtr<Node<T>>) * _bucketCount, memory::Tag::HashSet);
   }
 
   inline FeExpect<bool, Error> Insert(const T &value) {
@@ -102,6 +105,15 @@ public:
     }
 
     return FeFalse;
+  }
+
+  template <typename Fn>
+  void ForEach(Fn &&fn) {
+    for (uint64 i = 0; i < _bucketCount; i++) {
+      for (Node<T> *node = _ppBuckets[i].get(); node != nullptr; node = node->pNext.get()) {
+        fn(node->data);
+      }
+    }
   }
 
   inline uint64 Size() const { return _size; }

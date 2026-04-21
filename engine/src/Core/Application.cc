@@ -153,7 +153,6 @@ FeExpect<void, Error> Engine::Start() {
     }
 
     _scheduler.Update(_registry, deltaTime);
-
     auto drawRes = _renderer.Draw(deltaTime);
     if (!drawRes.has_value()) {
       FLOG_ERROR("game renderer failed to draw frame: {}", drawRes.error().message);

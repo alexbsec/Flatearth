@@ -105,6 +105,7 @@ FeExpect<void, Error> SystemScheduler::Build() {
     string out = std::format("the number of processed nodes '{}' is not equal _nodesMap.Size '{}'",
                              processed,
                              _nodesMap.Size());
+    Prune();
     return FeErr{Error(out, ErrorType::LogicalError)};
   }
 
