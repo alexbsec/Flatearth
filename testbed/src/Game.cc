@@ -4,6 +4,7 @@
 #include <Core/Input.hpp>
 #include <Core/Logger.hpp>
 #include <Defines.hpp>
+#include <Scene/Components/Camera2D.hpp>
 #include <Scene/Components/Transform2D.hpp>
 
 namespace flatearth::testbed {
@@ -25,7 +26,7 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
   // Camera entity
   _state.cameraEntity = ctx.registry.Create();
   ctx.registry.Insert(_state.cameraEntity, scene::Transform2D{});
-  ctx.registry.Insert(_state.cameraEntity, scene::Camera2D{});
+  ctx.registry.Insert(_state.cameraEntity, scene::Camera2D{.zoom = 0.5f});
 
   // Quad sprite
   auto quadRes = ctx.assetManager.LoadSprite("assets/textures/texture.jpg",
@@ -73,12 +74,16 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
 
   const float32 dy = 3.0f * deltaTime;
   const float32 dx = 3.0f * deltaTime;
+  const float32 zoomFactor = 1.0f + 1.5f * deltaTime;
 
   auto &camTransform = ctx.registry.Get<scene::Transform2D>(_state.cameraEntity);
+  auto &camComp = ctx.registry.Get<scene::Camera2D>(_state.cameraEntity);
   if (input.IsKeyDown(input::Keys::KEY_W)) { camTransform.y += dy; camTransform.dirty = FeTrue; }
   if (input.IsKeyDown(input::Keys::KEY_S)) { camTransform.y -= dy; camTransform.dirty = FeTrue; }
   if (input.IsKeyDown(input::Keys::KEY_A)) { camTransform.x += dx; camTransform.dirty = FeTrue; }
   if (input.IsKeyDown(input::Keys::KEY_D)) { camTransform.x -= dx; camTransform.dirty = FeTrue; }
+  if (input.IsKeyDown(input::Keys::KEY_Z)) { camComp.zoom *= zoomFactor; }
+  if (input.IsKeyDown(input::Keys::KEY_X)) { camComp.zoom /= zoomFactor; }
 
   _state.angle  += deltaTime * 1.5f;
   _state.angle2 -= deltaTime * 2.0f;
