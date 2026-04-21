@@ -28,8 +28,8 @@ FeExpect<bool, Error> GameRenderer::Draw(float32 deltaTime) {
   for (auto [entity, transform, cam] : cameraView) {
     // grabs first active camera
     view = math::Mat4D::Scale(cam.zoom, cam.zoom, 1.0f) *
-           math::Mat4D::Translation(-transform.x, -transform.y, 0.0f) *
-           math::Mat4D::RotationZ(-transform.rotation);
+           math::Mat4D::Translation(-transform.worldX, -transform.worldY, 0.0f) *
+           math::Mat4D::RotationZ(-transform.worldRotation);
     break;
   }
 
@@ -45,9 +45,9 @@ FeExpect<bool, Error> GameRenderer::Draw(float32 deltaTime) {
       continue;
     }
 
-    math::Mat4D model = math::Mat4D::Translation(transform.x, transform.y, 0.0f) *
-                        math::Mat4D::RotationZ(transform.rotation) *
-                        math::Mat4D::Scale(transform.scaleX, transform.scaleY, 1.0f);
+    math::Mat4D model = math::Mat4D::Translation(transform.worldX, transform.worldY, 0.0f) *
+                        math::Mat4D::RotationZ(transform.worldRotation) *
+                        math::Mat4D::Scale(transform.worldScaleX, transform.worldScaleY, 1.0f);
     RenderObject object{
         .geometryId = pMesh->id,
         .model = model,

@@ -16,6 +16,12 @@ struct Transform2D {
   float32 scaleY{1.0f};
 
   // Runtime, not reflected
+  float32 worldX{0.0f};
+  float32 worldY{0.0f};
+  float32 worldRotation{0.0f};
+  float32 worldScaleX{1.0f};
+  float32 worldScaleY{1.0f};
+
   ecs::EntityId parent{cNullEntity};
   bool dirty{FeTrue};
 };

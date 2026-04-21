@@ -23,7 +23,7 @@ enum class FieldType : uint8 {
 
 constexpr uint8 FieldSize(FieldType t) {
   switch (t) {
-    case FieldType::Null:
+    default:
       return 0;
     case FieldType::Bool:
       return 1;
