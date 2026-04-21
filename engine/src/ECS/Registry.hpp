@@ -17,7 +17,7 @@ public:
   void Destroy(EntityId id);
 
   template <typename T>
-  FEAPI void Insert(EntityId id, const T &component) {
+  void Insert(EntityId id, const T &component) {
     if (!_entityManager.IsAlive(id)) {
       return;
     }
@@ -27,7 +27,7 @@ public:
   }
 
   template <typename T>
-  FEAPI void Remove(EntityId id) {
+  void Remove(EntityId id) {
     if (!_entityManager.IsAlive(id)) {
       return;
     }
@@ -37,13 +37,13 @@ public:
   }
 
   template <typename T>
-  FEAPI T &Get(EntityId id) {
+  T &Get(EntityId id) {
     containers::SparseSet<T> *pSet = GetPool<T>();
     return pSet->Get(id);
   }
 
   template <typename T>
-  FEAPI containers::SparseSet<T> *GetPool() {
+  containers::SparseSet<T> *GetPool() {
     uint32 typeId = ComponentTypeId<T>::Value();
     FePtr<ISparseSetBase> *ppBase = _poolsMap.Retrieve(typeId);
     if (ppBase != nullptr) {
@@ -59,7 +59,7 @@ public:
   }
 
   template <typename T>
-  FEAPI bool Has(EntityId id) const {
+  bool Has(EntityId id) const {
     uint32 typeId = ComponentTypeId<T>::Value();
     const FePtr<ISparseSetBase> *ppBase = _poolsMap.Retrieve(typeId);
     if (ppBase == nullptr) return false;
@@ -67,7 +67,7 @@ public:
   }
 
   template <typename ...Ts>
-  FEAPI View<Ts...> ViewOf() {
+  View<Ts...> ViewOf() {
     return View<Ts...>(GetPool<Ts>()...);
   }
 
