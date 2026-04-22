@@ -20,6 +20,41 @@ bool GameTest::GameInitialize(flatearth::Game *gameInstance) {
   gameInstance->windowStartPosX   = 100;
   gameInstance->windowStartPosY   = 100;
   gameInstance->gameName          = "TopDown";
+
+  EngineContext &ctx = *gameInstance->pCtx;
+  ctx.assets.prefab.Register<PlayerPrefab>([&ctx](ecs::EntityId id, ecs::Registry &reg) {
+    auto walkTexRes = ctx.assets.manager.LoadTexture("assets/textures/Human_Walk.png");
+    if (!walkTexRes.has_value()) return;
+
+    auto playerSpriteRes = ctx.assets.manager.SpriteFromTexture(
+        walkTexRes.value(), "player_walk", resources::MeshShape::Quad);
+    if (!playerSpriteRes.has_value()) return;
+
+    constexpr float32 uvW = 32.0f / 128.0f;
+    constexpr float32 uvH = 32.0f / 128.0f;
+
+    scene::SpriteAnimator animator{};
+    animator.frameCount = 4;
+    animator.loop       = FeTrue;
+    animator.playing    = FeTrue;
+    for (uint8 col = 0; col < 4; ++col) {
+      animator.frames[col] = {
+        .uvOffset = {col * uvW, 1.0f * uvH},
+        .uvScale  = {uvW, -uvH},
+        .duration = 0.2f,
+      };
+    }
+
+    scene::Sprite playerSprite = playerSpriteRes.value();
+    playerSprite.uvOffset      = animator.frames[0].uvOffset;
+    playerSprite.uvScale       = animator.frames[0].uvScale;
+    playerSprite.layer         = renderer::RenderLayer::Entities;
+
+    reg.Insert(id, scene::Transform2D{0.0f, 0.0f});
+    reg.Insert(id, playerSprite);
+    reg.Insert(id, animator);
+  });
+
   return FeTrue;
 }
 
@@ -41,7 +76,7 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
   pScene->allEntities.push_back(_state.cameraEntity);
 
   // Tilemap
-  auto tmRes = ctx.tilemapManager.Load("assets/tiles/LevelEntrance.tmx", pScene);
+  auto tmRes = ctx.assets.tilemap.Load("assets/tiles/LevelEntrance.tmx", pScene);
   if (!tmRes.has_value()) {
     FLOG_ERROR("failed to load tilemap: {}", tmRes.error().message);
     return FeFalse;
@@ -49,46 +84,12 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
   _state.tilemapRoot = tmRes.value();
 
   // ── Player ───────────────────────────────────────────────────────────────
-  auto walkTexRes = ctx.assetManager.LoadTexture("assets/textures/Human_Walk.png");
-  if (!walkTexRes.has_value()) {
-    FLOG_ERROR("failed to load player texture: {}", walkTexRes.error().message);
+  auto playerRes = ctx.assets.prefab.Spawn<PlayerPrefab>(ctx.registry);
+  if (!playerRes.has_value()) {
+    FLOG_ERROR("failed to spawn player: {}", playerRes.error().message);
     return FeFalse;
   }
-
-  auto playerSpriteRes = ctx.assetManager.SpriteFromTexture(walkTexRes.value(),
-                                                             "player_walk",
-                                                             resources::MeshShape::Quad);
-  if (!playerSpriteRes.has_value()) {
-    FLOG_ERROR("failed to create player sprite: {}", playerSpriteRes.error().message);
-    return FeFalse;
-  }
-
-  // Walk.png: 128x128, 32x32 frames — 4 cols x 4 rows
-  // Row 0 = facing down, Row 1 = left, Row 2 = right, Row 3 = up
-  constexpr float32 uvW = 32.0f / 128.0f;  // 0.25
-  constexpr float32 uvH = 32.0f / 128.0f;  // 0.25
-
-  scene::SpriteAnimator animator{};
-  animator.frameCount = 4;
-  animator.loop       = FeTrue;
-  animator.playing    = FeTrue;
-  for (uint8 col = 0; col < 4; ++col) {
-    animator.frames[col] = {
-      .uvOffset = {col * uvW, 1.0f * uvH},  // row 0 (down): bottom edge at uvH
-      .uvScale  = {uvW, -uvH},              // flip Y
-      .duration = 0.2f,
-    };
-  }
-
-  scene::Sprite playerSprite  = playerSpriteRes.value();
-  playerSprite.uvOffset       = animator.frames[0].uvOffset;
-  playerSprite.uvScale        = animator.frames[0].uvScale;
-  playerSprite.layer          = renderer::RenderLayer::Entities;
-
-  _state.playerEntity = ctx.registry.Create();
-  ctx.registry.Insert(_state.playerEntity, scene::Transform2D{0.0f, 0.0f});
-  ctx.registry.Insert(_state.playerEntity, playerSprite);
-  ctx.registry.Insert(_state.playerEntity, animator);
+  _state.playerEntity = playerRes.value();
   pScene->allEntities.push_back(_state.playerEntity);
 
   return FeTrue;
@@ -107,7 +108,7 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
   constexpr float32 speed = 1.5f;
   float32 dx = 0.0f, dy = 0.0f;
 
-  auto &input = ctx.inputManager;
+  auto &input = ctx.core.input;
   if (input.IsKeyDown(input::KEY_W) || input.IsKeyDown(input::KEY_UP))    dy += 1.0f;
   if (input.IsKeyDown(input::KEY_S) || input.IsKeyDown(input::KEY_DOWN))  dy -= 1.0f;
   if (input.IsKeyDown(input::KEY_A) || input.IsKeyDown(input::KEY_LEFT))  dx -= 1.0f;

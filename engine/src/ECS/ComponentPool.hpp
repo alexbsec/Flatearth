@@ -34,6 +34,18 @@ struct ComponentTypeId {
   }
 };
 
+struct PrefabTypeIdCounter {
+  inline static uint32 sCounter{0};
+};
+
+template <typename T>
+struct PrefabTypeId {
+  static uint32 Value() {
+    static uint32 id = PrefabTypeIdCounter::sCounter++;
+    return id;
+  }
+};
+
 } // namespace flatearth::ecs
 
 #endif // _FLATEARTH_ENGINE_ECS_COMPONENT_POOL_HPP

@@ -7,6 +7,8 @@ namespace flatearth::ecs {
 
 using EntityId = uint32;
 
+constexpr EntityId cNullEntity = UINT32_MAX;
+
 inline constexpr uint16 IdIndex(EntityId id) {
   return id & 0xffff;
 }

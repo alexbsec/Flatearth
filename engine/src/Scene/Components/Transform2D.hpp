@@ -6,7 +6,6 @@
 
 namespace flatearth::scene {
 
-constexpr ecs::EntityId cNullEntity = UINT32_MAX;
 
 struct Transform2D {
   float32 x{0.0f};
@@ -22,7 +21,7 @@ struct Transform2D {
   float32 worldScaleX{1.0f};
   float32 worldScaleY{1.0f};
 
-  ecs::EntityId parent{cNullEntity};
+  ecs::EntityId parent{ecs::cNullEntity};
   bool dirty{FeTrue};
 };
 

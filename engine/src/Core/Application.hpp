@@ -2,6 +2,7 @@
 #define _FLATEARTH_ENGINE_CORE_APPLICATION_HPP
 
 #include "Assets/AssetManager.hpp"
+#include "Assets/PrefabManager.hpp"
 #include "Assets/TilemapManager.hpp"
 #include "Core/ApplicationConfig.hpp"
 #include "Core/EngineContext.hpp"
@@ -26,6 +27,7 @@ public:
   FEAPI FeExpect<void, Error> Start();
 
 private:
+  FeExpect<void, Error> RegisterSystems();
   FeExpect<void, Error> CheckGamePrerequisites();
 
 private:
@@ -37,6 +39,7 @@ private:
   platform::FileSystem _filesystem;
   assets::AssetManager   _assetManager;
   assets::TilemapManager _tilemapManager;
+  assets::PrefabManager _prefabManager;
   ecs::SystemScheduler   _scheduler;
   ecs::Registry          _registry;
   renderer::GameRenderer _renderer;

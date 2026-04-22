@@ -7,6 +7,8 @@
 
 namespace flatearth::testbed {
 
+struct PlayerPrefab {};
+
 struct GameState {
   ecs::EntityId cameraEntity{UINT32_MAX};
   ecs::EntityId tilemapRoot{UINT32_MAX};
