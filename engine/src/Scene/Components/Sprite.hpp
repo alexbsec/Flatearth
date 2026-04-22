@@ -13,6 +13,7 @@ struct Sprite {
   resources::MeshShape meshShape{resources::MeshShape::Quad};
   math::Vec2D uvOffset{0.0f, 0.0f};
   math::Vec2D uvScale{1.0f, 1.0f};
+  bool flipX{FeFalse}, flipY{FeFalse};
 
   // Runtime only, not reflected
   bool dirty{FeTrue};
