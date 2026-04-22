@@ -13,6 +13,7 @@ public:
 
 private:
   void UpdateAnimator(scene::SpriteAnimator &animator, scene::Sprite &sprite, float32 deltaTime);
+  void UpdateSprite(scene::Sprite &sprite);
 };
 
 } // namespace flatearth::systems

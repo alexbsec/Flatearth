@@ -140,6 +140,12 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
   }
   sprite.uvOffset = anim.frames[anim.currentFrame].uvOffset;
   sprite.uvScale  = anim.frames[anim.currentFrame].uvScale;
+
+  if (input.IsKeyDown(input::KEY_F) && !input.WasKeyDown(input::KEY_F))
+    sprite.flipX = !sprite.flipX;
+  if (input.IsKeyDown(input::KEY_G) && !input.WasKeyDown(input::KEY_G))
+    sprite.flipY = !sprite.flipY;
+
   sprite.dirty    = FeTrue;
 
   playerXform.x += dx * speed * deltaTime;
