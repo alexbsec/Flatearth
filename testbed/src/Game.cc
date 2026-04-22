@@ -90,8 +90,6 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
   ctx.registry.Insert(_state.playerEntity, playerSprite);
   ctx.registry.Insert(_state.playerEntity, animator);
   pScene->allEntities.push_back(_state.playerEntity);
-  FLOG_INFO("player entity={} meshHandle={} matHandle={} texHandle={}",
-            _state.playerEntity, playerSprite.meshHandle, playerSprite.matHandle, playerSprite.texHandle);
 
   return FeTrue;
 }
