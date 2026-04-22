@@ -66,6 +66,29 @@ FeExpect<scene::Sprite, Error> AssetManager::LoadSprite(stringv path,
   return std::move(sprite);
 }
 
+FeExpect<scene::Sprite, Error> AssetManager::SpriteFromTexture(resources::TextureHandle texHandle,
+                                                                stringv name,
+                                                                resources::MeshShape shape) {
+  resources::Texture *pTexture = GetTexture(texHandle);
+  if (pTexture == nullptr)
+    return FeErr{Error("SpriteFromTexture: invalid texture handle", ErrorType::NullptrException)};
+
+  scene::Sprite sprite{};
+  sprite.texHandle = texHandle;
+
+  auto acMatRes = _pRenderer->AcquireMaterial(string(name), pTexture);
+  if (!acMatRes.has_value())
+    return FeErr{acMatRes.error()};
+  sprite.matHandle = acMatRes.value();
+
+  auto acMeshRes = _pRenderer->AcquireMesh(shape);
+  if (!acMeshRes.has_value())
+    return FeErr{acMeshRes.error()};
+  sprite.meshHandle = acMeshRes.value();
+
+  return sprite;
+}
+
 void AssetManager::ReleaseSprite(scene::Sprite &sprite) {
   _pRenderer->ReleaseMaterial(sprite.matHandle);
   _pRenderer->ReleaseMesh(sprite.meshHandle);

@@ -40,6 +40,18 @@ set(BOX2D_BUILD_DOCS       OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(box2d)
 set_target_properties(box2d PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+FetchContent_Declare(
+    tinyxml2
+    GIT_REPOSITORY https://github.com/leethomason/tinyxml2.git
+    GIT_TAG        10.0.0
+    GIT_SHALLOW    TRUE
+)
+
+set(tinyxml2_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(tinyxml2)
+set_target_properties(tinyxml2 PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 ############################################################################
 #   PROJECT DEFINITIONS
 
@@ -82,15 +94,19 @@ if(UNIX AND NOT MSVC)
             xcb-keysyms
             Vulkan::Vulkan
             box2d
+            tinyxml2
     )
 elseif(WIN32)
     if(MSVC)
         target_compile_options(${BINARY_NAME} PRIVATE /W4 /permissive-)
-        target_link_libraries(${BINARY_NAME} PRIVATE Vulkan::Vulkan box2d)
+        target_link_libraries(${BINARY_NAME} PRIVATE Vulkan::Vulkan box2d tinyxml2)
     endif()
 endif()
 
-target_include_directories(${BINARY_NAME} PRIVATE $<TARGET_PROPERTY:box2d,INTERFACE_INCLUDE_DIRECTORIES>)
+target_include_directories(${BINARY_NAME} PRIVATE
+    $<TARGET_PROPERTY:box2d,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:tinyxml2,INTERFACE_INCLUDE_DIRECTORIES>
+)
 
 # Define FEXPORT so your code can detect and handle export logic internally
 target_compile_definitions(${BINARY_NAME} PRIVATE FEXPORT)

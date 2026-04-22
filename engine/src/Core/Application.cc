@@ -17,9 +17,10 @@ namespace flatearth {
 Engine::Engine(Game *pGame)
     : _appState(pGame), _eventManager(_memoryManager), _inputManager(_eventManager),
       _renderer(&_appState, _memoryManager, _registry, _filesystem), _filesystem(_memoryManager),
-      _assetManager(_memoryManager, _filesystem), _scheduler(_memoryManager),
+      _assetManager(_memoryManager, _filesystem), _tilemapManager(_assetManager, _registry),
+      _scheduler(_memoryManager),
       _registry(_memoryManager), _sceneManager(_memoryManager, _registry), _world(_memoryManager),
-      _ctx(_memoryManager, _assetManager, _inputManager, _registry, _sceneManager, _world) {
+      _ctx(_memoryManager, _assetManager, _tilemapManager, _inputManager, _registry, _sceneManager, _world) {
   _engineListener = _memoryManager.Allocate<event::IEventListener, EngineListener>(
       memory::Tag::Application, _eventManager, _renderer, _appState);
 }

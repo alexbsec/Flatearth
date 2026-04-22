@@ -18,6 +18,7 @@ enum class ErrorType {
   RendererVulkanError,
   SystemError,
   RendererSelectPhysicalDevice,
+  FileReadError,
   GameUpdateUndefined,
   PlatformCreateSurface,
   GameResizeUndefined,
