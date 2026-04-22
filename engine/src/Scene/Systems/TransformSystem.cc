@@ -9,8 +9,8 @@
 
 namespace flatearth::systems {
 
+using ecs::cNullEntity;
 using scene::Children;
-using scene::cNullEntity;
 using scene::Transform2D;
 
 TransformSystem::TransformSystem(memory::MemoryManager &memManager) : _memoryManager(memManager) {

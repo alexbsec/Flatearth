@@ -18,9 +18,16 @@ Engine::Engine(Game *pGame)
     : _appState(pGame), _eventManager(_memoryManager), _inputManager(_eventManager),
       _renderer(&_appState, _memoryManager, _registry, _filesystem), _filesystem(_memoryManager),
       _assetManager(_memoryManager, _filesystem), _tilemapManager(_assetManager, _registry),
-      _scheduler(_memoryManager),
+      _prefabManager(_memoryManager), _scheduler(_memoryManager),
       _registry(_memoryManager), _sceneManager(_memoryManager, _registry), _world(_memoryManager),
-      _ctx(_memoryManager, _assetManager, _tilemapManager, _inputManager, _registry, _sceneManager, _world) {
+      _ctx(_memoryManager,
+           _assetManager,
+           _tilemapManager,
+           _prefabManager,
+           _inputManager,
+           _registry,
+           _sceneManager,
+           _world) {
   _engineListener = _memoryManager.Allocate<event::IEventListener, EngineListener>(
       memory::Tag::Application, _eventManager, _renderer, _appState);
 }
@@ -99,28 +106,10 @@ FeExpect<void, Error> Engine::Initialize() {
   }
 
   _world.Initialize();
-  auto registerRes = _scheduler.Register<systems::TransformSystem>(_memoryManager);
+  FeExpect<void, Error> registerRes = RegisterSystems();
   if (!registerRes.has_value()) {
-    FLOG_ERROR("could not register TransformSystem into scheduler");
+    FLOG_ERROR("failed to register engine systems");
     return FeErr{registerRes.error()};
-  }
-
-  auto spriteRes = _scheduler.Register<systems::SpriteSystem>();
-  if (!spriteRes.has_value()) {
-    FLOG_ERROR("could not register SpriteSystem into scheduler");
-    return FeErr{spriteRes.error()};
-  }
-
-  auto physicsRes = _scheduler.Register<physics::PhysicsSystem>(_world);
-  if (!physicsRes.has_value()) {
-    FLOG_ERROR("could not register PhysicsSystem into scheduler");
-    return FeErr{physicsRes.error()};
-  }
-
-  auto buildRes = _scheduler.Build();
-  if (!buildRes.has_value()) {
-    FLOG_ERROR("failed to build scheduler");
-    return FeErr{buildRes.error()};
   }
 
   FLOG_INFO("engine successfully initialized");
@@ -190,6 +179,36 @@ FeExpect<void, Error> Engine::Start() {
   }
 
   _appState.isRunning = FeFalse;
+  return {};
+}
+
+FeExpect<void, Error> Engine::RegisterSystems() {
+  _scheduler.Prune();
+
+  auto registerRes = _scheduler.Register<systems::TransformSystem>(_memoryManager);
+  if (!registerRes.has_value()) {
+    FLOG_ERROR("could not register TransformSystem into scheduler");
+    return FeErr{registerRes.error()};
+  }
+
+  auto spriteRes = _scheduler.Register<systems::SpriteSystem>();
+  if (!spriteRes.has_value()) {
+    FLOG_ERROR("could not register SpriteSystem into scheduler");
+    return FeErr{spriteRes.error()};
+  }
+
+  auto physicsRes = _scheduler.Register<physics::PhysicsSystem>(_world);
+  if (!physicsRes.has_value()) {
+    FLOG_ERROR("could not register PhysicsSystem into scheduler");
+    return FeErr{physicsRes.error()};
+  }
+
+  auto buildRes = _scheduler.Build();
+  if (!buildRes.has_value()) {
+    FLOG_ERROR("failed to build scheduler");
+    return FeErr{buildRes.error()};
+  }
+
   return {};
 }
 
