@@ -150,7 +150,7 @@ FeExpect<void, Error> FrontendRenderer::OnResize(uint32 width, uint32 height) {
 
   float32 aspect = static_cast<float32>(width) / height;
   _rendererState.projection = math::Mat4D::Orthographic(
-      aspect, -aspect, -1.0f, 1.0f, _rendererState.nearClip, _rendererState.farClip);
+      -aspect, aspect, -1.0f, 1.0f, _rendererState.nearClip, _rendererState.farClip);
   auto res = _rendererState.pActiveBackend->OnResize(width, height);
   if (!res.has_value()) {
     FLOG_ERROR("backend renderer failed to resize");

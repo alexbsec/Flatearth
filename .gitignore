@@ -28,6 +28,9 @@ build-release/*
 debug/*
 release/*
 
+#
+.ignore/*
+
 # Visual Studio
 .vs/
 *.VC.db

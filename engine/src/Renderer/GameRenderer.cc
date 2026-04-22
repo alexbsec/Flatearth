@@ -38,12 +38,21 @@ FeExpect<bool, Error> GameRenderer::Draw(float32 deltaTime) {
   packet.view = view;
 
   View<Transform2D, Sprite> spriteView = _registry.ViewOf<Transform2D, Sprite>();
+  static bool sLoggedOnce = false;
+  uint32 spriteCount = 0;
+  uint32 skippedCount = 0;
   for (auto [entity, transform, sprite] : spriteView) {
     resources::Mesh *pMesh = _frontendRenderer.GetMesh(sprite.meshHandle);
     resources::Material *pMat = _frontendRenderer.GetMaterial(sprite.matHandle);
     if (pMesh == nullptr || pMat == nullptr) {
+      skippedCount++;
+      if (!sLoggedOnce) {
+        FLOG_WARN("GameRenderer: entity {} skipped — mesh={} mat={}", entity,
+                  pMesh ? "ok" : "null", pMat ? "ok" : "null");
+      }
       continue;
     }
+    spriteCount++;
 
     math::Mat4D model = math::Mat4D::Translation(transform.worldX, transform.worldY, 0.0f) *
                         math::Mat4D::RotationZ(transform.worldRotation) *
@@ -59,6 +68,10 @@ FeExpect<bool, Error> GameRenderer::Draw(float32 deltaTime) {
     packet.objects.Push(object);
   }
 
+  if (!sLoggedOnce) {
+    FLOG_INFO("GameRenderer first frame: {} sprites submitted, {} skipped", spriteCount, skippedCount);
+    sLoggedOnce = true;
+  }
   return _frontendRenderer.DrawFrame(&packet);
 }
 
