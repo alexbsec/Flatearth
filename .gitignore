@@ -23,6 +23,8 @@ engine/build-debug/*
 engine/build-release/*
 testbed/build-debug/*
 testbed/build-release/*
+build-debug/*
+build-release/*
 debug/*
 release/*
 

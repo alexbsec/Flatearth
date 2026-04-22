@@ -2,6 +2,7 @@
 #define _FLATEARTH_ENGINE_CORE_APPLICATION_HPP
 
 #include "Assets/AssetManager.hpp"
+#include "Assets/TilemapManager.hpp"
 #include "Core/ApplicationConfig.hpp"
 #include "Core/EngineContext.hpp"
 #include "Core/Event.hpp"
@@ -34,11 +35,12 @@ private:
   event::EventManager _eventManager;
   input::InputManager _inputManager;
   platform::FileSystem _filesystem;
-  assets::AssetManager _assetManager;
-  ecs::SystemScheduler _scheduler;
-  ecs::Registry _registry;
+  assets::AssetManager   _assetManager;
+  assets::TilemapManager _tilemapManager;
+  ecs::SystemScheduler   _scheduler;
+  ecs::Registry          _registry;
   renderer::GameRenderer _renderer;
-  scene::SceneManager _sceneManager;
+  scene::SceneManager    _sceneManager;
   physics::FlatearthWorld _world;
   FePtr<event::IEventListener> _engineListener;
   EngineContext _ctx;

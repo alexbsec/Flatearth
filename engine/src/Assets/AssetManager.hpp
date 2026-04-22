@@ -27,6 +27,11 @@ public:
              resources::MeshShape shape,
              resources::TextureFilter filter = resources::TextureFilter::Nearest);
 
+  FEAPI FeExpect<scene::Sprite, Error>
+  SpriteFromTexture(resources::TextureHandle texHandle,
+                    stringv name,
+                    resources::MeshShape shape = resources::MeshShape::Quad);
+
   FEAPI void ReleaseSprite(scene::Sprite &sprite);
 
   FEAPI void Shutdown();

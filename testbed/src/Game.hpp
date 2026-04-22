@@ -4,18 +4,12 @@
 #include <Defines.hpp>
 #include <ECS/ECSTypes.hpp>
 #include <GameTypes.hpp>
-#include <Scene/Components/Sprite.hpp>
-#include <Scene/Components/Transform2D.hpp>
 
 namespace flatearth::testbed {
 
 struct GameState {
   ecs::EntityId cameraEntity{UINT32_MAX};
-  ecs::EntityId ballEntity{UINT32_MAX};
-  ecs::EntityId platformEntity{UINT32_MAX};
-
-  scene::Sprite platformSprite{};
-  scene::Sprite ballSprite{};
+  ecs::EntityId tilemapRoot{UINT32_MAX};
 };
 
 class GameTest {
@@ -27,7 +21,6 @@ public:
   static bool GameOnResize(flatearth::Game *gameInstance, uint32 width, uint32 height);
 
 private:
-  static void ResetBall(flatearth::Game *gameInstance);
   static GameState _state;
 };
 
