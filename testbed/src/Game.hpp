@@ -14,6 +14,7 @@ struct GameState {
   ecs::EntityId tilemapRoot{UINT32_MAX};
   ecs::EntityId playerEntity{UINT32_MAX};
   ecs::EntityId particleEntity{UINT32_MAX};
+  ecs::EntityId bgmEntity{UINT32_MAX};
 };
 
 class GameTest {

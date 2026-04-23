@@ -41,6 +41,7 @@
   _FE_EXPAND(_FE_REFLECT_GET3(__VA_ARGS__, _REFLECT_COMPONENT_2, _REFLECT_COMPONENT_1))(__VA_ARGS__)
 
 #define FIELD(name, ftype) {#name, static_cast<uint32>(offsetof(T, name)), ftype},
+#define FIELD_CSTR(name, maxlen) {#name, static_cast<uint32>(offsetof(T, name)), ::flatearth::ecs::reflect::FieldType::CString, (maxlen)},
 
 #define END_REFLECT                                                      \
   }                                                                      \

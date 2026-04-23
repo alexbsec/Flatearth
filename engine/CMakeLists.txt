@@ -125,6 +125,9 @@ if(UNIX AND NOT MSVC)
             Vulkan::Vulkan
             box2d
             tinyxml2
+            dl
+            pthread
+            m
     )
 elseif(WIN32)
     if(MSVC)

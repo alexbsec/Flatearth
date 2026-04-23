@@ -1,5 +1,7 @@
 #include "Game.hpp"
 
+#include <cstring>
+
 #include <Core/EngineContext.hpp>
 #include <Core/Input.hpp>
 #include <Scene/Components/ParticleEmitter.hpp>
@@ -11,6 +13,7 @@
 #include <Scene/Components/Sprite.hpp>
 #include <Scene/Components/SpriteAnimator.hpp>
 #include <Scene/Components/Transform2D.hpp>
+#include <Scene/Components/AudioSource.hpp>
 #include <Scene/Scene.hpp>
 
 namespace flatearth::testbed {
@@ -120,6 +123,16 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
       pScene->allEntities.push_back(_state.particleEntity);
     }
   }
+
+  _state.bgmEntity = ctx.registry.Create();
+  {
+    scene::AudioSource bgm{};
+    std::strncpy(bgm.path, "assets/bgm/95.mp3", scene::cAudioPathMax - 1);
+    bgm.loop    = FeTrue;
+    bgm.playing = FeTrue;
+    ctx.registry.Insert(_state.bgmEntity, bgm);
+  }
+  pScene->allEntities.push_back(_state.bgmEntity);
 
   return FeTrue;
 }
@@ -268,6 +281,7 @@ void GameTest::GameUnload(flatearth::Game *gameInstance) {
     base.meshHandle = emitter.meshHandle;
     ctx.assets.manager.ReleaseSprite(base);
   }
+
 
   ctx.assets.tilemap.Unload("assets/tiles/LevelEntrance.tmx");
   ctx.sceneManager.Unload("level1");

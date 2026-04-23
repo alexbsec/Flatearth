@@ -4,6 +4,7 @@
 #include "Assets/AssetManager.hpp"
 #include "Assets/PrefabManager.hpp"
 #include "Assets/TilemapManager.hpp"
+#include "Audio/AudioManager.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Input.hpp"
 #include "ECS/Registry.hpp"
@@ -22,6 +23,7 @@ struct EngineContext {
   struct {
     memory::MemoryManager &memory;
     input::InputManager &input;
+    audio::AudioManager &audio;
   } core;
 
   ecs::Registry &registry;
@@ -34,10 +36,12 @@ struct EngineContext {
                          assets::TilemapManager &tilemapManager,
                          assets::PrefabManager &prefabManager,
                          input::InputManager &inputManager,
+                         audio::AudioManager &audioManager,
                          ecs::Registry &registry,
                          scene::SceneManager &sceneManager,
                          physics::FlatearthWorld &world)
-      : assets(assetManager, tilemapManager, prefabManager), core(memManager, inputManager),
+      : assets(assetManager, tilemapManager, prefabManager),
+        core(memManager, inputManager, audioManager),
         registry(registry), sceneManager(sceneManager), world(world) {}
 };
 

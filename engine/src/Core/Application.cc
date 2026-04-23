@@ -11,6 +11,7 @@
 #include "Defines.hpp"
 #include "Error.hpp"
 #include "Physics/PhysicsSystem.hpp"
+#include "Scene/Systems/AudioSystem.hpp"
 #include "Scene/Systems/ParticleSystem.hpp"
 #include "Scene/Systems/SpriteSystem.hpp"
 #include "Scene/Systems/TransformSystem.hpp"
@@ -23,11 +24,13 @@ Engine::Engine(Game *pGame)
       _assetManager(_memoryManager, _filesystem), _tilemapManager(_memoryManager, _assetManager, _registry),
       _prefabManager(_memoryManager), _scheduler(_memoryManager),
       _registry(_memoryManager), _sceneManager(_memoryManager, _registry), _world(_memoryManager),
+      _audio(_memoryManager),
       _ctx(_memoryManager,
            _assetManager,
            _tilemapManager,
            _prefabManager,
            _inputManager,
+           _audio,
            _registry,
            _sceneManager,
            _world) {
@@ -42,6 +45,7 @@ Engine::~Engine() {
   }
   _renderer.Shutdown();
   _assetManager.Shutdown();
+  _audio.Shutdown();
   _world.Shutdown();
   FLOG_INFO("engine shutdown gracefully");
 }
@@ -101,6 +105,11 @@ FeExpect<void, Error> Engine::Initialize() {
   _appState.isRunning = FeTrue;
   _appState.isSuspended = FeFalse;
   _appState.platformState = _pPlatform->State();
+
+  if (auto audioRes = _audio.Initialize(); !audioRes.has_value()) {
+    FLOG_ERROR("audio manager failed to initialize: {}", audioRes.error().message);
+    return FeErr{audioRes.error()};
+  }
 
   if (_appState.pGameInstance->Load) {
     if (!_appState.pGameInstance->Load(_appState.pGameInstance)) {
@@ -230,6 +239,12 @@ FeExpect<void, Error> Engine::RegisterSystems() {
   if (!particleRes.has_value()) {
     FLOG_ERROR("could not register ParticleSystem into scheduler");
     return FeErr{particleRes.error()};
+  }
+
+  auto audioRes = _scheduler.Register<systems::AudioSystem>(_audio);
+  if (!audioRes.has_value()) {
+    FLOG_ERROR("could not register AudioSystem into scheduler");
+    return FeErr{audioRes.error()};
   }
 
   auto buildRes = _scheduler.Build();
