@@ -9,6 +9,7 @@
 #include "Defines.hpp"
 #include "Error.hpp"
 #include "Physics/PhysicsSystem.hpp"
+#include "Scene/Systems/ParticleSystem.hpp"
 #include "Scene/Systems/SpriteSystem.hpp"
 #include "Scene/Systems/TransformSystem.hpp"
 
@@ -201,6 +202,12 @@ FeExpect<void, Error> Engine::RegisterSystems() {
   if (!physicsRes.has_value()) {
     FLOG_ERROR("could not register PhysicsSystem into scheduler");
     return FeErr{physicsRes.error()};
+  }
+
+  auto particleRes = _scheduler.Register<systems::ParticleSystem>();
+  if (!particleRes.has_value()) {
+    FLOG_ERROR("could not register ParticleSystem into scheduler");
+    return FeErr{particleRes.error()};
   }
 
   auto buildRes = _scheduler.Build();

@@ -13,6 +13,7 @@ struct GameState {
   ecs::EntityId cameraEntity{UINT32_MAX};
   ecs::EntityId tilemapRoot{UINT32_MAX};
   ecs::EntityId playerEntity{UINT32_MAX};
+  ecs::EntityId particleEntity{UINT32_MAX};
 };
 
 class GameTest {
