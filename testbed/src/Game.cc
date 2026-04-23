@@ -2,6 +2,7 @@
 
 #include <Core/EngineContext.hpp>
 #include <Core/Input.hpp>
+#include <Scene/Components/ParticleEmitter.hpp>
 #include <Core/Logger.hpp>
 #include <Defines.hpp>
 #include <Scene/Components/Camera2D.hpp>
@@ -92,6 +93,32 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
   _state.playerEntity = playerRes.value();
   pScene->allEntities.push_back(_state.playerEntity);
 
+  auto particleTexRes = ctx.assets.manager.LoadTexture("assets/textures/Human_Walk.png");
+  if (particleTexRes.has_value()) {
+    auto particleSprRes = ctx.assets.manager.SpriteFromTexture(
+        particleTexRes.value(), "particle_mat", resources::MeshShape::Quad);
+    if (particleSprRes.has_value()) {
+      scene::Sprite &ps = particleSprRes.value();
+
+      scene::ParticleEmitter emitter{};
+      emitter.texHandle   = ps.texHandle;
+      emitter.matHandle   = ps.matHandle;
+      emitter.meshHandle  = ps.meshHandle;
+      emitter.velocityMin = {-0.3f, 0.2f};
+      emitter.velocityMax = { 0.3f, 0.8f};
+      emitter.lifetimeMin = 0.3f;
+      emitter.lifetimeMax = 0.8f;
+      emitter.sizeStart   = 0.04f;
+      emitter.sizeEnd     = 0.0f;
+      emitter.spawnRate   = 15.0f;
+
+      _state.particleEntity = ctx.registry.Create();
+      ctx.registry.Insert(_state.particleEntity, scene::Transform2D{});
+      ctx.registry.Insert(_state.particleEntity, emitter);
+      pScene->allEntities.push_back(_state.particleEntity);
+    }
+  }
+
   return FeTrue;
 }
 
@@ -147,6 +174,13 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
     sprite.flipY = !sprite.flipY;
 
   sprite.dirty    = FeTrue;
+
+  if (_state.particleEntity != UINT32_MAX) {
+    auto &emitterXform = ctx.registry.Get<scene::Transform2D>(_state.particleEntity);
+    emitterXform.x     = playerXform.x;
+    emitterXform.y     = playerXform.y;
+    emitterXform.dirty = FeTrue;
+  }
 
   playerXform.x += dx * speed * deltaTime;
   playerXform.y += dy * speed * deltaTime;
