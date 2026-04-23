@@ -179,6 +179,7 @@ FeExpect<void, Error> Engine::Start() {
       FLOG_ERROR("game renderer failed to draw frame: {}", drawRes.error().message);
       return FeErr{drawRes.error()};
     }
+    _ctx.drawCallCount = _renderer.LastDrawCallCount();
 
     float64 frameEndTime = clock::GetAbsoluteTime();
     float64 frameElapsed = frameEndTime - frameStartTime;

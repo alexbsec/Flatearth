@@ -19,12 +19,14 @@ public:
   void Flush();
   void Shutdown();
 
+  uint32 LastDrawCallCount() const { return _lastDrawCallCount; }
   FrontendRenderer &FrontendReference();
 
 private:
   renderer::FrontendRenderer _frontendRenderer;
   memory::MemoryManager &_memoryManager;
   ecs::Registry &_registry;
+  uint32 _lastDrawCallCount{0};
 };
 
 } // namespace flatearth::renderer

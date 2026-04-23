@@ -201,7 +201,7 @@ void GameTest::GameImGui(flatearth::Game *gameInstance) {
 
   ImGui::Begin("Debug");
 
-  ImGui::Text("FPS: %.1f", 1.0f / ImGui::GetIO().DeltaTime);
+  ImGui::Text("FPS: %.1f  |  Draw calls: %u", 1.0f / ImGui::GetIO().DeltaTime, ctx.drawCallCount);
 
   if (ImGui::CollapsingHeader("ECS", ImGuiTreeNodeFlags_DefaultOpen)) {
     ImGui::Text("Entities alive: %u", ctx.registry.AliveCount());
