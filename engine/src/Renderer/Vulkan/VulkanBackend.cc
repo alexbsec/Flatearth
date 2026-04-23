@@ -10,6 +10,8 @@
 #include "Renderer/Vulkan/VulkanUtils.hpp"
 #include "Resources/ResourceTypes.hpp"
 
+#include <imgui.h>
+#include <backends/imgui_impl_vulkan.h>
 #include <cstdint>
 #include <vulkan/vulkan_core.h>
 
@@ -30,6 +32,7 @@ VulkanBackend::VulkanBackend(memory::MemoryManager &memManager, platform::FileSy
 
 VulkanBackend::~VulkanBackend() {
   vkDeviceWaitIdle(_ctx.device.logicalDevice);
+  ShutdownImGui();
 
   _bufferManager.DestroyVulkanBuffer(_ctx, &_ctx.objectVertexBuffer);
   _bufferManager.DestroyVulkanBuffer(_ctx, &_ctx.objectIndexBuffer);
@@ -334,6 +337,8 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
     FLOG_ERROR("vulkan buffers creation failed");
     return FeErr{createBufferRes.error()};
   }
+
+  InitImGui();
 
   FLOG_INFO("sync objects & fences created successfully");
   FLOG_INFO("Vulkan backend initialized successfully");
@@ -844,6 +849,19 @@ FeExpect<void, Error> VulkanBackend::DestroyMaterial(resources::Material *pMater
   return {};
 }
 
+void VulkanBackend::Flush() {
+  vkDeviceWaitIdle(_ctx.device.logicalDevice);
+}
+
+void VulkanBackend::BeginImGuiFrame() {
+  ImGui_ImplVulkan_NewFrame();
+}
+
+void VulkanBackend::DrawImGui() {
+  CommandBuffer &cmd = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
+  ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd.handle);
+}
+
 // PRIVATE MEMBERS
 
 FeExpect<void, Error> VulkanBackend::CreateFence(Fence *pFence, bool signaled) {
@@ -1046,6 +1064,53 @@ void VulkanBackend::TextureSubmitCallback(CommandBuffer cmd,
     FLOG_ERROR("failed to transition image layout for texture upload");
     return;
   }
+}
+
+void VulkanBackend::InitImGui() {
+  VkDescriptorPoolSize poolSize{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100};
+  VkDescriptorPoolCreateInfo poolInfo{};
+  poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+  poolInfo.maxSets = 100;
+  poolInfo.poolSizeCount = 1;
+  poolInfo.pPoolSizes = &poolSize;
+  vkCreateDescriptorPool(_ctx.device.logicalDevice, &poolInfo, nullptr, &_imguiDescriptorPool);
+
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  ImGui::StyleColorsDark();
+
+  ImGui_ImplVulkan_InitInfo initInfo{};
+  initInfo.Instance = _ctx.instance;
+  initInfo.PhysicalDevice = _ctx.device.physicalDevice;
+  initInfo.Device = _ctx.device.logicalDevice;
+  initInfo.QueueFamily = static_cast<uint32>(_ctx.device.graphicsQueueIndex);
+  initInfo.Queue = _ctx.device.graphicsQueue;
+  initInfo.DescriptorPool = _imguiDescriptorPool;
+  initInfo.RenderPass = _ctx.mainRenderpass.handle;
+  initInfo.Subpass = 0;
+  initInfo.MinImageCount = _ctx.swapchain.maxFrames;
+  initInfo.ImageCount = _ctx.swapchain.imageCount;
+  initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+  initInfo.CheckVkResultFn = [](VkResult err) {
+    if (err != VK_SUCCESS) {
+      FLOG_ERROR("ImGui Vulkan Error: {}", static_cast<int32>(err));
+    }
+  };
+  ImGui_ImplVulkan_Init(&initInfo);
+  FLOG_INFO("ImGui initialized with Vulkan Implementation");
+}
+
+void VulkanBackend::ShutdownImGui() {
+  if (_imguiDescriptorPool == VK_NULL_HANDLE) {
+    return;
+  }
+
+  ImGui_ImplVulkan_Shutdown();
+  ImGui::DestroyContext();
+  vkDestroyDescriptorPool(_ctx.device.logicalDevice, _imguiDescriptorPool, nullptr);
+  _imguiDescriptorPool = VK_NULL_HANDLE;
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL

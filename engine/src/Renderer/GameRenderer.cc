@@ -59,7 +59,16 @@ FeExpect<bool, Error> GameRenderer::Draw(float32 deltaTime) {
     packet.objects.Push(object);
   }
 
+  _lastDrawCallCount = packet.objects.Length();
   return _frontendRenderer.DrawFrame(&packet);
+}
+
+void GameRenderer::Flush() {
+  _frontendRenderer.Flush();
+}
+
+void GameRenderer::BeginImGuiFrame() {
+  _frontendRenderer.BeginImGuiFrame();
 }
 
 FrontendRenderer &GameRenderer::FrontendReference() {

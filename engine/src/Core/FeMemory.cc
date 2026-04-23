@@ -21,7 +21,6 @@ static inline uint64 NormalizeAlignment(uint64 alignment) {
   return alignment;
 }
 
-static const char *TagToString(flatearth::memory::Tag tag);
 
 struct MemFmt {
   uint64 bytes;
@@ -141,13 +140,13 @@ void MemoryManager::MemoryUsage() {
     Tag tag = static_cast<Tag>(i);
 
     std::println(
-        "  [{}] {} bytes ({:.2f} KB | {:.2f} MB)", TagToString(tag), fmt.bytes, fmt.kb, fmt.mb);
+        "  [{}] {} bytes ({:.2f} KB | {:.2f} MB)", TagName(tag), fmt.bytes, fmt.kb, fmt.mb);
   }
 
   std::println("==================================");
 }
 
-const char *TagToString(flatearth::memory::Tag tag) {
+const char *TagName(flatearth::memory::Tag tag) {
   using flatearth::memory::Tag;
   switch (tag) {
     case Tag::Unknown:
@@ -188,6 +187,8 @@ const char *TagToString(flatearth::memory::Tag tag) {
       return "EntityNode";
     case Tag::Scene:
       return "Scene";
+    case Tag::HashMap:
+      return "HashMap";
     default:
       return "Invalid";
   }

@@ -1,9 +1,12 @@
 #ifndef _FLATEARTH_ENGINE_ASSETS_TILEMAP_MANAGER_HPP
 #define _FLATEARTH_ENGINE_ASSETS_TILEMAP_MANAGER_HPP
 
+#include "Containers/HashMap.hpp"
+#include "Core/FeMemory.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
 #include "ECS/ECSTypes.hpp"
+#include "Scene/Components/Sprite.hpp"
 
 namespace flatearth::scene { struct Scene; }
 namespace flatearth::ecs   { class Registry; }
@@ -14,16 +17,17 @@ class AssetManager;
 
 class TilemapManager {
 public:
-  explicit TilemapManager(AssetManager &assetManager, ecs::Registry &registry);
+  explicit TilemapManager(memory::MemoryManager &memManager,
+                          AssetManager &assetManager,
+                          ecs::Registry &registry);
 
-  // Loads a .tmx file, creates all tile and collision entities, registers them
-  // in the scene for automatic cleanup on SceneManager::Unload.
-  // Returns the root tilemap entity.
   FEAPI FeExpect<ecs::EntityId, Error> Load(stringv tmxPath, scene::Scene *scene);
+  FEAPI void Unload(stringv tmxPath);
 
 private:
   AssetManager   &_assetManager;
   ecs::Registry  &_registry;
+  containers::HashMap<string, scene::Sprite> _baseSprites;
 };
 
 } // namespace flatearth::assets

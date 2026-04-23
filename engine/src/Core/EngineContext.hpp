@@ -27,6 +27,7 @@ struct EngineContext {
   ecs::Registry &registry;
   scene::SceneManager &sceneManager;
   physics::FlatearthWorld &world;
+  uint32 drawCallCount{0};
 
   explicit EngineContext(memory::MemoryManager &memManager,
                          assets::AssetManager &assetManager,

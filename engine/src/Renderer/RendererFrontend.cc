@@ -25,7 +25,14 @@ FrontendRenderer::~FrontendRenderer() {
   FLOG_INFO("frontend renderer exited gracefully");
 }
 
+void FrontendRenderer::Flush() {
+  if (_rendererState.pActiveBackend) {
+    _rendererState.pActiveBackend->Flush();
+  }
+}
+
 void FrontendRenderer::Shutdown() {
+  Flush();
   _meshCache.Shutdown();
   _materialCache.Shutdown();
 }
@@ -133,6 +140,8 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
     _rendererState.pActiveBackend->DrawGeometry(object.geometryId, data, object.pMaterial);
   }
 
+  _rendererState.pActiveBackend->DrawImGui();
+
   auto endRes = EndFrame(pRenderPacket->deltaTime);
   if (!endRes.has_value()) {
     FLOG_ERROR("failed to end frame");
@@ -224,6 +233,10 @@ void FrontendRenderer::ReleaseMaterial(resources::MaterialHandle handle) {
 
 resources::Material *FrontendRenderer::GetMaterial(resources::MaterialHandle handle) {
   return _materialCache.Get(handle);
+}
+
+void FrontendRenderer::BeginImGuiFrame() {
+  _rendererState.pActiveBackend->BeginImGuiFrame();
 }
 
 FeExpect<void, Error> FrontendRenderer::MakeBackends() {

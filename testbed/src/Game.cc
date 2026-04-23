@@ -3,6 +3,8 @@
 #include <Core/EngineContext.hpp>
 #include <Core/Input.hpp>
 #include <Scene/Components/ParticleEmitter.hpp>
+#include <Core/FeMemory.hpp>
+#include <imgui.h>
 #include <Core/Logger.hpp>
 #include <Defines.hpp>
 #include <Scene/Components/Camera2D.hpp>
@@ -193,9 +195,81 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
   return FeTrue;
 }
 
+// TODO: remove, just here for testing
+void GameTest::GameImGui(flatearth::Game *gameInstance) {
+  EngineContext &ctx = *gameInstance->pCtx;
+
+  ImGui::Begin("Debug");
+
+  ImGui::Text("FPS: %.1f  |  Draw calls: %u", 1.0f / ImGui::GetIO().DeltaTime, ctx.drawCallCount);
+
+  if (ImGui::CollapsingHeader("ECS", ImGuiTreeNodeFlags_DefaultOpen)) {
+    ImGui::Text("Entities alive: %u", ctx.registry.AliveCount());
+    if (_state.playerEntity != UINT32_MAX) {
+      auto &xform = ctx.registry.Get<scene::Transform2D>(_state.playerEntity);
+      ImGui::Text("Player pos: (%.2f, %.2f)", xform.x, xform.y);
+    }
+  }
+
+  if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
+    auto camView = ctx.registry.ViewOf<scene::Transform2D, scene::Camera2D>();
+    for (auto [e, xform, cam] : camView) {
+      ImGui::Text("World pos: (%.2f, %.2f)", xform.worldX, xform.worldY);
+      ImGui::Text("Zoom: %.3f", cam.zoom);
+      break;
+    }
+  }
+
+  if (ImGui::CollapsingHeader("Particles", ImGuiTreeNodeFlags_DefaultOpen)) {
+    auto emitterView = ctx.registry.ViewOf<scene::ParticleEmitter, scene::Transform2D>();
+    int emitterIdx = 0;
+    for (auto [e, emitter, xform] : emitterView) {
+      uint32 activeCount = 0;
+      for (uint32 i = 0; i < scene::cMaxParticles; ++i)
+        activeCount += emitter.active[i] ? 1 : 0;
+      ImGui::Text("Emitter %d: %u / %u active", emitterIdx, activeCount, scene::cMaxParticles);
+      ImGui::Text("  pos: (%.2f, %.2f)  rate: %.1f/s", xform.worldX, xform.worldY, emitter.spawnRate);
+      ++emitterIdx;
+    }
+    if (emitterIdx == 0) ImGui::TextDisabled("no emitters");
+  }
+
+  if (ImGui::CollapsingHeader("Memory")) {
+    const auto &stats = ctx.core.memory.GetStats();
+    double totalKB = stats.memoryBlock.totalAllocated / 1024.0;
+    double totalMB = totalKB / 1024.0;
+    ImGui::Text("Total: %.2f KB (%.2f MB)", totalKB, totalMB);
+    ImGui::Text("Active allocs: %llu", static_cast<unsigned long long>(stats.allocCount));
+    ImGui::Separator();
+    for (uint64 i = 0; i < memory::MaxTags; ++i) {
+      uint64 bytes = stats.memoryBlock.taggedAllocations[i];
+      if (bytes == 0) continue;
+      ImGui::Text("  [%-16s] %.2f KB", memory::TagName(static_cast<memory::Tag>(i)), bytes / 1024.0);
+    }
+  }
+
+  ImGui::End();
+}
+
 void GameTest::GameUnload(flatearth::Game *gameInstance) {
   if (!gameInstance->pCtx) return;
   EngineContext &ctx = *gameInstance->pCtx;
+
+  if (_state.playerEntity != UINT32_MAX) {
+    auto &sprite = ctx.registry.Get<scene::Sprite>(_state.playerEntity);
+    ctx.assets.manager.ReleaseSprite(sprite);
+  }
+
+  if (_state.particleEntity != UINT32_MAX) {
+    auto &emitter = ctx.registry.Get<scene::ParticleEmitter>(_state.particleEntity);
+    scene::Sprite base{};
+    base.texHandle  = emitter.texHandle;
+    base.matHandle  = emitter.matHandle;
+    base.meshHandle = emitter.meshHandle;
+    ctx.assets.manager.ReleaseSprite(base);
+  }
+
+  ctx.assets.tilemap.Unload("assets/tiles/LevelEntrance.tmx");
   ctx.sceneManager.Unload("level1");
 }
 

@@ -72,6 +72,8 @@ public:
     return View<Ts...>(GetPool<Ts>()...);
   }
 
+  uint32 AliveCount() const { return _entityManager.AliveCount(); }
+
 private:
   memory::MemoryManager &_memoryManager;
   EntityManager _entityManager;

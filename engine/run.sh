@@ -33,13 +33,13 @@ echo -e "${CYAN}############################### BUILDING ENGINE ################
 
 # Check build directory
 echo -e "${YELLOW}>> Checking if build directory exists...${RESET}"
+if [ -d "$buildDir" ] && [ ! -f "$buildDir/build.ninja" ]; then
+    echo -e "${YELLOW}Stale build directory (wrong generator) — removing...${RESET}"
+    rm -rf "$buildDir"
+fi
 if [ ! -d "$buildDir" ]; then
     echo -e "${GREEN}Creating build directory...${RESET}"
     mkdir "$buildDir"
-    pushd "$buildDir" > /dev/null
-    echo -e "${CYAN}Running 'cmake ..'${RESET}"
-    cmake ..
-    popd > /dev/null
 else
     echo -e "${GREEN}Build directory exists!${RESET}"
 fi
@@ -53,15 +53,19 @@ if [ -f compile_commands.json ]; then
 fi
 
 if [[ "$type" == "Debug" ]]; then
-  cmake -DCMAKE_BUILD_TYPE="$type" \
+  cmake -G Ninja \
+        -DCMAKE_BUILD_TYPE="$type" \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+        -DCMAKE_CXX_SCAN_FOR_MODULES=OFF \
         -DCMAKE_CXX_FLAGS_DEBUG="${SAN_FLAGS}" \
         -DCMAKE_C_FLAGS_DEBUG="${SAN_FLAGS}" \
         -S . \
         -B "$buildDir"
 else
-    cmake -DCMAKE_BUILD_TYPE="$type" \
+    cmake -G Ninja \
+          -DCMAKE_BUILD_TYPE="$type" \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+          -DCMAKE_CXX_SCAN_FOR_MODULES=OFF \
           -S . \
           -B "$buildDir"
 fi
@@ -70,11 +74,6 @@ ln -sf "${linkPath}/${buildDir}/compile_commands.json" compile_commands.json
 
 echo -e "${CYAN}Running CMake build...${RESET}"
 cmake --build "$buildDir"
-
-echo -e "${CYAN}Running make inside build directory...${RESET}"
-pushd "$buildDir" > /dev/null
-make
-popd > /dev/null
 
 # Copying step
 echo -e "${CYAN}############################# COPYING STEP ####################################${RESET}"

@@ -102,4 +102,14 @@ bool InputManager::WasButtonUp(Button button) {
   return !_state.mousePrevious.buttons[ButtonIndex(button)];
 }
 
+void InputManager::GetMousePosition(int32 &x, int32 &y) {
+  x = _state.mouseCurrent.x;
+  y = _state.mouseCurrent.y;
+}
+
+void InputManager::GetPreviousMousePosition(int32 &x, int32 &y) {
+  x = _state.mousePrevious.x;
+  y = _state.mousePrevious.y;
+}
+
 } // namespace flatearth::input

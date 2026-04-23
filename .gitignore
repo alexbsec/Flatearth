@@ -30,6 +30,7 @@ release/*
 
 #
 .ignore/*
+imgui.ini
 
 # Visual Studio
 .vs/

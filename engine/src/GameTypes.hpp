@@ -22,14 +22,15 @@ public:
   std::function<void(struct Game *gameInstance)> Unload;
   std::function<bool(struct Game *gameInstance, float32 deltaTime)> Update;
   std::function<bool(struct Game *gameInstance, uint32 width, uint32 height)> OnResize;
+  std::function<void(struct Game *gameInstance)> OnImGui;
 
   explicit Game()
-      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), OnResize(nullptr),
+      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), OnResize(nullptr), OnImGui(nullptr),
         gameName(cGameName), windowStartWidth(scDefaultStartWidth),
         windowStartHeight(scDefaultStartHeight) {}
 
   Game(const string &name)
-      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), OnResize(nullptr),
+      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), OnResize(nullptr), OnImGui(nullptr),
         gameName(name), windowStartWidth(scDefaultStartWidth),
         windowStartHeight(scDefaultStartHeight) {}
 

@@ -85,10 +85,13 @@ public:
   }
 
   void MemoryUsage();
+  const SystemState &GetStats() const { return _memoryState; }
 
 private:
   SystemState _memoryState{};
 };
+
+FEAPI const char *TagName(Tag tag);
 
 } // namespace flatearth::memory
 

@@ -1,6 +1,7 @@
 #include "Assets/TilemapManager.hpp"
 
 #include "Assets/AssetManager.hpp"
+#include "Core/FeMemory.hpp"
 #include "Assets/TilemapLoader.hpp"
 #include "Core/Logger.hpp"
 #include "ECS/Registry.hpp"
@@ -13,8 +14,10 @@
 
 namespace flatearth::assets {
 
-TilemapManager::TilemapManager(AssetManager &assetManager, ecs::Registry &registry)
-    : _assetManager(assetManager), _registry(registry) {}
+TilemapManager::TilemapManager(memory::MemoryManager &memManager,
+                               AssetManager &assetManager,
+                               ecs::Registry &registry)
+    : _assetManager(assetManager), _registry(registry), _baseSprites(memManager) {}
 
 FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::Scene *scene) {
   TilemapLoader loader{_assetManager};
@@ -83,13 +86,12 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::Scen
     }
   }
 
+  auto _ = _baseSprites.Insert(string(tmxPath), baseSprite);
+
   uint32 renderLayerCount = static_cast<uint32>(tm.renderLayers.size());
   uint32 collTileCount    = static_cast<uint32>(coll.tiles.size());
   uint32 objectCount      = static_cast<uint32>(tm.objects.size());
 
-  // ── root tilemap entity ───────────────────────────────────────────────────
-  // Tilemap data is not stored as a component (contains std::vector — not trivially copyable).
-  // TilemapManager owns the data; the root entity is just a transform anchor.
   auto root = _registry.Create();
   _registry.Insert(root, scene::Transform2D{});
   scene->roots.push_back(root);
@@ -98,6 +100,14 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::Scen
   FLOG_INFO("TilemapManager: loaded '{}' — {} render layers, {} collision tiles, {} objects",
             tmxPath, renderLayerCount, collTileCount, objectCount);
   return root;
+}
+
+void TilemapManager::Unload(stringv tmxPath) {
+  scene::Sprite *pBase = _baseSprites.Retrieve(string(tmxPath));
+  if (pBase) {
+    _assetManager.ReleaseSprite(*pBase);
+    _baseSprites.Erase(string(tmxPath));
+  }
 }
 
 } // namespace flatearth::assets

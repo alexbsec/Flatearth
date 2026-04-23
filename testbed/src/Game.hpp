@@ -23,6 +23,7 @@ public:
   static void GameUnload(flatearth::Game *gameInstance);
   static bool GameUpdate(flatearth::Game *gameInstance, float32 deltaTime);
   static bool GameOnResize(flatearth::Game *gameInstance, uint32 width, uint32 height);
+  static void GameImGui(flatearth::Game *gameInstance);
 
 private:
   static GameState _state;
