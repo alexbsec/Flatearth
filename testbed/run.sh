@@ -39,6 +39,7 @@ fi
 cmake -G Ninja \
       -DCMAKE_BUILD_TYPE="$type" \
       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+      -DCMAKE_CXX_SCAN_FOR_MODULES=OFF \
       -S . \
       -B "$buildDir"
 

@@ -56,6 +56,7 @@ if [[ "$type" == "Debug" ]]; then
   cmake -G Ninja \
         -DCMAKE_BUILD_TYPE="$type" \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+        -DCMAKE_CXX_SCAN_FOR_MODULES=OFF \
         -DCMAKE_CXX_FLAGS_DEBUG="${SAN_FLAGS}" \
         -DCMAKE_C_FLAGS_DEBUG="${SAN_FLAGS}" \
         -S . \
@@ -64,6 +65,7 @@ else
     cmake -G Ninja \
           -DCMAKE_BUILD_TYPE="$type" \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+          -DCMAKE_CXX_SCAN_FOR_MODULES=OFF \
           -S . \
           -B "$buildDir"
 fi

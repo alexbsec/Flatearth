@@ -25,10 +25,14 @@ FrontendRenderer::~FrontendRenderer() {
   FLOG_INFO("frontend renderer exited gracefully");
 }
 
-void FrontendRenderer::Shutdown() {
+void FrontendRenderer::Flush() {
   if (_rendererState.pActiveBackend) {
     _rendererState.pActiveBackend->Flush();
   }
+}
+
+void FrontendRenderer::Shutdown() {
+  Flush();
   _meshCache.Shutdown();
   _materialCache.Shutdown();
 }

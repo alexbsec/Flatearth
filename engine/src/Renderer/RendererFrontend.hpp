@@ -65,6 +65,7 @@ public:
   void ReleaseMaterial(resources::MaterialHandle handle);
   resources::Material *GetMaterial(resources::MaterialHandle handle);
 
+  void Flush();
   void BeginImGuiFrame();
 
   void Shutdown();

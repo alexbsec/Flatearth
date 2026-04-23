@@ -20,7 +20,7 @@ namespace flatearth {
 Engine::Engine(Game *pGame)
     : _appState(pGame), _eventManager(_memoryManager), _inputManager(_eventManager),
       _renderer(&_appState, _memoryManager, _registry, _filesystem), _filesystem(_memoryManager),
-      _assetManager(_memoryManager, _filesystem), _tilemapManager(_assetManager, _registry),
+      _assetManager(_memoryManager, _filesystem), _tilemapManager(_memoryManager, _assetManager, _registry),
       _prefabManager(_memoryManager), _scheduler(_memoryManager),
       _registry(_memoryManager), _sceneManager(_memoryManager, _registry), _world(_memoryManager),
       _ctx(_memoryManager,
@@ -36,6 +36,7 @@ Engine::Engine(Game *pGame)
 }
 
 Engine::~Engine() {
+  _renderer.Flush();
   if (_appState.pGameInstance->Unload) {
     _appState.pGameInstance->Unload(_appState.pGameInstance);
   }

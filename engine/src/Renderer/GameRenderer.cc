@@ -62,6 +62,10 @@ FeExpect<bool, Error> GameRenderer::Draw(float32 deltaTime) {
   return _frontendRenderer.DrawFrame(&packet);
 }
 
+void GameRenderer::Flush() {
+  _frontendRenderer.Flush();
+}
+
 void GameRenderer::BeginImGuiFrame() {
   _frontendRenderer.BeginImGuiFrame();
 }
