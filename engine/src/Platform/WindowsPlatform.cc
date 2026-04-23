@@ -1,5 +1,6 @@
 ﻿#include "Core/Logger.hpp"
 #include "Platform/Platform.hpp"
+#include "imgui.h"
 
 #if FEPLATFORM_WINDOWS
 
@@ -249,7 +250,6 @@ LRESULT Platform::ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
       input::Keys key = static_cast<input::Keys>((uint16)wParam);
 
       if (wParam == VK_MENU) {
-        // Alt has been pressed
         if (GetKeyState(VK_RMENU) & 0x8000) {
           key = input::KEY_RMENU;
         } else if (GetKeyState(VK_LMENU) & 0x8000) {
@@ -263,7 +263,18 @@ LRESULT Platform::ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
         }
       }
 
+      ImGuiKey imKey = TranslateVKToImGuiKey(wParam);
+      if (imKey != ImGuiKey_None) {
+        ImGui::GetIO().AddKeyEvent(imKey, pressed);
+      }
+
       _inputManager.ProcessKey(key, pressed);
+    } break;
+
+    case WM_CHAR: {
+      if (wParam >= 0x20) {
+        ImGui::GetIO().AddInputCharacterUTF16((ImWchar16)wParam);
+      }
     } break;
 
     case WM_MOUSEMOVE: {
@@ -310,6 +321,35 @@ LRESULT Platform::ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
   }
 
   return DefWindowProcA(hwnd, msg, wParam, lParam);
+}
+
+static ImGuiKey TranslateVKToImGuiKey(WPARAM vk) {
+  switch (vk) {
+    case VK_BACK:     return ImGuiKey_Backspace;
+    case VK_RETURN:   return ImGuiKey_Enter;
+    case VK_TAB:      return ImGuiKey_Tab;
+    case VK_ESCAPE:   return ImGuiKey_Escape;
+    case VK_DELETE:   return ImGuiKey_Delete;
+    case VK_INSERT:   return ImGuiKey_Insert;
+    case VK_HOME:     return ImGuiKey_Home;
+    case VK_END:      return ImGuiKey_End;
+    case VK_PRIOR:    return ImGuiKey_PageUp;
+    case VK_NEXT:     return ImGuiKey_PageDown;
+    case VK_LEFT:     return ImGuiKey_LeftArrow;
+    case VK_RIGHT:    return ImGuiKey_RightArrow;
+    case VK_UP:       return ImGuiKey_UpArrow;
+    case VK_DOWN:     return ImGuiKey_DownArrow;
+    case VK_LSHIFT:   return ImGuiKey_LeftShift;
+    case VK_RSHIFT:   return ImGuiKey_RightShift;
+    case VK_LCONTROL: return ImGuiKey_LeftCtrl;
+    case VK_RCONTROL: return ImGuiKey_RightCtrl;
+    case VK_LMENU:    return ImGuiKey_LeftAlt;
+    case VK_RMENU:    return ImGuiKey_RightAlt;
+    case 'A': return ImGuiKey_A; case 'C': return ImGuiKey_C;
+    case 'V': return ImGuiKey_V; case 'X': return ImGuiKey_X;
+    case 'Z': return ImGuiKey_Z;
+    default:  return ImGuiKey_None;
+  }
 }
 
 } // namespace flatearth::platform

@@ -119,6 +119,10 @@ public:
     return const_cast<HashMap *>(this)->Retrieve(key);
   }
 
+  inline bool Has(const T &key) const {
+    return Retrieve(key) != nullptr;
+  }
+
   inline bool Erase(const T &key) {
     H hashFn{};
     Eq eqFn{};

@@ -23,11 +23,14 @@ Engine::Engine(Game *pGame)
       _assetManager(_memoryManager, _filesystem), _tilemapManager(_memoryManager, _assetManager, _registry),
       _prefabManager(_memoryManager), _scheduler(_memoryManager),
       _registry(_memoryManager), _sceneManager(_memoryManager, _registry), _world(_memoryManager),
+      _kvarRegistry(_memoryManager),
+      _devConsole(_inputManager),
       _ctx(_memoryManager,
            _assetManager,
            _tilemapManager,
            _prefabManager,
            _inputManager,
+           _kvarRegistry,
            _registry,
            _sceneManager,
            _world) {
@@ -149,13 +152,13 @@ FeExpect<void, Error> Engine::Start() {
     float64 deltaTime = currentTime - _appState.lastTime;
     float64 frameStartTime = clock::GetAbsoluteTime();
 
-    // Update game
-    if (!_appState.pGameInstance->Update(_appState.pGameInstance, deltaTime)) {
-      FLOG_FATAL("game update failed, shutting down application");
-      break;
+    if (!_devConsole.IsOpen()) {
+      if (!_appState.pGameInstance->Update(_appState.pGameInstance, deltaTime)) {
+        FLOG_FATAL("game update failed, shutting down application");
+        break;
+      }
+      _scheduler.Update(_registry, deltaTime);
     }
-
-    _scheduler.Update(_registry, deltaTime);
 
     _renderer.BeginImGuiFrame();
     ImGuiIO &io = ImGui::GetIO();
@@ -172,6 +175,7 @@ FeExpect<void, Error> Engine::Start() {
     if (_appState.pGameInstance->OnImGui) {
       _appState.pGameInstance->OnImGui(_appState.pGameInstance);
     }
+    _devConsole.Draw(_kvarRegistry);
     ImGui::Render();
 
     auto drawRes = _renderer.Draw(deltaTime);
