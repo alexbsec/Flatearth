@@ -26,6 +26,9 @@ FrontendRenderer::~FrontendRenderer() {
 }
 
 void FrontendRenderer::Shutdown() {
+  if (_rendererState.pActiveBackend) {
+    _rendererState.pActiveBackend->Flush();
+  }
   _meshCache.Shutdown();
   _materialCache.Shutdown();
 }

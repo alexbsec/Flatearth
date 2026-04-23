@@ -31,8 +31,8 @@ VulkanBackend::VulkanBackend(memory::MemoryManager &memManager, platform::FileSy
 }
 
 VulkanBackend::~VulkanBackend() {
-  ShutdownImGui();
   vkDeviceWaitIdle(_ctx.device.logicalDevice);
+  ShutdownImGui();
 
   _bufferManager.DestroyVulkanBuffer(_ctx, &_ctx.objectVertexBuffer);
   _bufferManager.DestroyVulkanBuffer(_ctx, &_ctx.objectIndexBuffer);
@@ -847,6 +847,10 @@ FeExpect<void, Error> VulkanBackend::DestroyMaterial(resources::Material *pMater
   _memoryManager.RawFree(pMatData, sizeof(MaterialData), memory::Tag::Renderer);
   pMaterial->pInternalData = nullptr;
   return {};
+}
+
+void VulkanBackend::Flush() {
+  vkDeviceWaitIdle(_ctx.device.logicalDevice);
 }
 
 void VulkanBackend::BeginImGuiFrame() {

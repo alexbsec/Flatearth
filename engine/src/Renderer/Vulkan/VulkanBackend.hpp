@@ -55,6 +55,7 @@ public:
                                        const resources::Texture *pTexture) override;
   FeExpect<void, Error> DestroyMaterial(resources::Material *pMaterial) override;
 
+  void Flush() override;
   void BeginImGuiFrame() override;
   void DrawImGui() override;
 
