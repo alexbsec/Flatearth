@@ -17,6 +17,10 @@ linkPath=$(pwd)
 testingPath=$(pwd)
 binDir="../${OUT_ROOT}/bin"
 
+if [ -d "$buildDir" ] && [ ! -f "$buildDir/build.ninja" ]; then
+  echo -e "${YELLOW}Stale build directory (wrong generator) — removing...${RESET}"
+  rm -rf "$buildDir"
+fi
 mkdir -p "$buildDir"
 mkdir -p "$binDir"
 
@@ -32,7 +36,8 @@ if [ -f compile_commands.json ]; then
   rm compile_commands.json
 fi
 
-cmake -DCMAKE_BUILD_TYPE="$type" \
+cmake -G Ninja \
+      -DCMAKE_BUILD_TYPE="$type" \
       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
       -S . \
       -B "$buildDir"

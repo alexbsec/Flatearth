@@ -65,6 +65,7 @@ if(UNIX AND NOT APPLE AND NOT TARGET flatearth)
 
     target_include_directories(flatearth INTERFACE
         "${CMAKE_CURRENT_LIST_DIR}/../engine/src"
+        "${FLATEARTH_ENGINE_BUILD_DIR}/_deps/imgui-src"
     )
 endif()
 

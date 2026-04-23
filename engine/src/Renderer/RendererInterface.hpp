@@ -51,6 +51,9 @@ public:
                                                const resources::Texture *pTexture) = 0;
   virtual FeExpect<void, Error> DestroyMaterial(resources::Material *pMaterial) = 0;
 
+  virtual void BeginImGuiFrame() {}
+  virtual void DrawImGui() {}
+
 protected:
   virtual ~IRendererBackend() = default;
 };

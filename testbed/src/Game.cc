@@ -3,6 +3,8 @@
 #include <Core/EngineContext.hpp>
 #include <Core/Input.hpp>
 #include <Scene/Components/ParticleEmitter.hpp>
+#include <Core/FeMemory.hpp>
+#include <imgui.h>
 #include <Core/Logger.hpp>
 #include <Defines.hpp>
 #include <Scene/Components/Camera2D.hpp>
@@ -191,6 +193,39 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
   cameraXform.dirty = FeTrue;
 
   return FeTrue;
+}
+
+// TODO: remove, just here for testing
+void GameTest::GameImGui(flatearth::Game *gameInstance) {
+  EngineContext &ctx = *gameInstance->pCtx;
+
+  ImGui::Begin("Debug");
+
+  ImGui::Text("FPS: %.1f", 1.0f / ImGui::GetIO().DeltaTime);
+
+  if (ImGui::CollapsingHeader("ECS", ImGuiTreeNodeFlags_DefaultOpen)) {
+    ImGui::Text("Entities alive: %u", ctx.registry.AliveCount());
+    if (_state.playerEntity != UINT32_MAX) {
+      auto &xform = ctx.registry.Get<scene::Transform2D>(_state.playerEntity);
+      ImGui::Text("Player pos: (%.2f, %.2f)", xform.x, xform.y);
+    }
+  }
+
+  if (ImGui::CollapsingHeader("Memory")) {
+    const auto &stats = ctx.core.memory.GetStats();
+    double totalKB = stats.memoryBlock.totalAllocated / 1024.0;
+    double totalMB = totalKB / 1024.0;
+    ImGui::Text("Total: %.2f KB (%.2f MB)", totalKB, totalMB);
+    ImGui::Text("Active allocs: %llu", static_cast<unsigned long long>(stats.allocCount));
+    ImGui::Separator();
+    for (uint64 i = 0; i < memory::MaxTags; ++i) {
+      uint64 bytes = stats.memoryBlock.taggedAllocations[i];
+      if (bytes == 0) continue;
+      ImGui::Text("  [%-16s] %.2f KB", memory::TagName(static_cast<memory::Tag>(i)), bytes / 1024.0);
+    }
+  }
+
+  ImGui::End();
 }
 
 void GameTest::GameUnload(flatearth::Game *gameInstance) {

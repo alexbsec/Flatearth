@@ -55,6 +55,9 @@ public:
                                        const resources::Texture *pTexture) override;
   FeExpect<void, Error> DestroyMaterial(resources::Material *pMaterial) override;
 
+  void BeginImGuiFrame() override;
+  void DrawImGui() override;
+
 private:
   FeExpect<void, Error> CreateFence(Fence *pFence, bool signaled);
   FeExpect<void, Error> DestroyFence(Fence *pFence);
@@ -68,6 +71,9 @@ private:
                                         uint64 size,
                                         VulkanBuffer &buffer,
                                         const void *pData);
+
+  void InitImGui();
+  void ShutdownImGui();
 
   void TextureSubmitCallback(CommandBuffer cmd,
                              VkFormat imageFormat,
@@ -87,6 +93,8 @@ private:
   Context _ctx;
 
   containers::HashMap<uint32, GeometryData> _geometries;
+
+  VkDescriptorPool _imguiDescriptorPool{VK_NULL_HANDLE};
 
   const resources::Material *_cpLastBoundMaterial{nullptr};
   uint32 _lastBoundGeometry{UINT32_MAX};

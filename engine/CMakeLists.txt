@@ -26,6 +26,8 @@ set(LIBRARY_BASE_PATH "${PROJECT_SOURCE_DIR}/src")
 
 include(FetchContent)
 
+# Box2D
+
 FetchContent_Declare(
     box2d
     GIT_REPOSITORY https://github.com/erincatto/box2d.git
@@ -40,6 +42,8 @@ set(BOX2D_BUILD_DOCS       OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(box2d)
 set_target_properties(box2d PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+# Tiny XML 2
+
 FetchContent_Declare(
     tinyxml2
     GIT_REPOSITORY https://github.com/leethomason/tinyxml2.git
@@ -51,6 +55,17 @@ set(tinyxml2_BUILD_TESTING OFF CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(tinyxml2)
 set_target_properties(tinyxml2 PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+# ImGui
+
+FetchContent_Declare(
+  imgui
+  GIT_REPOSITORY https://github.com/ocornut/imgui.git
+  GIT_TAG        v1.91.5
+  GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(imgui)
+FetchContent_GetProperties(imgui SOURCE_DIR IMGUI_SOURCE_DIR)
 
 ############################################################################
 #   PROJECT DEFINITIONS
@@ -71,6 +86,21 @@ add_library(${BINARY_NAME} SHARED
 target_include_directories(${BINARY_NAME}
     PUBLIC
         ${LIBRARY_BASE_PATH}
+)
+
+target_sources(${BINARY_NAME} PRIVATE
+    ${IMGUI_SOURCE_DIR}/imgui.cpp
+    ${IMGUI_SOURCE_DIR}/imgui_draw.cpp
+    ${IMGUI_SOURCE_DIR}/imgui_tables.cpp
+    ${IMGUI_SOURCE_DIR}/imgui_widgets.cpp
+    ${IMGUI_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
+)
+
+target_include_directories(${BINARY_NAME}
+    PRIVATE
+        ${IMGUI_SOURCE_DIR}/backends
+    PUBLIC
+        ${IMGUI_SOURCE_DIR}
 )
 
 ############################################################################

@@ -15,6 +15,10 @@ fi
 buildDir="./build-${OUT_ROOT}"
 binDir="../${OUT_ROOT}/bin"
 
+if [ -d "$buildDir" ] && [ ! -f "$buildDir/build.ninja" ]; then
+  echo "Stale build directory (wrong generator) — removing..."
+  rm -rf "$buildDir"
+fi
 mkdir -p "$buildDir"
 mkdir -p "$binDir"
 
@@ -24,7 +28,8 @@ RESET='\033[0m'
 
 echo -e "${CYAN}############################### BUILDING TESTS (${type}) ###############################${RESET}"
 
-cmake -DCMAKE_BUILD_TYPE="$type" \
+cmake -G Ninja \
+      -DCMAKE_BUILD_TYPE="$type" \
       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
       -S . \
       -B "$buildDir"

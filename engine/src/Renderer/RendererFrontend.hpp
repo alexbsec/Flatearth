@@ -43,29 +43,31 @@ public:
                 resources::TextureFilter filter = resources::TextureFilter::Nearest);
   FeExpect<void, Error> DestroyTexture(resources::Texture *pTexture);
 
-  FEAPI FeExpect<void, Error> CreateMaterial(resources::Material *pMaterial,
-                                             const resources::Texture *pTexture);
-  FEAPI FeExpect<void, Error> DestroyMaterial(resources::Material *pMaterial);
+  FeExpect<void, Error> CreateMaterial(resources::Material *pMaterial,
+                                       const resources::Texture *pTexture);
+  FeExpect<void, Error> DestroyMaterial(resources::Material *pMaterial);
 
-  FEAPI FeExpect<void, Error> CreateGeometry(uint32 id,
-                                             uint32 vertexCount,
-                                             const math::Vertex3D *pVertices,
-                                             uint32 indexCount,
-                                             const uint32 *pIndices);
-  FEAPI FeExpect<void, Error> DestroyGeometry(uint32 id);
+  FeExpect<void, Error> CreateGeometry(uint32 id,
+                                       uint32 vertexCount,
+                                       const math::Vertex3D *pVertices,
+                                       uint32 indexCount,
+                                       const uint32 *pIndices);
+  FeExpect<void, Error> DestroyGeometry(uint32 id);
 
   // Mesh cache public API
-  FEAPI FeExpect<resources::MeshHandle, Error> AcquireMesh(resources::MeshShape shape);
-  FEAPI void ReleaseMesh(resources::MeshHandle handle);
-  FEAPI resources::Mesh *GetMesh(resources::MeshHandle handle);
+  FeExpect<resources::MeshHandle, Error> AcquireMesh(resources::MeshShape shape);
+  void ReleaseMesh(resources::MeshHandle handle);
+  resources::Mesh *GetMesh(resources::MeshHandle handle);
 
   // Material cache public API
-  FEAPI FeExpect<resources::MaterialHandle, Error> AcquireMaterial(const string &name,
-                                                                    resources::Texture *pTexture);
-  FEAPI void ReleaseMaterial(resources::MaterialHandle handle);
-  FEAPI resources::Material *GetMaterial(resources::MaterialHandle handle);
+  FeExpect<resources::MaterialHandle, Error> AcquireMaterial(const string &name,
+                                                             resources::Texture *pTexture);
+  void ReleaseMaterial(resources::MaterialHandle handle);
+  resources::Material *GetMaterial(resources::MaterialHandle handle);
 
-  FEAPI void Shutdown();
+  void BeginImGuiFrame();
+
+  void Shutdown();
 
 private:
   FeExpect<void, Error> MakeBackends();

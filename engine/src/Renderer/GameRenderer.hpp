@@ -14,6 +14,8 @@ public:
 
   FeExpect<bool, Error> Initialize();
   FeExpect<bool, Error> Draw(float32 deltaTime);
+  void BeginImGuiFrame();
+
   void Shutdown();
 
   FrontendRenderer &FrontendReference();

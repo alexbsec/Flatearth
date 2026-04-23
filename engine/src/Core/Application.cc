@@ -1,5 +1,7 @@
 #include "Application.hpp"
 
+#include <imgui.h>
+
 #include "Core/Clock.hpp"
 #include "Core/EngineListener.hpp"
 #include "Core/Event.hpp"
@@ -153,6 +155,24 @@ FeExpect<void, Error> Engine::Start() {
     }
 
     _scheduler.Update(_registry, deltaTime);
+
+    _renderer.BeginImGuiFrame();
+    ImGuiIO &io = ImGui::GetIO();
+    io.DisplaySize = ImVec2(static_cast<float>(_appState.width),
+                            static_cast<float>(_appState.height));
+    io.DeltaTime   = static_cast<float>(deltaTime);
+    int32 mx, my;
+    _inputManager.GetMousePosition(mx, my);
+    io.AddMousePosEvent(static_cast<float>(mx), static_cast<float>(my));
+    io.AddMouseButtonEvent(0, _inputManager.IsButtonDown(input::Button::Left));
+    io.AddMouseButtonEvent(1, _inputManager.IsButtonDown(input::Button::Right));
+    io.AddMouseButtonEvent(2, _inputManager.IsButtonDown(input::Button::Middle));
+    ImGui::NewFrame();
+    if (_appState.pGameInstance->OnImGui) {
+      _appState.pGameInstance->OnImGui(_appState.pGameInstance);
+    }
+    ImGui::Render();
+
     auto drawRes = _renderer.Draw(deltaTime);
     if (!drawRes.has_value()) {
       FLOG_ERROR("game renderer failed to draw frame: {}", drawRes.error().message);
