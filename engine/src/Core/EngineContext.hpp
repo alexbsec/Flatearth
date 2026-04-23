@@ -7,6 +7,7 @@
 #include "Audio/AudioManager.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Input.hpp"
+#include "Core/KVarRegistry.hpp"
 #include "ECS/Registry.hpp"
 #include "Physics/FlatearthWorld.hpp"
 #include "Scene/SceneManager.hpp"
@@ -24,6 +25,7 @@ struct EngineContext {
     memory::MemoryManager &memory;
     input::InputManager &input;
     audio::AudioManager &audio;
+    KVarRegistry &kvars;
   } core;
 
   ecs::Registry &registry;
@@ -37,11 +39,12 @@ struct EngineContext {
                          assets::PrefabManager &prefabManager,
                          input::InputManager &inputManager,
                          audio::AudioManager &audioManager,
+                         KVarRegistry &kvarRegistry,
                          ecs::Registry &registry,
                          scene::SceneManager &sceneManager,
                          physics::FlatearthWorld &world)
       : assets(assetManager, tilemapManager, prefabManager),
-        core(memManager, inputManager, audioManager),
+        core(memManager, inputManager, audioManager, kvarRegistry),
         registry(registry), sceneManager(sceneManager), world(world) {}
 };
 

@@ -4,6 +4,7 @@
 #include "Core/Logger.hpp"
 #include "Defines.hpp"
 #include "Platform.hpp"
+#include "imgui.h"
 
 #if FEPLATFORM_LINUX
 
@@ -76,6 +77,7 @@ FeExpect<void, Error> CreateVulkanSurface(PlatformState *platState,
 }
 
 input::Keys TranslateKeySymbol(uint32 keySym);
+ImGuiKey   TranslateToImGuiKey(uint32 keySym);
 
 const string cNullInternalStateError = "platform internal state is nullptr";
 const string cXCBConnectionError = "XCB failed to connect";
@@ -230,6 +232,16 @@ FeExpect<bool, Error> Platform::PollEvents() {
         int32 level = (keyEvent->state & XCB_MOD_MASK_SHIFT) ? 1 : 0;
         KeySym keySymbol = XkbKeycodeToKeysym(pInternalState->display, (KeyCode)code, 0, level);
         input::Keys key = TranslateKeySymbol((uint32)keySymbol);
+
+        ImGuiIO &io = ImGui::GetIO();
+        ImGuiKey imKey = TranslateToImGuiKey((uint32)keySymbol);
+        if (imKey != ImGuiKey_None) {
+          io.AddKeyEvent(imKey, pressed);
+        }
+        if (pressed && keySymbol >= 0x20 && keySymbol < 0x80) {
+          io.AddInputCharacter((unsigned int)keySymbol);
+        }
+
         auto processRes = _inputManager.ProcessKey(key, pressed);
         if (!processRes.has_value()) {
           FLOG_ERROR("input manager failed to process key {} event", (uint32)keySymbol);
@@ -591,6 +603,38 @@ input::Keys TranslateKeySymbol(uint32 keySymbol) {
       return input::KEY_Z;
     default:
       return input::KEY_NULL;
+  }
+}
+
+ImGuiKey TranslateToImGuiKey(uint32 keySym) {
+  switch (keySym) {
+    case XK_BackSpace:  return ImGuiKey_Backspace;
+    case XK_Return:     return ImGuiKey_Enter;
+    case XK_KP_Enter:   return ImGuiKey_KeypadEnter;
+    case XK_Tab:        return ImGuiKey_Tab;
+    case XK_Escape:     return ImGuiKey_Escape;
+    case XK_Delete:     return ImGuiKey_Delete;
+    case XK_Insert:     return ImGuiKey_Insert;
+    case XK_Home:       return ImGuiKey_Home;
+    case XK_End:        return ImGuiKey_End;
+    case XK_Prior:      return ImGuiKey_PageUp;
+    case XK_Next:       return ImGuiKey_PageDown;
+    case XK_Left:       return ImGuiKey_LeftArrow;
+    case XK_Right:      return ImGuiKey_RightArrow;
+    case XK_Up:         return ImGuiKey_UpArrow;
+    case XK_Down:       return ImGuiKey_DownArrow;
+    case XK_Shift_L:    return ImGuiKey_LeftShift;
+    case XK_Shift_R:    return ImGuiKey_RightShift;
+    case XK_Control_L:  return ImGuiKey_LeftCtrl;
+    case XK_Control_R:  return ImGuiKey_RightCtrl;
+    case XK_Alt_L:      return ImGuiKey_LeftAlt;
+    case XK_Alt_R:      return ImGuiKey_RightAlt;
+    case XK_a: case XK_A: return ImGuiKey_A;
+    case XK_c: case XK_C: return ImGuiKey_C;
+    case XK_v: case XK_V: return ImGuiKey_V;
+    case XK_x: case XK_X: return ImGuiKey_X;
+    case XK_z: case XK_Z: return ImGuiKey_Z;
+    default: return ImGuiKey_None;
   }
 }
 

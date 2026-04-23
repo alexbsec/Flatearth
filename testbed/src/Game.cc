@@ -28,6 +28,12 @@ bool GameTest::GameInitialize(flatearth::Game *gameInstance) {
   gameInstance->gameName          = "TopDown";
 
   EngineContext &ctx = *gameInstance->pCtx;
+
+  auto _ = ctx.core.kvars.Register("player.speed",        "Player movement speed (units/s)", 1.5f);
+  auto _ = ctx.core.kvars.Register("particle.spawnRate",   "Particle emitter spawn rate (particles/s)", 15.0f);
+  auto _ = ctx.core.kvars.Register("camera.zoom",          "Camera zoom scale", 0.2f);
+  auto _ = ctx.core.kvars.Register("bgm.volume",           "BGM volume (0.0 - 2.0)", 1.0f);
+
   ctx.assets.prefab.Register<PlayerPrefab>([&ctx](ecs::EntityId id, ecs::Registry &reg) {
     auto walkTexRes = ctx.assets.manager.LoadTexture("assets/textures/Human_Walk.png");
     if (!walkTexRes.has_value()) return;
@@ -147,7 +153,8 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
   auto &anim        = ctx.registry.Get<scene::SpriteAnimator>(_state.playerEntity);
   auto &sprite      = ctx.registry.Get<scene::Sprite>(_state.playerEntity);
 
-  constexpr float32 speed = 1.5f;
+  auto &kvars = ctx.core.kvars;
+  float32 speed = kvars.Get<float32>("player.speed").value_or(1.5f);
   float32 dx = 0.0f, dy = 0.0f;
 
   auto &input = ctx.core.input;
@@ -156,25 +163,41 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
   if (input.IsKeyDown(input::KEY_A) || input.IsKeyDown(input::KEY_LEFT))  dx -= 1.0f;
   if (input.IsKeyDown(input::KEY_D) || input.IsKeyDown(input::KEY_RIGHT)) dx += 1.0f;
 
-  // Walk.png row order: 0=down, 1=left, 2=right, 3=up
-  uint8 dirRow = 0;
-  if      (dy < 0.0f) dirRow = 0;
-  else if (dy > 0.0f) dirRow = 3;
-  else if (dx < 0.0f) dirRow = 1;
-  else if (dx > 0.0f) dirRow = 2;
-
   constexpr float32 uvW = 32.0f / 128.0f;
   constexpr float32 uvH = 32.0f / 128.0f;
 
   bool moving = (dx != 0.0f || dy != 0.0f);
 
-  // Rebuild all animation frames for the new direction
+  // Walk.png row order: 0=down, 1=left, 2=right, 3=up
+  // Two independent axes: vertRow tracks W/S state, horzRow tracks A/D state.
+  if (dy > 0.0f) _state.vertRow = 3;
+  if (dy < 0.0f) _state.vertRow = 0;
+  if (dx < 0.0f) _state.horzRow = 1;
+  if (dx > 0.0f) _state.horzRow = 2;
+
+  uint8 dirRow;
+  if (dx != 0.0f && dy != 0.0f) {
+    // Diagonal — explicit quadrant mapping
+    if      (dx < 0.0f && dy > 0.0f) dirRow = 3;  // AW: up-left  → back
+    else if (dx < 0.0f && dy < 0.0f) dirRow = 1;  // AS: down-left → left
+    else if (dx > 0.0f && dy < 0.0f) dirRow = 2;  // SD: down-right → right
+    else                              dirRow = 2;  // WD: up-right → right
+  } else if (dx != 0.0f) {
+    dirRow = _state.vertRow;   // A or D alone: strafe, keep front/back
+  } else if (dy != 0.0f) {
+    dirRow = _state.horzRow;   // W or S alone: keep left/right
+  } else {
+    dirRow = _state.lastDirRow;
+  }
+
+  if (moving) _state.lastDirRow = dirRow;
+
+  // Rebuild all animation frames for the current direction
   for (uint8 col = 0; col < 4; ++col) {
     anim.frames[col].uvOffset = {col * uvW, (dirRow + 1) * uvH};
     anim.frames[col].uvScale  = {uvW, -uvH};
   }
 
-  // Push the current frame UV directly to the sprite so direction changes are instant
   anim.playing = moving;
   if (!moving) {
     anim.currentFrame = 0;
@@ -191,7 +214,9 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
   sprite.dirty    = FeTrue;
 
   if (_state.particleEntity != UINT32_MAX) {
+    auto &emitter      = ctx.registry.Get<scene::ParticleEmitter>(_state.particleEntity);
     auto &emitterXform = ctx.registry.Get<scene::Transform2D>(_state.particleEntity);
+    emitter.spawnRate  = kvars.Get<float32>("particle.spawnRate").value_or(15.0f);
     emitterXform.x     = playerXform.x;
     emitterXform.y     = playerXform.y;
     emitterXform.dirty = FeTrue;
@@ -200,6 +225,18 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
   playerXform.x += dx * speed * deltaTime;
   playerXform.y += dy * speed * deltaTime;
   playerXform.dirty = FeTrue;
+
+  auto &camera  = ctx.registry.Get<scene::Camera2D>(_state.cameraEntity);
+  camera.zoom   = kvars.Get<float32>("camera.zoom").value_or(0.2f);
+
+  if (_state.bgmEntity != UINT32_MAX) {
+    auto &bgm = ctx.registry.Get<scene::AudioSource>(_state.bgmEntity);
+    float32 vol = kvars.Get<float32>("bgm.volume").value_or(1.0f);
+    if (bgm.volume != vol) {
+      bgm.volume = vol;
+      bgm.dirty  = FeTrue;
+    }
+  }
 
   cameraXform.x     = playerXform.x;
   cameraXform.y     = playerXform.y;
@@ -245,6 +282,28 @@ void GameTest::GameImGui(flatearth::Game *gameInstance) {
       ++emitterIdx;
     }
     if (emitterIdx == 0) ImGui::TextDisabled("no emitters");
+  }
+
+  if (ImGui::CollapsingHeader("KVars")) {
+    ctx.core.kvars.ForEach([](const string &key, flatearth::KVar &kvar) {
+      if (std::holds_alternative<float32>(kvar.value)) {
+        float v = std::get<float32>(kvar.value);
+        if (ImGui::SliderFloat(key.c_str(), &v, 0.0f, 2.0f))
+          kvar.value = v;
+      } else if (std::holds_alternative<bool>(kvar.value)) {
+        bool v = std::get<bool>(kvar.value);
+        if (ImGui::Checkbox(key.c_str(), &v))
+          kvar.value = v;
+      } else if (std::holds_alternative<int32>(kvar.value)) {
+        int v = std::get<int32>(kvar.value);
+        if (ImGui::InputInt(key.c_str(), &v))
+          kvar.value = static_cast<int32>(v);
+      } else if (std::holds_alternative<string>(kvar.value)) {
+        ImGui::TextDisabled("%s: %s", key.c_str(), std::get<string>(kvar.value).c_str());
+      }
+      if (ImGui::IsItemHovered() && !kvar.description.empty())
+        ImGui::SetTooltip("%s", kvar.description.c_str());
+    });
   }
 
   if (ImGui::CollapsingHeader("Memory")) {
