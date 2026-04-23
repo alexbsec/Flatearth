@@ -25,6 +25,11 @@ bool GameTest::GameInitialize(flatearth::Game *gameInstance) {
   gameInstance->gameName          = "TopDown";
 
   EngineContext &ctx = *gameInstance->pCtx;
+
+  ctx.core.kvars.Register("player.speed",        "Player movement speed (units/s)", 1.5f);
+  ctx.core.kvars.Register("particle.spawnRate",   "Particle emitter spawn rate (particles/s)", 15.0f);
+  ctx.core.kvars.Register("camera.zoom",          "Camera zoom scale", 0.2f);
+
   ctx.assets.prefab.Register<PlayerPrefab>([&ctx](ecs::EntityId id, ecs::Registry &reg) {
     auto walkTexRes = ctx.assets.manager.LoadTexture("assets/textures/Human_Walk.png");
     if (!walkTexRes.has_value()) return;
@@ -134,7 +139,8 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
   auto &anim        = ctx.registry.Get<scene::SpriteAnimator>(_state.playerEntity);
   auto &sprite      = ctx.registry.Get<scene::Sprite>(_state.playerEntity);
 
-  constexpr float32 speed = 1.5f;
+  auto &kvars = ctx.core.kvars;
+  float32 speed = kvars.Get<float32>("player.speed").value_or(1.5f);
   float32 dx = 0.0f, dy = 0.0f;
 
   auto &input = ctx.core.input;
@@ -178,7 +184,9 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
   sprite.dirty    = FeTrue;
 
   if (_state.particleEntity != UINT32_MAX) {
+    auto &emitter      = ctx.registry.Get<scene::ParticleEmitter>(_state.particleEntity);
     auto &emitterXform = ctx.registry.Get<scene::Transform2D>(_state.particleEntity);
+    emitter.spawnRate  = kvars.Get<float32>("particle.spawnRate").value_or(15.0f);
     emitterXform.x     = playerXform.x;
     emitterXform.y     = playerXform.y;
     emitterXform.dirty = FeTrue;
@@ -187,6 +195,9 @@ bool GameTest::GameUpdate(flatearth::Game *gameInstance, float32 deltaTime) {
   playerXform.x += dx * speed * deltaTime;
   playerXform.y += dy * speed * deltaTime;
   playerXform.dirty = FeTrue;
+
+  auto &camera  = ctx.registry.Get<scene::Camera2D>(_state.cameraEntity);
+  camera.zoom   = kvars.Get<float32>("camera.zoom").value_or(0.2f);
 
   cameraXform.x     = playerXform.x;
   cameraXform.y     = playerXform.y;

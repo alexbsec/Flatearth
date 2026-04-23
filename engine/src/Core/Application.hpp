@@ -5,7 +5,9 @@
 #include "Assets/PrefabManager.hpp"
 #include "Assets/TilemapManager.hpp"
 #include "Core/ApplicationConfig.hpp"
+#include "Core/EngineConsole.hpp"
 #include "Core/EngineContext.hpp"
+#include "Core/KVarRegistry.hpp"
 #include "Core/Event.hpp"
 #include "Core/Input.hpp"
 #include "ECS/Registry.hpp"
@@ -45,6 +47,8 @@ private:
   renderer::GameRenderer _renderer;
   scene::SceneManager    _sceneManager;
   physics::FlatearthWorld _world;
+  KVarRegistry _kvarRegistry;
+  DevConsole _devConsole;
   FePtr<event::IEventListener> _engineListener;
   EngineContext _ctx;
 };

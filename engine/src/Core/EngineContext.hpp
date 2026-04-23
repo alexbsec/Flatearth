@@ -6,6 +6,7 @@
 #include "Assets/TilemapManager.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Input.hpp"
+#include "Core/KVarRegistry.hpp"
 #include "ECS/Registry.hpp"
 #include "Physics/FlatearthWorld.hpp"
 #include "Scene/SceneManager.hpp"
@@ -22,6 +23,7 @@ struct EngineContext {
   struct {
     memory::MemoryManager &memory;
     input::InputManager &input;
+    KVarRegistry &kvars;
   } core;
 
   ecs::Registry &registry;
@@ -34,10 +36,12 @@ struct EngineContext {
                          assets::TilemapManager &tilemapManager,
                          assets::PrefabManager &prefabManager,
                          input::InputManager &inputManager,
+                         KVarRegistry &kvarRegistry,
                          ecs::Registry &registry,
                          scene::SceneManager &sceneManager,
                          physics::FlatearthWorld &world)
-      : assets(assetManager, tilemapManager, prefabManager), core(memManager, inputManager),
+      : assets(assetManager, tilemapManager, prefabManager),
+        core(memManager, inputManager, kvarRegistry),
         registry(registry), sceneManager(sceneManager), world(world) {}
 };
 
