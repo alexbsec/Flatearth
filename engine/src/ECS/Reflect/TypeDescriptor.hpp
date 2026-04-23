@@ -12,6 +12,7 @@ struct FieldDescriptor {
   stringv name{""};
   uint32 offset{0};
   FieldType type{FieldType::Null};
+  uint32 arraySize{0}; // used by CString to store the buffer capacity
 };
 
 struct TypeDescriptor {

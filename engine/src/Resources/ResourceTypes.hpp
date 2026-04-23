@@ -2,12 +2,14 @@
 #define _FLATEARTH_ENGINE_RESOURCES_RESOURCE_TYPES_HPP
 
 #include "Defines.hpp"
+#include "Vendor/miniaudio.h"
 
 namespace flatearth::resources {
 
 using TextureHandle = uint32;
 using MaterialHandle = uint32;
 using MeshHandle = uint32;
+using SoundHandle = uint32;
 
 enum class MeshShape : uint16 {
   Quad,
@@ -44,6 +46,12 @@ struct Texture {
   bool hasTransparency;
   TextureFilter filter;
   void *pInternalData;
+};
+
+struct Audio {
+  string name;
+  SoundHandle sndHandle;
+  ma_sound *pSound{nullptr};
 };
 
 }; // namespace flatearth::resources

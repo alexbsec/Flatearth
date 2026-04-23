@@ -14,6 +14,7 @@
 #include "ECS/Scheduler/SystemScheduler.hpp"
 #include "GameTypes.hpp"
 #include "Physics/FlatearthWorld.hpp"
+#include "Audio/AudioManager.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Platform/Platform.hpp"
 #include "Renderer/GameRenderer.hpp"
@@ -47,6 +48,7 @@ private:
   renderer::GameRenderer _renderer;
   scene::SceneManager    _sceneManager;
   physics::FlatearthWorld _world;
+  audio::AudioManager _audio;
   KVarRegistry _kvarRegistry;
   DevConsole _devConsole;
   FePtr<event::IEventListener> _engineListener;

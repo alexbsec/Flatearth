@@ -19,6 +19,8 @@ enum class FieldType : uint8 {
   Float32,
   Float64,
   Vec2D,
+  String,
+  CString, // fixed-size char array; arraySize holds the buffer capacity
 };
 
 constexpr uint8 FieldSize(FieldType t) {
@@ -49,6 +51,10 @@ constexpr uint8 FieldSize(FieldType t) {
       return 8;
     case FieldType::Vec2D:
       return 8;
+    case FieldType::String:
+      return 0; // variable length
+    case FieldType::CString:
+      return 0; // variable; arraySize in FieldDescriptor holds the capacity
   }
 }
 
@@ -80,6 +86,10 @@ constexpr const char *FieldTypeName(FieldType t) {
       return "float64";
     case FieldType::Vec2D:
       return "vec2d";
+    case FieldType::String:
+      return "string";
+    case FieldType::CString:
+      return "cstring";
   }
   return "unknown";
 }

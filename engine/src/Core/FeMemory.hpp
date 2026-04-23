@@ -29,6 +29,7 @@ enum class Tag : uint64 {
   EntityNode,
   Scene,
   HashMap,
+  Audio,
   MaxTags,
 };
 

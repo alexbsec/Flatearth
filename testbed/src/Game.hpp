@@ -14,6 +14,10 @@ struct GameState {
   ecs::EntityId tilemapRoot{UINT32_MAX};
   ecs::EntityId playerEntity{UINT32_MAX};
   ecs::EntityId particleEntity{UINT32_MAX};
+  ecs::EntityId bgmEntity{UINT32_MAX};
+  uint8 lastDirRow{0};
+  uint8 vertRow{0};   // 0=front/down  3=back/up  — driven by W/S
+  uint8 horzRow{1};   // 1=left  2=right           — driven by A/D
 };
 
 class GameTest {
