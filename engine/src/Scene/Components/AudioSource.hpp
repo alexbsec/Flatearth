@@ -11,7 +11,7 @@ constexpr uint32 cAudioPathMax = 256;
 struct AudioSource {
   char path[cAudioPathMax]{};
   char loadedPath[cAudioPathMax]{};
-  resources::SoundHandle handle;
+  resources::SoundHandle handle{resources::cInvalidSoundHandle};
   bool loop{FeFalse};
   bool playing{FeFalse};
   float32 volume{1.0f};

@@ -1,36 +1,30 @@
 #ifndef _FLATEARTH_TESTSUITE_GAME_HPP
 #define _FLATEARTH_TESTSUITE_GAME_HPP
 
+#include "Director.hpp"
+
 #include <Defines.hpp>
 #include <ECS/ECSTypes.hpp>
+#include <ECS/Scheduler/SystemScheduler.hpp>
 #include <GameTypes.hpp>
 
 namespace flatearth::testbed {
 
-struct PlayerPrefab {};
-
-struct GameState {
-  ecs::EntityId cameraEntity{UINT32_MAX};
-  ecs::EntityId tilemapRoot{UINT32_MAX};
-  ecs::EntityId playerEntity{UINT32_MAX};
-  ecs::EntityId particleEntity{UINT32_MAX};
-  ecs::EntityId bgmEntity{UINT32_MAX};
-  uint8 lastDirRow{0};
-  uint8 vertRow{0};   // 0=front/down  3=back/up  — driven by W/S
-  uint8 horzRow{1};   // 1=left  2=right           — driven by A/D
-};
+struct GameState {};
 
 class GameTest {
 public:
-  static bool GameInitialize(flatearth::Game *gameInstance);
   static bool GameLoad(flatearth::Game *gameInstance);
   static void GameUnload(flatearth::Game *gameInstance);
-  static bool GameUpdate(flatearth::Game *gameInstance, float32 deltaTime);
-  static bool GameOnResize(flatearth::Game *gameInstance, uint32 width, uint32 height);
+  static void GameRegisterSystems(flatearth::Game *gameInstance, ecs::SystemScheduler &scheduler);
   static void GameImGui(flatearth::Game *gameInstance);
 
 private:
+  static void Setup(flatearth::Game *gameInstance);
+
+private:
   static GameState _state;
+  static FePtr<Orchestrator> _pOrchestrator;
 };
 
 } // namespace flatearth::testbed

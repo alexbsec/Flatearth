@@ -9,8 +9,12 @@ set(BINARY_NAME flatearth_testbed)
 ############################################################################
 #   SOURCES
 add_executable(${BINARY_NAME}
-    src/Game.cc
     src/Entrypoint.cc
+    src/Game.cc
+    src/Director.cc
+    src/Systems/PlayerSystem.cc
+    src/Systems/CameraFollowSystem.cc
+    src/Systems/WorldSystem.cc
 )
 
 ############################################################################

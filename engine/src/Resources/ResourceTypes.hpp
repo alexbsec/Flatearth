@@ -10,6 +10,7 @@ using TextureHandle = uint32;
 using MaterialHandle = uint32;
 using MeshHandle = uint32;
 using SoundHandle = uint32;
+constexpr SoundHandle cInvalidSoundHandle = UINT32_MAX;
 
 enum class MeshShape : uint16 {
   Quad,

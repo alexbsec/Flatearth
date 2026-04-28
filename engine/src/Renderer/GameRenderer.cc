@@ -8,11 +8,11 @@
 
 namespace flatearth::renderer {
 
-GameRenderer::GameRenderer(ApplicationState *appState,
+GameRenderer::GameRenderer(EngineState *pEngState,
                            memory::MemoryManager &memManager,
                            ecs::Registry &reg,
                            platform::FileSystem &fs)
-    : _memoryManager(memManager), _frontendRenderer(appState, memManager, fs), _registry(reg) {
+    : _memoryManager(memManager), _frontendRenderer(pEngState, memManager, fs), _registry(reg) {
 }
 
 FeExpect<bool, Error> GameRenderer::Initialize() {

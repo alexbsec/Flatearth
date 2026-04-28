@@ -2,7 +2,6 @@
 #define _FLATEARTH_ENGINE_RENDERER_VULKAN_BACKEND_HPP
 
 #include "Containers/HashMap.hpp"
-#include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererInterface.hpp"
@@ -24,7 +23,7 @@ public:
   explicit VulkanBackend(memory::MemoryManager &memManager, platform::FileSystem &fs);
   ~VulkanBackend();
 
-  FeExpect<bool, Error> Initialize(ApplicationState *appState) override;
+  FeExpect<bool, Error> Initialize(EngineState *pEngState) override;
   FeExpect<bool, Error> OnResize(uint32 width, uint32 height) override;
   FeExpect<bool, Error> BeginFrame(float32 deltaTime) override;
   FeExpect<bool, Error> EndFrame(float32 deltaTime) override;

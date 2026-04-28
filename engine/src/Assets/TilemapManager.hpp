@@ -8,8 +8,7 @@
 #include "ECS/ECSTypes.hpp"
 #include "Scene/Components/Sprite.hpp"
 
-namespace flatearth::scene { struct Scene; }
-namespace flatearth::ecs   { class Registry; }
+namespace flatearth::ecs { class Registry; }
 
 namespace flatearth::assets {
 
@@ -21,7 +20,7 @@ public:
                           AssetManager &assetManager,
                           ecs::Registry &registry);
 
-  FEAPI FeExpect<ecs::EntityId, Error> Load(stringv tmxPath, scene::Scene *scene);
+  FEAPI FeExpect<ecs::EntityId, Error> Load(stringv tmxPath, stringv sceneName);
   FEAPI void Unload(stringv tmxPath);
 
 private:

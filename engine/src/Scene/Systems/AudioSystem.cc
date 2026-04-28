@@ -1,10 +1,10 @@
 #include "AudioSystem.hpp"
 
-#include <cstring>
-
 #include "Audio/AudioManager.hpp"
 #include "Core/Logger.hpp"
 #include "Scene/Components/AudioSource.hpp"
+
+#include <cstring>
 
 namespace flatearth::systems {
 
@@ -18,7 +18,25 @@ void AudioSystem::Update(Registry &registry, float32 delatTime) {
   View<AudioSource> view = registry.ViewOf<AudioSource>();
 
   for (auto &&[entity, audioSrc] : view) {
-    if (audioSrc.handle == audio::cInvalidSound && audioSrc.path[0] != '\0') {
+    bool hasHandle = audioSrc.handle != audio::cInvalidSound;
+
+    const bool pathChanged = hasHandle && std::strcmp(audioSrc.loadedPath, audioSrc.path) != 0;
+    const bool hasPath = audioSrc.path[0] != '\0';
+    const bool isValidSource = hasPath || pathChanged;
+
+    if (!isValidSource) {
+      FLOG_WARN("invalid AudioSource: no path and handle was defined for this source");
+      continue;
+    }
+
+    if (pathChanged) {
+      _audio.Stop(audioSrc.handle);
+      _audio.ReleaseSound(audioSrc.handle);
+      audioSrc.handle = audio::cInvalidSound;
+      continue; // will re-acquire next frame via first if
+    }
+
+    if (!hasHandle) {
       auto res = _audio.AcquireSound(audioSrc.path);
       if (!res.has_value()) {
         FLOG_ERROR("failed to acquire sound: {}", audioSrc.path);
@@ -26,26 +44,23 @@ void AudioSystem::Update(Registry &registry, float32 delatTime) {
       }
       audioSrc.handle = res.value();
       std::strncpy(audioSrc.loadedPath, audioSrc.path, scene::cAudioPathMax - 1);
+
       audioSrc.dirty = FeTrue;
+      hasHandle = FeTrue;
     }
 
-    if (audioSrc.handle != audio::cInvalidSound && std::strcmp(audioSrc.loadedPath, audioSrc.path) != 0) {
+    if (!audioSrc.dirty) {
+      continue;
+    }
+
+    _audio.SetVolume(audioSrc.handle, audioSrc.volume);
+    if (audioSrc.playing) {
+      _audio.Play(audioSrc.handle, audioSrc.loop);
+    } else {
       _audio.Stop(audioSrc.handle);
-      _audio.ReleaseSound(audioSrc.handle);
-      audioSrc.handle = audio::cInvalidSound;
-      continue; // will re-acquire next frame via first if
     }
 
-    if (audioSrc.dirty && audioSrc.handle != audio::cInvalidSound) {
-      _audio.SetVolume(audioSrc.handle, audioSrc.volume);
-      if (audioSrc.playing) {
-        _audio.Play(audioSrc.handle, audioSrc.loop);
-      } else {
-        _audio.Stop(audioSrc.handle);
-      }
-
-      audioSrc.dirty = FeFalse;
-    }
+    audioSrc.dirty = FeFalse;
   }
 }
 

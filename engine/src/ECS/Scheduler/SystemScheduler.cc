@@ -136,6 +136,16 @@ void SystemScheduler::Prune() {
   _nodesMap.Clear();
 }
 
+void SystemScheduler::BootSystems(Registry &registry) {
+  if (!_built) {
+    return;
+  }
+
+  for (uint64 i = 0; i < _sortedSystems.Length(); i++) {
+    _sortedSystems[i]->Initialize(registry);
+  }
+}
+
 void SystemScheduler::Update(Registry &registry, float32 deltaTime) {
   if (!_built) {
     return;

@@ -8,6 +8,7 @@ namespace flatearth::ecs {
 class ISystem {
 public:
   virtual ~ISystem() = default;
+  virtual void Initialize(ecs::Registry &) {}
   virtual void Update(Registry &registry, float32 deltaTime) = 0;
 };
 

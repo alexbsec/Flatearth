@@ -10,7 +10,7 @@
 
 namespace flatearth::audio {
 
-constexpr resources::SoundHandle cInvalidSound = UINT32_MAX;
+constexpr resources::SoundHandle cInvalidSound = resources::cInvalidSoundHandle;
 
 class AudioManager {
 public:

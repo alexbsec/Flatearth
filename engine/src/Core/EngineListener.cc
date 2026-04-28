@@ -1,6 +1,7 @@
 #include "EngineListener.hpp"
 
 #include "Core/Logger.hpp"
+#include "GameTypes.hpp"
 #include "Renderer/GameRenderer.hpp"
 
 namespace flatearth {
@@ -9,8 +10,8 @@ const char *KeyToString(input::Keys key);
 
 EngineListener::EngineListener(event::EventManager &eventManager,
                                renderer::GameRenderer &renderer,
-                               ApplicationState &appState)
-    : _eventManager(eventManager), _appState(appState), _renderer(renderer) {
+                               EngineState &engState)
+    : _eventManager(eventManager), _engState(engState), _renderer(renderer) {
 }
 
 EngineListener::~EngineListener() {
@@ -82,27 +83,28 @@ FeExpect<bool, Error> EngineListener::OnResize(const event::EventDispatchContext
   uint32 width = resizeEvent[0];
   uint32 height = resizeEvent[1];
 
-  if (width == _appState.width && height == _appState.height) {
+  if (width == _engState.width && height == _engState.height) {
     return FeFalse;
   }
 
-  _appState.width = width;
-  _appState.height = height;
+  _engState.width = width;
+  _engState.height = height;
 
   FLOG_DEBUG("window resizing: {}x{}", width, height);
 
   if (width == 0 || height == 0) {
     FLOG_INFO("window minimized, suspending application");
-    _appState.isSuspended = FeTrue;
+    _engState.isSuspended = FeTrue;
     return FeTrue;
   }
 
-  if (_appState.isSuspended) {
+  if (_engState.isSuspended) {
     FLOG_INFO("window restored, resuming application.");
-    _appState.isSuspended = FeFalse;
+    _engState.isSuspended = FeFalse;
   }
 
-  if (!_appState.pGameInstance->OnResize(_appState.pGameInstance, width, height)) {
+  if (_engState.pGameInstance->OnResize != nullptr &&
+      !_engState.pGameInstance->OnResize(_engState.pGameInstance, width, height)) {
     return FeErr{Error("game failed to resize", ErrorType::GameResizeError)};
   }
 
@@ -129,7 +131,7 @@ FeExpect<bool, Error> EngineListener::OnKey(const event::EventDispatchContext &c
 FeExpect<bool, Error> EngineListener::OnEvent(const event::EventDispatchContext &ctx,
                                               const event::EventContext &eventCtx) {
   if (ctx.code == event::SystemEventCode::ApplicationQuit) {
-    _appState.isRunning = FeFalse;
+    _engState.isRunning = FeFalse;
     return FeTrue;
   }
 

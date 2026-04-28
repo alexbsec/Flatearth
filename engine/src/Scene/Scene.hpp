@@ -2,17 +2,20 @@
 #define _FLATEARTH_ENGINE_SCENE_SCENE_HPP
 
 #include "Defines.hpp"
-#include "ECS/ECSTypes.hpp"
 
-#include <vector>
+#include <cstring>
 
 namespace flatearth::scene {
 
-struct Scene {
-  string name;
-  string sourcePath;
-  std::vector<ecs::EntityId> roots;
-  std::vector<ecs::EntityId> allEntities;
+constexpr uint32 cSceneNameMax = 64;
+
+struct SceneOwnership {
+  char sceneName[cSceneNameMax]{};
+
+  SceneOwnership() = default;
+  explicit SceneOwnership(stringv name) {
+    std::strncpy(sceneName, name.data(), cSceneNameMax - 1);
+  }
 };
 
 } // namespace flatearth::scene

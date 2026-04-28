@@ -133,6 +133,9 @@ constexpr static float32 FE_F32EPS = 1.192092896e-7f;
 template <typename T>
 using FePtr = std::unique_ptr<T, std::function<void(T *)>>;
 
+template <typename T>
+using FeSharedPtr = std::shared_ptr<T>;
+
 template <typename T, typename D>
 using FeCustomDeleterPtr = std::unique_ptr<T, D>;
 
@@ -163,5 +166,16 @@ inline T *FeCastPermissive(void *ptr) {
 
 template <typename T>
 using FeOptional = std::optional<T>;
+
+#define FE_MOVE_ONLY(Type)                     \
+  Type(Type &&) noexcept = default;            \
+  Type &operator=(Type &&) noexcept = default; \
+  Type(const Type &) = delete;                 \
+  Type &operator=(const Type &) = delete;
+
+#define FE_MOVE_CONSTRUCT_ONLY(Type) \
+  Type(Type &&) noexcept = default;  \
+  Type &operator=(Type &&) = delete; \
+  FE_NO_COPY(Type)
 
 #endif // _FLATEARTH_ENGINE_DEFINITIONS_HP

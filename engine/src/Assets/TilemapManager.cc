@@ -19,7 +19,7 @@ TilemapManager::TilemapManager(memory::MemoryManager &memManager,
                                ecs::Registry &registry)
     : _assetManager(assetManager), _registry(registry), _baseSprites(memManager) {}
 
-FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::Scene *scene) {
+FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, stringv sceneName) {
   TilemapLoader loader{_assetManager};
   auto tmRes = loader.Load(tmxPath);
   if (!tmRes.has_value())
@@ -64,7 +64,7 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::Scen
 
         _registry.Insert(e, scene::Transform2D{wx, wy, 0.0f, 1.0f, 1.0f});
         _registry.Insert(e, tileSprite);
-        scene->allEntities.push_back(e);
+        _registry.Insert(e, scene::SceneOwnership{sceneName});
       }
     }
   }
@@ -82,7 +82,7 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::Scen
       _registry.Insert(e, scene::Transform2D{wx, wy});
       _registry.Insert(e, physics::RigidBody{.type = physics::BodyType::Static});
       _registry.Insert(e, physics::BoxCollider{.halfWidth = 0.5f, .halfHeight = 0.5f});
-      scene->allEntities.push_back(e);
+      _registry.Insert(e, scene::SceneOwnership{sceneName});
     }
   }
 
@@ -94,8 +94,7 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::Scen
 
   auto root = _registry.Create();
   _registry.Insert(root, scene::Transform2D{});
-  scene->roots.push_back(root);
-  scene->allEntities.push_back(root);
+  _registry.Insert(root, scene::SceneOwnership{sceneName});
 
   FLOG_INFO("TilemapManager: loaded '{}' — {} render layers, {} collision tiles, {} objects",
             tmxPath, renderLayerCount, collTileCount, objectCount);

@@ -22,7 +22,7 @@ void AssetManager::Initialize(renderer::FrontendRenderer *pRenderer) {
 }
 
 FeExpect<resources::TextureHandle, Error>
-AssetManager::LoadTexture(stringv path, resources::TextureFilter filter) {
+AssetManager::LoadTexture(const string &path, resources::TextureFilter filter) {
   return _textureCache.AcquireTexture(string(path), filter);
 }
 
@@ -37,7 +37,7 @@ resources::Texture *AssetManager::GetTexture(resources::TextureHandle handle) {
 FeExpect<scene::Sprite, Error> AssetManager::LoadSprite(stringv path,
                                                         resources::MeshShape shape,
                                                         resources::TextureFilter filter) {
-  auto loadRes = LoadTexture(path, filter);
+  auto loadRes = LoadTexture(string(path), filter);
   if (!loadRes.has_value()) {
     return FeErr{loadRes.error()};
   }

@@ -18,7 +18,7 @@ public:
   void Initialize(renderer::FrontendRenderer *pRenderer);
 
   FEAPI FeExpect<resources::TextureHandle, Error>
-  LoadTexture(stringv path, resources::TextureFilter filter = resources::TextureFilter::Nearest);
+  LoadTexture(const string &path, resources::TextureFilter filter = resources::TextureFilter::Nearest);
   FEAPI void ReleaseTexture(resources::TextureHandle handle);
   FEAPI resources::Texture *GetTexture(resources::TextureHandle handle);
 

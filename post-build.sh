@@ -53,4 +53,7 @@ cp -r assets/textures/. "${ASSET_DIR}/textures/"
 mkdir -p "${ASSET_DIR}/tiles"
 cp -r assets/tiles/. "${ASSET_DIR}/tiles/"
 
+mkdir -p "${ASSET_DIR}/bgm"
+cp -r assets/bgm/. "${ASSET_DIR}/bgm/"
+
 echo "Done."

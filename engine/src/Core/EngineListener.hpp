@@ -1,7 +1,6 @@
 #ifndef _FLATEARTH_ENGINE_ENGINE_LISTENER_HPP
 #define _FLATEARTH_ENGINE_ENGINE_LISTENER_HPP
 
-#include "ApplicationConfig.hpp"
 #include "Core/Event.hpp"
 #include "Renderer/GameRenderer.hpp"
 
@@ -11,7 +10,7 @@ class EngineListener final : public event::ListenerAdapter {
 public:
   explicit EngineListener(event::EventManager &eventManager,
                           renderer::GameRenderer &renderer,
-                          ApplicationState &appState);
+                          EngineState &engState);
 
   ~EngineListener();
 
@@ -41,7 +40,7 @@ private:
                                         const event::EventContext &eventCtx);
 
 private:
-  ApplicationState &_appState;
+  EngineState &_engState;
   event::EventManager &_eventManager;
   renderer::GameRenderer &_renderer;
 };

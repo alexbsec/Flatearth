@@ -75,6 +75,22 @@ public:
     return FePtr<T>(object, deleter);
   }
 
+  template <typename T, typename... Args>
+  inline FeSharedPtr<T> AllocateShared(Tag tag, Args &&...args) {
+    void *raw = RawAlloc(sizeof(T), alignof(T), tag);
+
+    if (raw == nullptr) {
+      return FeSharedPtr<T>(nullptr);
+    }
+
+    T *object = new (raw) T(std::forward<Args>(args)...);
+    return FeSharedPtr<T>(object, [this, tag](T *ptr) {
+      if (!ptr) return;
+      ptr->~T();
+      RawFree(ptr, sizeof(T), tag);
+    });
+  }
+
   template <typename Base, typename Derived, typename... Args>
   inline FePtr<Base> Allocate(Tag tag, Args &&...args) {
     FePtr<Derived> concrete = Allocate<Derived>(tag, args...);

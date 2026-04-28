@@ -43,7 +43,7 @@ private:
 class SystemScheduler {
 public:
   template <typename T, typename... Args>
-  FeExpect<SystemBuilder, Error> Register(Args &&...args) {
+  FEAPI FeExpect<SystemBuilder, Error> Register(Args &&...args) {
     if (_built) {
       return FeErr{Error("cannot register any new systems on built SystemScheduler",
                          ErrorType::SystemError)};
@@ -87,6 +87,8 @@ public:
   FeExpect<void, Error> Rebuild(bool pruned = FeFalse);
   void Reset();
   void Prune();
+
+  void BootSystems(Registry &registry);
   void Update(Registry &registry, float32 deltaTime);
 
 private:
