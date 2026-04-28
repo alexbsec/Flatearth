@@ -1,11 +1,11 @@
 #ifndef _FLATEARHT_ENGINE_RENDERER_INTERFACE_HPP
 #define _FLATEARHT_ENGINE_RENDERER_INTERFACE_HPP
 
-#include "Core/ApplicationConfig.hpp"
 #include "Defines.hpp"
 #include "Math/MathTypes.hpp"
 #include "Renderer/RendererTypes.hpp"
 #include "Resources/ResourceTypes.hpp"
+#include "Core/CoreTypes.hpp"
 
 namespace flatearth::renderer {
 
@@ -20,7 +20,7 @@ static constexpr int32 scMaxBackends = static_cast<int32>(BackendType::MaxBacken
 
 class IRendererBackend {
 public:
-  virtual FeExpect<bool, Error> Initialize(ApplicationState *appState) = 0;
+  virtual FeExpect<bool, Error> Initialize(EngineState *pEngState) = 0;
   virtual FeExpect<bool, Error> OnResize(uint32 width, uint32 height) = 0;
   virtual FeExpect<bool, Error> BeginFrame(float32 deltaTime) = 0;
   virtual FeExpect<bool, Error> EndFrame(float32 deltaTime) = 0;

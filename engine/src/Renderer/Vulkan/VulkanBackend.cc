@@ -1,6 +1,5 @@
 #include "VulkanBackend.hpp"
 
-#include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
 #include "Math/MathTypes.hpp"
@@ -89,11 +88,11 @@ VulkanBackend::~VulkanBackend() {
   FLOG_INFO("Vulkan backend exited gracefully");
 }
 
-FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
+FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
   // TODO: custom allocator
   _ctx.pAllocator = nullptr;
-  _cachedFrameBufferWidth = appState->width;
-  _cachedFrameBufferHeight = appState->height;
+  _cachedFrameBufferWidth = pEngState->width;
+  _cachedFrameBufferHeight = pEngState->height;
   _ctx.framebufferWidth = (_cachedFrameBufferWidth != 0) ? _cachedFrameBufferWidth : 946;
   _ctx.framebufferHeight = (_cachedFrameBufferHeight != 0) ? _cachedFrameBufferHeight : 507;
 
@@ -102,7 +101,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
 
   VkApplicationInfo appInfo = {VK_STRUCTURE_TYPE_APPLICATION_INFO};
   appInfo.apiVersion = VK_API_VERSION_1_2;
-  appInfo.pApplicationName = appState->appConfig.name.c_str();
+  appInfo.pApplicationName = pEngState->pAppConfig->name.c_str();
   appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   appInfo.pEngineName = "Flatearth Engine";
   appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -213,7 +212,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(ApplicationState *appState) {
 #endif
 
   FLOG_DEBUG("creating Vulkan surface");
-  if (auto res = platform::CreateVulkanSurface(appState->platformState, _ctx); !res.has_value()) {
+  if (auto res = platform::CreateVulkanSurface(pEngState->platformState, _ctx); !res.has_value()) {
     FLOG_ERROR("failed to create Vulkan surface");
     return FeErr{res.error()};
   }

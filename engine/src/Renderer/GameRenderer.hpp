@@ -5,11 +5,12 @@
 #include "ECS/Registry.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererFrontend.hpp"
+
 namespace flatearth::renderer {
 
 class GameRenderer {
 public:
-  explicit GameRenderer(ApplicationState *pAppState, memory::MemoryManager &memManager,
+  explicit GameRenderer(EngineState *pEngState, memory::MemoryManager &memManager,
                               ecs::Registry &registry, platform::FileSystem &fs);
 
   FeExpect<bool, Error> Initialize();

@@ -3,11 +3,8 @@
 
 #include "Defines.hpp"
 
+#include <ECS/Scheduler/SystemScheduler.hpp>
 #include <functional>
-
-namespace flatearth {
-struct EngineContext;
-}
 
 namespace flatearth {
 
@@ -22,6 +19,7 @@ public:
   std::function<void(struct Game *gameInstance)> Unload;
   std::function<bool(struct Game *gameInstance, float32 deltaTime)> Update;
   std::function<bool(struct Game *gameInstance, uint32 width, uint32 height)> OnResize;
+  std::function<void(struct Game *gameInstance, ecs::SystemScheduler &scheduler)> RegisterSystems;
   std::function<void(struct Game *gameInstance)> OnImGui;
 
   explicit Game()
@@ -37,7 +35,7 @@ public:
 public:
   string gameName;
   int32 windowStartPosX, windowStartPosY, windowStartWidth, windowStartHeight;
-  EngineContext *pCtx{nullptr};
+  struct EngineContext *pCtx{nullptr};
 };
 
 } // namespace flatearth

@@ -8,11 +8,9 @@
 
 bool CreateGame(flatearth::Game *pGame) {
   using namespace flatearth::testbed;
-  pGame->Initialize = GameTest::GameInitialize;
   pGame->Load = GameTest::GameLoad;
   pGame->Unload = GameTest::GameUnload;
-  pGame->Update = GameTest::GameUpdate;
-  pGame->OnResize = GameTest::GameOnResize;
+  pGame->RegisterSystems = GameTest::GameRegisterSystems;
   pGame->OnImGui  = GameTest::GameImGui;
   return true;
 }
@@ -25,13 +23,13 @@ int main(void) {
     return EXIT_FAILURE;
   }
 
-  flatearth::Engine engine(&gameInstance);
-  if (auto res = engine.Initialize(); !res.has_value()) {
+  flatearth::Application app;
+  if (auto res = app.Initialize(gameInstance); !res.has_value()) {
     LOG_ERROR("engine failed to initialize");
     return EXIT_FAILURE;
   }
 
-  if (auto res = engine.Start(); !res.has_value()) {
+  if (auto res = app.Start(); !res.has_value()) {
     LOG_ERROR("engine failed to start");
     return EXIT_FAILURE;
   }

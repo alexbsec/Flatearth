@@ -1,34 +1,20 @@
 #ifndef _FLATEARTH_ENGINE_CORE_APPLICATION_CONFIG_HPP
 #define _FLATEARTH_ENGINE_CORE_APPLICATION_CONFIG_HPP
 
-#include "Core/Clock.hpp"
 #include "Defines.hpp"
-#include "GameTypes.hpp"
-#include "Platform/Platform.hpp"
 
 namespace flatearth {
 
+struct Game;
+
 struct ApplicationConfig {
   // Window specs
-  int32 windowStartPosX, windowStartPosY, windowStartWidth, windowStartHeight;
+  int32 windowStartPosX{0}, windowStartPosY{0}, windowStartWidth{1280}, windowStartHeight{920};
 
   // Application name
   string name;
 };
 
-struct ApplicationState {
-  Game *pGameInstance;
-  bool isRunning;
-  bool isSuspended;
-  int32 width;
-  int32 height;
-  float64 lastTime;
-  platform::PlatformState *platformState;
-  ApplicationConfig appConfig;
-  clock::Clock clock;
-
-  ApplicationState(Game *game) : pGameInstance(game) {}
-};
 
 } // namespace flatearth
 

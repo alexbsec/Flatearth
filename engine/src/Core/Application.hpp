@@ -1,58 +1,27 @@
 #ifndef _FLATEARTH_ENGINE_CORE_APPLICATION_HPP
 #define _FLATEARTH_ENGINE_CORE_APPLICATION_HPP
 
-#include "Assets/AssetManager.hpp"
-#include "Assets/PrefabManager.hpp"
-#include "Assets/TilemapManager.hpp"
 #include "Core/ApplicationConfig.hpp"
-#include "Core/EngineConsole.hpp"
-#include "Core/EngineContext.hpp"
-#include "Core/KVarRegistry.hpp"
-#include "Core/Event.hpp"
-#include "Core/Input.hpp"
-#include "ECS/Registry.hpp"
-#include "ECS/Scheduler/SystemScheduler.hpp"
+#include "Core/Engine.hpp"
+#include "Core/FeMemory.hpp"
 #include "GameTypes.hpp"
-#include "Physics/FlatearthWorld.hpp"
-#include "Audio/AudioManager.hpp"
-#include "Platform/Filesystem.hpp"
-#include "Platform/Platform.hpp"
-#include "Renderer/GameRenderer.hpp"
-#include "Scene/SceneManager.hpp"
 
 namespace flatearth {
 
-class Engine {
+class Application {
 public:
-  FEAPI Engine(Game *pGame);
-  FEAPI ~Engine();
-  FEAPI FeExpect<void, Error> Initialize();
+  FEAPI Application();
+
+  FEAPI FeExpect<void, Error> Initialize(Game &game, const ApplicationConfig &config = {});
   FEAPI FeExpect<void, Error> Start();
+  FEAPI void Shutdown();
+  FEAPI Engine &GetEngine();
 
 private:
-  FeExpect<void, Error> RegisterSystems();
-  FeExpect<void, Error> CheckGamePrerequisites();
-
-private:
-  ApplicationState _appState;
-  FePtr<platform::Platform> _pPlatform;
+  ApplicationConfig _appConfig{};
   memory::MemoryManager _memoryManager;
-  event::EventManager _eventManager;
-  input::InputManager _inputManager;
-  platform::FileSystem _filesystem;
-  assets::AssetManager   _assetManager;
-  assets::TilemapManager _tilemapManager;
-  assets::PrefabManager _prefabManager;
-  ecs::SystemScheduler   _scheduler;
-  ecs::Registry          _registry;
-  renderer::GameRenderer _renderer;
-  scene::SceneManager    _sceneManager;
-  physics::FlatearthWorld _world;
-  audio::AudioManager _audio;
-  KVarRegistry _kvarRegistry;
-  DevConsole _devConsole;
-  FePtr<event::IEventListener> _engineListener;
-  EngineContext _ctx;
+  Engine _engine;
+  bool _initialized{false};
 };
 
 } // namespace flatearth

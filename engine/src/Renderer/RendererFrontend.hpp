@@ -1,7 +1,6 @@
 #ifndef _FLATEARTH_ENGINE_RENDERER_FRONTEND_HPP
 #define _FLATEARTH_ENGINE_RENDERER_FRONTEND_HPP
 
-#include "Core/ApplicationConfig.hpp"
 #include "Core/FeMemory.hpp"
 #include "Defines.hpp"
 #include "Platform/Filesystem.hpp"
@@ -20,7 +19,7 @@ struct RendererState {
 
 class FrontendRenderer {
 public:
-  explicit FrontendRenderer(ApplicationState *appState,
+  explicit FrontendRenderer(EngineState *pEngState,
                             memory::MemoryManager &memManager,
                             platform::FileSystem &fs);
   ~FrontendRenderer();
@@ -78,7 +77,7 @@ private:
   RendererState _rendererState;
 
   memory::MemoryManager &_memoryManager;
-  ApplicationState *_pAppState;
+  EngineState *_pEngState;
   string _applicationName;
   platform::FileSystem &_filesystem;
   resources::MeshCache _meshCache;

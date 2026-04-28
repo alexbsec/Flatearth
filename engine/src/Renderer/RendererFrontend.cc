@@ -14,11 +14,11 @@
 
 namespace flatearth::renderer {
 
-FrontendRenderer::FrontendRenderer(ApplicationState *appState,
+FrontendRenderer::FrontendRenderer(EngineState *pEngState,
                                    memory::MemoryManager &memManager,
                                    platform::FileSystem &fs)
-    : _applicationName(appState->appConfig.name), _memoryManager(memManager), _pAppState(appState),
-      _filesystem(fs), _meshCache(memManager, *this), _materialCache(memManager, *this) {
+    : _memoryManager(memManager), _pEngState(pEngState), _filesystem(fs),
+      _meshCache(memManager, *this), _materialCache(memManager, *this) {
 }
 
 FrontendRenderer::~FrontendRenderer() {
@@ -38,6 +38,9 @@ void FrontendRenderer::Shutdown() {
 }
 
 FeExpect<bool, Error> FrontendRenderer::Initialize() {
+  if (_pEngState->pAppConfig)
+    _applicationName = _pEngState->pAppConfig->name;
+
   auto backendsRes = MakeBackends();
   if (!backendsRes.has_value()) {
     FLOG_ERROR("failed to scaffold renderer backends: {}", backendsRes.error().message);
@@ -52,14 +55,14 @@ FeExpect<bool, Error> FrontendRenderer::Initialize() {
   }
 
   _rendererState.pActiveBackend = _pBackends[vulkanIndex].get();
-  auto backendInitRes = _rendererState.pActiveBackend->Initialize(_pAppState);
+  auto backendInitRes = _rendererState.pActiveBackend->Initialize(_pEngState);
   if (!backendInitRes.has_value()) {
     FLOG_ERROR("failed to initialize backend renderer");
     return FeErr{backendInitRes.error()};
   }
 
   // Set up renderer state values
-  float32 aspect = static_cast<float32>(_pAppState->width) / _pAppState->height;
+  float32 aspect = static_cast<float32>(_pEngState->width) / _pEngState->height;
   _rendererState.projection = math::Mat4D::Orthographic(
       -aspect, aspect, -1.0f, 1.0f, _rendererState.nearClip, _rendererState.farClip);
 

@@ -5,6 +5,7 @@
 #include "Core/FeMemory.hpp"
 #include "ECS/ComponentPool.hpp"
 #include "ECS/Registry.hpp"
+#include <Scene/Scene.hpp>
 
 namespace flatearth::assets {
 
@@ -22,13 +23,14 @@ public:
   }
 
   template <typename Tag>
-  FEAPI FeExpect<ecs::EntityId, Error> Spawn(ecs::Registry &reg) const {
+  FEAPI FeExpect<ecs::EntityId, Error> Spawn(ecs::Registry &reg, const scene::SceneOwnership &ownership) const {
     const auto *pFn = _prefabsMap.Retrieve(ecs::PrefabTypeId<Tag>::Value());
     if (pFn == nullptr) {
       return FeErr{Error("cannot spawn unknown entity prefab", ErrorType::NullptrException)};
     }
 
     ecs::EntityId id = reg.Create();
+    reg.Insert(id, ownership);
     (*pFn)(id, reg);
     return id;
   }

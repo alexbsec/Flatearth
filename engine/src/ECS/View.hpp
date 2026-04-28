@@ -29,7 +29,7 @@ public:
 
     std::tuple<EntityId, Ts &...> operator*() {
       EntityId id = _view._pDriver->Entities()[_index];
-      return {id, _view.Get<Ts>(id)...};
+      return {id, _view.template Get<Ts>(id)...};
     }
 
     friend class View;
