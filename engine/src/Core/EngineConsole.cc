@@ -100,7 +100,7 @@ void DevConsole::DispatchCommand(ConsoleCmd cmd, stringv name, stringv value, KV
         return;
       }
       auto res = kvars.ParseAndSet(name, value);
-      if (!res.has_value()) {
+      if (res.errored()) {
         _history.push_back("  error: " + res.error().message);
       } else {
         _history.push_back("  " + string(name) + " = " + kvars.GetAsString(name));

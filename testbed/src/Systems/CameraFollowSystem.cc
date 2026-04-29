@@ -1,27 +1,27 @@
 #include "CameraFollowSystem.hpp"
+
+#include "../Components/Tags.hpp"
+
 #include <Scene/Components/Camera2D.hpp>
 #include <Scene/Components/Transform2D.hpp>
 #include <Scene/Scene.hpp>
 
-#include "../Components/Tags.hpp"
-
 namespace flatearth::testbed {
 
-CameraFollowSystem::CameraFollowSystem(EngineContext &ctx,
-                                       const string &sceneName)
-  : _ctx(ctx), _sceneName(sceneName) {}
+CameraFollowSystem::CameraFollowSystem(EngineContext &ctx, scene::SceneId sceneId)
+    : _ctx(ctx), _sceneId(sceneId) {
+}
 
 void CameraFollowSystem::Initialize(ecs::Registry &registry) {
-  ecs::EntityId cameraId = registry.Create();
-  const scene::SceneOwnership ownership{_sceneName};
-  registry.Insert(cameraId, scene::Transform2D{});
-  registry.Insert(cameraId, scene::Camera2D{.zoom = 0.2f});
-  registry.Insert(cameraId, ownership);
+  registry.Spawn()
+      .With(scene::Transform2D{})
+      .With(scene::Camera2D{.zoom = 0.2f})
+      .OwnedBy(_sceneId)
+      .Commit();
 
-  auto res = _ctx.core.KVarsRegistry().Register("camera.zoom", "Camera zoom scale", 0.2f);
-  if (!res.has_value()) {
-    FLOG_ERROR("failed to register camera zoom kvar");
-  }
+  _ctx.core.KVarsRegistry()
+      .Register("camera.zoom", "Camera zoom scale", 0.2f)
+      .or_log_error("failed to register camera zoom kvar");
 }
 
 void CameraFollowSystem::Update(ecs::Registry &registry, float32) {
@@ -44,4 +44,4 @@ void CameraFollowSystem::Update(ecs::Registry &registry, float32) {
   }
 }
 
-}
+} // namespace flatearth::testbed

@@ -16,9 +16,7 @@ enum class ErrorType {
   NoBackendRenderer,
   GameInitializeUndefined,
   RendererVulkanError,
-  SystemError,
   RendererSelectPhysicalDevice,
-  FileReadError,
   GameUpdateUndefined,
   PlatformCreateSurface,
   GameResizeUndefined,
@@ -30,6 +28,8 @@ enum class ErrorType {
   MathError,
   NullptrException,
   LogicalError,
+  SystemError,
+  FileReadError,
 };
 
 struct Error {

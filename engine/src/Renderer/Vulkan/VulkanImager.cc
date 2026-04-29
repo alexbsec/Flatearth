@@ -42,7 +42,7 @@ FeExpect<void, Error> ImageManager::CreateImage(Context &ctx,
 
   if (auto res = VkCheck(
           vkCreateImage(ctx.device.logicalDevice, &imgCreateInfo, ctx.pAllocator, &image.handle));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to create image");
     return FeErr{res.error()};
   }
@@ -61,14 +61,14 @@ FeExpect<void, Error> ImageManager::CreateImage(Context &ctx,
   memInfo.memoryTypeIndex = memType;
   if (auto res = VkCheck(vkAllocateMemory(
           ctx.device.logicalDevice, &memInfo, ctx.pAllocator, &image.deviceMemory));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to allocate memory for image");
     return FeErr{res.error()};
   }
 
   if (auto res =
           VkCheck(vkBindImageMemory(ctx.device.logicalDevice, image.handle, image.deviceMemory, 0));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to bind image memory");
     return FeErr{res.error()};
   }
@@ -80,7 +80,7 @@ FeExpect<void, Error> ImageManager::CreateImage(Context &ctx,
 
   image.view = nullptr;
   auto createRes = CreateImageView(ctx, image, format, aspectFlags);
-  if (!createRes.has_value()) {
+  if (createRes.errored()) {
     FLOG_ERROR("failed to create image view");
     return FeErr{createRes.error()};
   }
@@ -110,7 +110,7 @@ FeExpect<void, Error> ImageManager::CreateImageView(Context &ctx,
 
   if (auto res = VkCheck(vkCreateImageView(
           ctx.device.logicalDevice, &viewCreateInfo, ctx.pAllocator, &image.view));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to create image view");
     return FeErr{res.error()};
   }

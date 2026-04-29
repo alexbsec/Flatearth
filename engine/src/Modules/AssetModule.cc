@@ -4,9 +4,9 @@
 
 namespace flatearth::modules {
 
-FeExpect<bool, Error> Assets::Initialize(renderer::FrontendRenderer *pRenderer) {
+FeExpect<void, Error> Assets::Initialize(renderer::FrontendRenderer *pRenderer) {
   if (_initialized) {
-    return FeFalse;
+    return {};
   }
 
   if (pRenderer == nullptr) {
@@ -16,7 +16,7 @@ FeExpect<bool, Error> Assets::Initialize(renderer::FrontendRenderer *pRenderer) 
 
   _manager.Initialize(pRenderer);
   _initialized = FeTrue;
-  return FeTrue;
+  return {};
 }
 
 void Assets::Shutdown() {

@@ -40,6 +40,7 @@ struct LogMessage {
   LogLevel level;
   std::source_location where;
   string message;
+  bool toConsole;
   bool toFile;
 };
 
@@ -84,13 +85,13 @@ public:
       return;
     }
 
-    const bool logToFile = true;
     const string out = format(level, where, fmt, args...);
     LogMessage msg{
         .level = level,
         .where = where,
         .message = out,
-        .toFile = logToFile,
+        .toConsole = true,
+        .toFile = true,
     };
 
     std::lock_guard lock(_qMutex);
@@ -106,13 +107,13 @@ public:
       return;
     }
 
-    const bool logToFile = false;
     const string out = format(level, where, fmt, args...);
     LogMessage msg{
         .level = level,
         .where = where,
         .message = out,
-        .toFile = logToFile,
+        .toConsole = true,
+        .toFile = false,
     };
 
     std::lock_guard lock(_qMutex);
@@ -131,12 +132,12 @@ private:
           _logQ.pop();
           lock.unlock();
 
-          if (msg.toFile && _logToFile && _logFile.is_open()) {
-            _logFile << msg.message;
+          if (msg.toConsole) {
+            std::print("{}", msg.message);
           }
 
-          if (!msg.toFile) {
-            std::print("{}", msg.message);
+          if (msg.toFile && _logToFile && _logFile.is_open()) {
+            _logFile << msg.message;
           }
 
           lock.lock();
@@ -155,10 +156,12 @@ private:
     while (!_logQ.empty()) {
       auto msg = _logQ.front();
       _logQ.pop();
+      if (msg.toConsole) {
+        std::print("{}", msg.message);
+      }
+
       if (msg.toFile && _logToFile && _logFile.is_open()) {
         _logFile << msg.message;
-      } else {
-        std::print("{}", msg.message);
       }
     }
 

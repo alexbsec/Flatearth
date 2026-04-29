@@ -36,9 +36,8 @@ TextureCache::Create(Texture *pTexture, uint32 /*handle*/, const string &path) {
     return FeErr{Error("texture file not found", ErrorType::FileOpenError)};
   }
 
-  auto handleRes = _fs.OpenFile(path, platform::FileMode::Read, FeTrue);
-  if (!handleRes.has_value()) {
-    FLOG_ERROR("failed to open texture file: {}", path);
+  auto handleRes = _fs.OpenFile(path, platform::FileMode::Read, FeTrue).or_error("failed to open texture file");
+  if (handleRes.errored()) {
     return FeErr{handleRes.error()};
   }
 
@@ -51,12 +50,12 @@ TextureCache::Create(Texture *pTexture, uint32 /*handle*/, const string &path) {
   auto readRes = _fs.ReadFromFile(
       fileHandle, std::span<std::byte>(reinterpret_cast<std::byte *>(rawBytes.Data()), fileSize));
 
-  if (auto closeRes = _fs.CloseFile(fileHandle); !closeRes.has_value()) {
+  if (auto closeRes = _fs.CloseFile(fileHandle); closeRes.errored()) {
     FLOG_ERROR("failed to close texture file: {}", path);
     return FeErr{closeRes.error()};
   }
 
-  if (!readRes.has_value()) {
+  if (readRes.errored()) {
     FLOG_ERROR("failed to read texture file: {}", path);
     return FeErr{readRes.error()};
   }
@@ -76,7 +75,7 @@ TextureCache::Create(Texture *pTexture, uint32 /*handle*/, const string &path) {
 
   stbi_image_free(pPixels);
 
-  if (!texRes.has_value()) {
+  if (texRes.errored()) {
     FLOG_ERROR("failed to create texture from file: {}", path);
     return FeErr{texRes.error()};
   }

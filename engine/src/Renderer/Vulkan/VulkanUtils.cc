@@ -16,7 +16,7 @@ void ShaderModuleCleanup(Context &ctx,
   }
 
   auto closeRes = ctx.filesystem.CloseFile(fileHandle);
-  if (!closeRes.has_value()) {
+  if (closeRes.errored()) {
     FLOG_FATAL("failed to close file in cleanup stage");
   }
 }
@@ -41,7 +41,7 @@ FeExpect<bool, Error> CreateShaderModule(Context &ctx,
       VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 
   auto openRes = ctx.filesystem.OpenFile(cFileName, platform::FileMode::Read);
-  if (!openRes.has_value()) {
+  if (openRes.errored()) {
     FLOG_ERROR("failed to open file at path {}: {}", cFileName.string(), openRes.error().message);
     return FeErr{openRes.error()};
   }
@@ -69,7 +69,7 @@ FeExpect<bool, Error> CreateShaderModule(Context &ctx,
   };
 
   auto readRes = ctx.filesystem.ReadFromFile(fileHandle, bytes);
-  if (!readRes.has_value()) {
+  if (readRes.errored()) {
     FLOG_ERROR("failed to read file at path {}: {}", cFileName.string(), readRes.error().message);
     ShaderModuleCleanup(ctx, fileHandle, words, fileSize);
     return FeErr{readRes.error()};
@@ -82,7 +82,7 @@ FeExpect<bool, Error> CreateShaderModule(Context &ctx,
                                               &pShaderStage[stageIndex].shaderModuleCreateInfo,
                                               ctx.pAllocator,
                                               &pShaderStage[stageIndex].handle));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to create shader module");
     ShaderModuleCleanup(ctx, fileHandle, words, fileSize);
     return FeErr{res.error()};

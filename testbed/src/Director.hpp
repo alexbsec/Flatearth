@@ -2,6 +2,7 @@
 #define _FLATEARTH_TESTBED_DIRECTOR_HPP
 
 #include <Core/EngineContext.hpp>
+#include <Scene/Scene.hpp>
 
 namespace flatearth::testbed {
 
@@ -20,12 +21,14 @@ public:
 
 private:
   void ChangeScene();
+  scene::SceneId PhaseToSceneId(GamePhase phase) const;
 
 private:
   EngineContext &_ctx;
   GamePhase _currentPhase{GamePhase::MainMenu};
   GamePhase _pendingPhase{GamePhase::MainMenu};
-  string _currentSceneName{};
+  scene::SceneId _currentSceneId{scene::cNullScene};
+  scene::SceneId _sceneIds[4]{};
 };
 
 }

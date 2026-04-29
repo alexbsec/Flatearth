@@ -72,7 +72,7 @@ FeExpect<bool, Error> EventManager::UnregisterEvent(SystemEventCode code,
     }
 
     auto result = events.PopAt(i);
-    if (!result.has_value()) {
+    if (result.errored()) {
       FLOG_ERROR("failed to pop event from DArray at index {}", i);
       return FeErr{result.error()};
     }
@@ -102,7 +102,7 @@ EventManager::FireEvent(SystemEventCode code, void *sender, const EventContext &
 
     FeExpect<bool, Error> res = DecideAndDispatch(code, event.listener, dispatchCtx, eventCtx);
 
-    if (!res.has_value()) {
+    if (res.errored()) {
       return FeErr{res.error()};
     }
 
@@ -137,7 +137,7 @@ EventManager::Broadcast(SystemEventCode code, void *sender, const EventContext &
 
     FeExpect<bool, Error> res = DecideAndDispatch(code, event.listener, dispatchCtx, eventCtx);
 
-    if (!res.has_value()) {
+    if (res.errored()) {
       FLOG_ERROR("callback for event {} return error: {}", event.id, res.error().message);
       errCount++;
       continue;

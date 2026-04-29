@@ -24,12 +24,12 @@ int main(void) {
   }
 
   flatearth::Application app;
-  if (auto res = app.Initialize(gameInstance); !res.has_value()) {
+  if (auto res = app.Initialize(gameInstance); res.errored()) {
     LOG_ERROR("engine failed to initialize");
     return EXIT_FAILURE;
   }
 
-  if (auto res = app.Start(); !res.has_value()) {
+  if (auto res = app.Start(); res.errored()) {
     LOG_ERROR("engine failed to start");
     return EXIT_FAILURE;
   }

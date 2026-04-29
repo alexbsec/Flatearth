@@ -16,7 +16,7 @@ FeExpect<void, Error> QuerySwapchainSupport(VkPhysicalDevice device,
   // Surface capabilities
   if (res = VkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
           device, surface, &outSwapchainInfo.capabilities));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to get physical device surface capabilities");
     return FeErr{res.error()};
   }
@@ -24,7 +24,7 @@ FeExpect<void, Error> QuerySwapchainSupport(VkPhysicalDevice device,
   // Surface formats
   if (res = VkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(
           device, surface, &outSwapchainInfo.formatCount, nullptr));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to get physical device surface format count");
     return FeErr{res.error()};
   }
@@ -45,7 +45,7 @@ FeExpect<void, Error> QuerySwapchainSupport(VkPhysicalDevice device,
 
     if (res = VkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(
             device, surface, &outSwapchainInfo.formatCount, outSwapchainInfo.pFormats));
-        !res.has_value()) {
+        res.errored()) {
       FLOG_ERROR("failed to get phyiscal device surface formats");
       return FeErr{res.error()};
     }
@@ -54,7 +54,7 @@ FeExpect<void, Error> QuerySwapchainSupport(VkPhysicalDevice device,
   // Present mode
   if (res = VkCheck(vkGetPhysicalDeviceSurfacePresentModesKHR(
           device, surface, &outSwapchainInfo.presentModeCount, nullptr));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to get physical device surface present mode count");
     return FeErr{res.error()};
   }
@@ -75,7 +75,7 @@ FeExpect<void, Error> QuerySwapchainSupport(VkPhysicalDevice device,
 
     if (res = VkCheck(vkGetPhysicalDeviceSurfacePresentModesKHR(
             device, surface, &outSwapchainInfo.presentModeCount, outSwapchainInfo.pPresentMode));
-        !res.has_value()) {
+        res.errored()) {
       FLOG_ERROR("failed to get physical device surface present mode");
       return FeErr{res.error()};
     }
@@ -113,19 +113,19 @@ SwapchainManager::RecreateSwapchain(Context &ctx, uint32 &width, uint32 &height)
 
   auto queryRes = QuerySwapchainSupport(
       ctx.device.physicalDevice, ctx.surface, ctx.device.swapchainSupportInfo, _memoryManager);
-  if (!queryRes.has_value()) {
+  if (queryRes.errored()) {
     FLOG_ERROR("failed to query swapchain support");
     return FeErr{queryRes.error()};
   }
 
   auto detectRes = DetectDeviceDepthFormat(ctx.device);
-  if (!detectRes.has_value()) {
+  if (detectRes.errored()) {
     FLOG_ERROR("failed to detect device depth format");
     return FeErr{detectRes.error()};
   }
 
   auto recreateRes = RecreateLogic(ctx, &ctx.swapchain, width, height);
-  if (!recreateRes.has_value()) {
+  if (recreateRes.errored()) {
     FLOG_ERROR("swapchain recreation logic failed");
     return FeErr{recreateRes.error()};
   }
@@ -145,7 +145,7 @@ SwapchainManager::RecreateSwapchain(Context &ctx, uint32 &width, uint32 &height)
   ctx.mainRenderpass.height = ctx.framebufferHeight;
 
   auto fbRes = RegenerateFrameBuffer(ctx, &ctx.swapchain, &ctx.mainRenderpass);
-  if (!fbRes.has_value()) {
+  if (fbRes.errored()) {
     return FeErr{fbRes.error()};
   }
 
@@ -176,7 +176,7 @@ FeExpect<bool, Error> SwapchainManager::AcquireNextImage(Context &ctx,
     // This errors happens when resizing goes wrong for example
     // We simply recreate the swapchain in this case
     auto res = RecreateLogic(ctx, &swapchain, ctx.framebufferWidth, ctx.framebufferHeight);
-    if (!res.has_value()) {
+    if (res.errored()) {
       FLOG_ERROR("failed to recreate swapchain after VK_ERROR_OUT_OF_DATE_KHR");
       return FeErr{res.error()};
     }
@@ -214,7 +214,7 @@ FeExpect<void, Error> SwapchainManager::PresentSwapchain(Context &ctx,
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
     // Must recreate
     auto res = RecreateSwapchain(ctx, ctx.framebufferWidth, ctx.framebufferHeight);
-    if (!res.has_value()) {
+    if (res.errored()) {
       FLOG_ERROR("failed to recreate swapchain after present returned out of "
                  "date or suboptimal");
       return FeErr{res.error()};
@@ -264,7 +264,7 @@ FeExpect<void, Error> SwapchainManager::RegenerateFrameBuffer(Context &ctx,
                                                            attachmentCount,
                                                            attachments);
 
-    if (!createRes.has_value()) {
+    if (createRes.errored()) {
       FLOG_ERROR("failed to create framebuffer at index {}", i);
       return FeErr{createRes.error()};
     }
@@ -289,7 +289,7 @@ SwapchainManager::CreateLogic(Context &ctx, Swapchain *pSwapchain, uint32 width,
 
   auto queryRes = QuerySwapchainSupport(
       ctx.device.physicalDevice, ctx.surface, ctx.device.swapchainSupportInfo, _memoryManager);
-  if (!queryRes.has_value()) {
+  if (queryRes.errored()) {
     FLOG_ERROR("swapchain support query failed");
     return FeErr{queryRes.error()};
   }
@@ -383,7 +383,7 @@ SwapchainManager::CreateLogic(Context &ctx, Swapchain *pSwapchain, uint32 width,
 
   if (auto res = VkCheck(vkCreateSwapchainKHR(
           ctx.device.logicalDevice, &createInfo, ctx.pAllocator, &pSwapchain->handle));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to create vulkan swapchain");
     return FeErr{res.error()};
   }
@@ -392,7 +392,7 @@ SwapchainManager::CreateLogic(Context &ctx, Swapchain *pSwapchain, uint32 width,
   pSwapchain->imageCount = 0;
   if (auto res = VkCheck(vkGetSwapchainImagesKHR(
           ctx.device.logicalDevice, pSwapchain->handle, &pSwapchain->imageCount, nullptr));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to get swapchain image count");
     return FeErr{res.error()};
   }
@@ -422,7 +422,7 @@ SwapchainManager::CreateLogic(Context &ctx, Swapchain *pSwapchain, uint32 width,
                                                  pSwapchain->handle,
                                                  &pSwapchain->imageCount,
                                                  pSwapchain->pImages));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to get swapchain images");
     return FeErr{res.error()};
   }
@@ -441,13 +441,13 @@ SwapchainManager::CreateLogic(Context &ctx, Swapchain *pSwapchain, uint32 width,
 
     if (auto res = VkCheck(vkCreateImageView(
             ctx.device.logicalDevice, &viewInfo, ctx.pAllocator, &pSwapchain->pViews[i]));
-        !res.has_value()) {
+        res.errored()) {
       FLOG_ERROR("failed to create image view for index {}", i);
       return FeErr{res.error()};
     }
   }
 
-  if (auto res = DetectDeviceDepthFormat(ctx.device); !res.has_value()) {
+  if (auto res = DetectDeviceDepthFormat(ctx.device); res.errored()) {
     FLOG_WARN("failed to find a supported depth format");
     ctx.device.depthFormat = VK_FORMAT_UNDEFINED;
   }
@@ -464,7 +464,7 @@ SwapchainManager::CreateLogic(Context &ctx, Swapchain *pSwapchain, uint32 width,
                                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                             FeTrue,
                                             VK_IMAGE_ASPECT_DEPTH_BIT);
-  if (!imageRes.has_value()) {
+  if (imageRes.errored()) {
     FLOG_ERROR("failed to create depth attachment image");
     return FeErr{imageRes.error()};
   }
@@ -484,7 +484,7 @@ FeExpect<void, Error> SwapchainManager::DestroyLogic(Context &ctx, Swapchain *pS
 
   for (uint32 i = 0; i < pSwapchain->imageCount; i++) {
     auto delRes = _frameBufferManager.DestroyFrameBuffer(ctx, &pSwapchain->framebuffers[i]);
-    if (!delRes.has_value()) {
+    if (delRes.errored()) {
       FLOG_ERROR("failed to delete frame buffer at index {}", i);
       return FeErr{delRes.error()};
     }
@@ -493,7 +493,7 @@ FeExpect<void, Error> SwapchainManager::DestroyLogic(Context &ctx, Swapchain *pS
 
   // Destroy image
   auto imageRes = _imageManager.DestroyImage(ctx, pSwapchain->depthAttachment);
-  if (!imageRes.has_value()) {
+  if (imageRes.errored()) {
     FLOG_ERROR("failed to destroy depth attachment image");
     return FeErr{imageRes.error()};
   }
@@ -527,13 +527,13 @@ FeExpect<void, Error> SwapchainManager::DestroyLogic(Context &ctx, Swapchain *pS
 FeExpect<void, Error>
 SwapchainManager::RecreateLogic(Context &ctx, Swapchain *pSwapchain, uint32 width, uint32 height) {
   auto destroyRes = DestroyLogic(ctx, pSwapchain);
-  if (!destroyRes.has_value()) {
+  if (destroyRes.errored()) {
     FLOG_ERROR("failed to destroy swapchain in recreate process");
     return FeErr{destroyRes.error()};
   }
 
   auto createRes = CreateLogic(ctx, pSwapchain, width, height);
-  if (!createRes.has_value()) {
+  if (createRes.errored()) {
     FLOG_ERROR("failed to create swapchain in recreate process");
     return FeErr{createRes.error()};
   }

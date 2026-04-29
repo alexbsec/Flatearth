@@ -26,7 +26,7 @@ FeExpect<void, Error> CommandBufferManager::CreateBuffers(Context &ctx) {
   for (uint32 i = 0; i < ctx.swapchain.imageCount; i++) {
     if (ctx.graphicsCommandBuffer[i].state != CmdBufferState::NotAllocated) {
       auto freeRes = FreeBuffer(ctx, &ctx.graphicsCommandBuffer[i], ctx.device.graphicsCommandPool);
-      if (!freeRes.has_value()) {
+      if (freeRes.errored()) {
         FLOG_ERROR("failed to free buffer at index {}", i);
         return FeErr{freeRes.error()};
       }
@@ -34,7 +34,7 @@ FeExpect<void, Error> CommandBufferManager::CreateBuffers(Context &ctx) {
     _memoryManager.FZeroMemory(&ctx.graphicsCommandBuffer[i], sizeof(CommandBuffer));
     auto allocRes =
         AllocateBuffer(ctx, &ctx.graphicsCommandBuffer[i], ctx.device.graphicsCommandPool, FeTrue);
-    if (!allocRes.has_value()) {
+    if (allocRes.errored()) {
       FLOG_ERROR("failed to allocate buffer at inidex {}", i);
       return FeErr{allocRes.error()};
     }
@@ -55,7 +55,7 @@ FeExpect<void, Error> CommandBufferManager::DestroyBuffers(Context &ctx) {
     }
 
     auto freeRes = FreeBuffer(ctx, &ctx.graphicsCommandBuffer[i], ctx.device.graphicsCommandPool);
-    if (!freeRes.has_value()) {
+    if (freeRes.errored()) {
       FLOG_ERROR("failed to free buffer at index {}", i);
       return FeErr{freeRes.error()};
     }
@@ -80,7 +80,7 @@ FeExpect<void, Error> CommandBufferManager::AllocateBuffer(Context &ctx,
   pCmdBuffer->state = CmdBufferState::NotAllocated;
   if (auto res = VkCheck(
           vkAllocateCommandBuffers(ctx.device.logicalDevice, &allocInfo, &pCmdBuffer->handle));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to allocate command buffers");
     return FeErr{res.error()};
   }
@@ -114,7 +114,7 @@ void CommandBufferManager::BeginBuffer(Context &ctx,
     beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
   }
 
-  if (auto res = VkCheck(vkBeginCommandBuffer(cmdBuffer.handle, &beginInfo)); !res.has_value()) {
+  if (auto res = VkCheck(vkBeginCommandBuffer(cmdBuffer.handle, &beginInfo)); res.errored()) {
     FLOG_ERROR("failed to begin command buffer");
     return;
   }
@@ -122,7 +122,7 @@ void CommandBufferManager::BeginBuffer(Context &ctx,
 }
 
 void CommandBufferManager::EndBuffer(Context &ctx, CommandBuffer &cmdBuffer) {
-  if (auto res = VkCheck(vkEndCommandBuffer(cmdBuffer.handle)); !res.has_value()) {
+  if (auto res = VkCheck(vkEndCommandBuffer(cmdBuffer.handle)); res.errored()) {
     FLOG_ERROR("failed to end command buffer");
     return;
   }

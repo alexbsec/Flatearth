@@ -32,6 +32,8 @@ release/*
 .ignore/*
 imgui.ini
 
+.claude/*
+
 # Visual Studio
 .vs/
 *.VC.db

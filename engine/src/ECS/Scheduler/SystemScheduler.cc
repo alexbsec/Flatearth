@@ -24,13 +24,10 @@ FeExpect<void, Error> SystemScheduler::Build() {
   // initialize inDegrees hash map
   HashMap<uint32, uint32> inDegree(_memoryManager);
   _nodesMap.ForEach([&](uint32 typeId, const auto &) {
-    auto res = inDegree.Insert(typeId, 0);
-    if (!res.has_value()) {
-      FLOG_WARN("failed to insert typeId {} into inDegree array. This initialization error may "
-                "lead to crashes and UB. Err: {}",
-                typeId,
-                res.error().message);
-    }
+    inDegree.Insert(typeId, 0)
+        .or_log_warn("failed to insert typeId {} into inDegree array. This initialization error "
+                     "may lead to crashes and UB.",
+                     typeId);
   });
 
   // build the adjacency list
@@ -47,10 +44,7 @@ FeExpect<void, Error> SystemScheduler::Build() {
       return;
     }
 
-    auto res = queue.Put(typeId);
-    if (!res.has_value()) {
-      FLOG_WARN("could not insert typeId {} into queue. Err: {}", typeId, res.error().message);
-    }
+    queue.Put(typeId).or_log_warn("could not insert typeId {} into queue", typeId);
   });
 
   uint32 processed = 0;
@@ -93,10 +87,7 @@ FeExpect<void, Error> SystemScheduler::Build() {
         continue;
       }
 
-      auto res = queue.Put(neighborId);
-      if (!res.has_value()) {
-        FLOG_ERROR("failed to put neighbor id in queue: {}", res.error().message);
-      }
+      queue.Put(neighborId).or_log_error("failed to put neighbor id in queue");
     }
   }
 
@@ -181,9 +172,8 @@ void BuildEdges(const FePtr<SystemNode> &node,
     containers::DArray<uint32> *pList = edges.Retrieve(x);
     if (pList == nullptr) {
       auto res = edges.Insert(x, std::move(containers::DArray<uint32>(memManager)));
-      if (!res.has_value()) {
-        FLOG_ERROR("failed to insert a new DArray while building edges. Err: {}",
-                   res.error().message);
+      res.or_log_error("failed to insert a new DArray while building edges");
+      if (res.errored()) {
         continue;
       }
       pList = edges.Retrieve(x);
@@ -196,9 +186,8 @@ void BuildEdges(const FePtr<SystemNode> &node,
     containers::DArray<uint32> *pList = edges.Retrieve(node->typeId);
     if (pList == nullptr) {
       auto res = edges.Insert(node->typeId, std::move(containers::DArray<uint32>(memManager)));
-      if (!res.has_value()) {
-        FLOG_ERROR("failed to insert a new DArray while building edges. Err: {}",
-                   res.error().message);
+      res.or_log_error("failed to insert a new DArray while building edges");
+      if (res.errored()) {
         continue;
       }
       pList = edges.Retrieve(node->typeId);

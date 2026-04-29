@@ -13,7 +13,7 @@ public:
   explicit GameRenderer(EngineState *pEngState, memory::MemoryManager &memManager,
                               ecs::Registry &registry, platform::FileSystem &fs);
 
-  FeExpect<bool, Error> Initialize();
+  FeExpect<void, Error> Initialize();
   FeExpect<bool, Error> Draw(float32 deltaTime);
   void BeginImGuiFrame();
 

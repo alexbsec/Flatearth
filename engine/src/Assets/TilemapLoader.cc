@@ -70,9 +70,8 @@ FeExpect<resources::Tilemap, Error> TilemapLoader::Load(stringv tmxPath) {
       (fs::path(tmxPath).parent_path() / tsElem->Attribute("source")).lexically_normal().string();
 
   TilesetLoader tsLoader{_assetManager};
-  auto tsRes = tsLoader.Load(tsxPath);
-  if (!tsRes.has_value()) {
-    FLOG_ERROR("TilemapLoader: failed to load tileset '{}'", tsxPath);
+  auto tsRes = tsLoader.Load(tsxPath).or_error("TilemapLoader: failed to load tileset");
+  if (tsRes.errored()) {
     return FeErr{tsRes.error()};
   }
   tm.tileset = std::move(tsRes.value());

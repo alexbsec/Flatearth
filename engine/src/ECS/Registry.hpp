@@ -9,12 +9,15 @@
 
 namespace flatearth::ecs {
 
+class EntityBuilder;
+
 class Registry {
 public:
   FEAPI explicit Registry(memory::MemoryManager &memManager);
 
   FEAPI EntityId Create();
   void Destroy(EntityId id);
+  FEAPI EntityBuilder Spawn();
 
   template <typename T>
   void Insert(EntityId id, const T &component) {
@@ -81,5 +84,9 @@ private:
 };
 
 } // namespace flatearth::ecs
+
+// Deferred include: EntityBuilder uses Registry, Registry returns EntityBuilder from Spawn().
+// Registry must be fully defined before EntityBuilder.hpp is processed.
+#include "ECS/EntityBuilder.hpp"
 
 #endif // _FLATEARTH_ENGINE_ECS_REGISTRY_HPP

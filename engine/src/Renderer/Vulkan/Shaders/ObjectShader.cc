@@ -110,7 +110,7 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
                                         cStageTypes[i],
                                         i,
                                         pObjShader->shaderStages.data());
-    if (!createRes.has_value()) {
+    if (createRes.errored()) {
       FLOG_ERROR("failed to create shader module at index {}", i);
       return FeErr{createRes.error()};
     }
@@ -120,7 +120,7 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
   // -----------------------------
   // Global descriptor set layout
   // -----------------------------
-  if (auto res = MakeLayoutBinding(ctx, pObjShader, DescriptorBinding::Global); !res.has_value()) {
+  if (auto res = MakeLayoutBinding(ctx, pObjShader, DescriptorBinding::Global); res.errored()) {
     FLOG_ERROR("failed to create global descriptor set layout");
     return FeErr{res.error()};
   }
@@ -128,7 +128,7 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
   // -----------------------------
   // Texture descriptor and layout
   // -----------------------------
-  if (auto res = MakeLayoutBinding(ctx, pObjShader, DescriptorBinding::Texture); !res.has_value()) {
+  if (auto res = MakeLayoutBinding(ctx, pObjShader, DescriptorBinding::Texture); res.errored()) {
     FLOG_ERROR("failed to create texture descriptor set layout");
     return FeErr{res.error()};
   }
@@ -136,7 +136,7 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
   // -----------------------------
   // Descriptor pool
   // -----------------------------
-  if (auto res = MakeDescriptorPool(ctx, pObjShader, DescriptorBinding::Global); !res.has_value()) {
+  if (auto res = MakeDescriptorPool(ctx, pObjShader, DescriptorBinding::Global); res.errored()) {
     FLOG_ERROR("failed to create global descriptor pool");
     return FeErr{res.error()};
   }
@@ -145,7 +145,7 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
   // Texture pool
   // -----------------------------
   if (auto res = MakeDescriptorPool(ctx, pObjShader, DescriptorBinding::Texture);
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to create texture descriptor pool");
     return FeErr{res.error()};
   }
@@ -208,7 +208,7 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
                                                              scissor,
                                                              FeFalse,
                                                              &pObjShader->pipeline);
-  if (!pipelineRes.has_value()) {
+  if (pipelineRes.errored()) {
     FLOG_ERROR("failed to create graphics pipeline");
     return FeErr{pipelineRes.error()};
   }
@@ -221,7 +221,7 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
 
   auto createBufferRes = _bufferManager.CreateVulkanBuffer(
       ctx, sizeof(GlobalUniformObject), usage, memFlags, FeTrue, &pObjShader->globalUniformBuffer);
-  if (!createBufferRes.has_value()) {
+  if (createBufferRes.errored()) {
     FLOG_ERROR("failed to create vulkan buffer for GlobalUniformObject");
     return FeErr{createBufferRes.error()};
   }
@@ -248,7 +248,7 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
 
   if (auto res = VkCheck(vkAllocateDescriptorSets(
           ctx.device.logicalDevice, &allocInfo, pObjShader->globalDescriptorSets.Data()));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to allocate descriptor sets");
     return FeErr{res.error()};
   }
@@ -332,7 +332,7 @@ FeExpect<void, Error> VulkanShader::UpdateGlobalState(Context &ctx, ObjectShader
 
   auto loadRes = _bufferManager.LoadData(
       ctx, objShader.globalUniformBuffer, cOffset, cRange, 0, &objShader.globalUBO);
-  if (!loadRes.has_value()) {
+  if (loadRes.errored()) {
     FLOG_ERROR("failed to load data while updating global state");
     return FeErr{loadRes.error()};
   }
@@ -364,7 +364,7 @@ FeExpect<void, Error> VulkanShader::AcquireTextureResources(Context &ctx,
 
   if (auto res = VkCheck(vkAllocateDescriptorSets(
           ctx.device.logicalDevice, &allocInfo, &objShader.textureDescriptorSet));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to allocate texture descriptor set");
     return FeErr{res.error()};
   }

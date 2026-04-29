@@ -30,7 +30,7 @@ FeExpect<void, Error> BufferManager::CreateVulkanBuffer(Context &ctx,
 
   if (auto res = VkCheck(
           vkCreateBuffer(ctx.device.logicalDevice, &bufferInfo, ctx.pAllocator, &pBuffer->handle));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to create buffer");
     return FeErr{res.error()};
   }
@@ -64,7 +64,7 @@ FeExpect<void, Error> BufferManager::CreateVulkanBuffer(Context &ctx,
   }
 
   auto bindRes = BindBuffer(ctx, *pBuffer, 0);
-  if (!bindRes.has_value()) {
+  if (bindRes.errored()) {
     FLOG_ERROR("failed to bind buffer on create");
     return FeErr{bindRes.error()};
   }
@@ -103,7 +103,7 @@ FeExpect<void, Error> BufferManager::ResizeBuffer(
   VkBuffer newBuffer;
   if (auto res = VkCheck(
           vkCreateBuffer(ctx.device.logicalDevice, &bufferInfo, ctx.pAllocator, &newBuffer));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to create new buffer on resize");
     return FeErr{res.error()};
   }
@@ -124,14 +124,14 @@ FeExpect<void, Error> BufferManager::ResizeBuffer(
   }
 
   if (auto res = VkCheck(vkBindBufferMemory(ctx.device.logicalDevice, newBuffer, newMemory, 0));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to bind new buffer memory");
     return FeErr{res.error()};
   }
 
   auto copyRes =
       CopyBufferTo(ctx, pool, 0, queue, buffer.handle, 0, newBuffer, 0, buffer.totalSize);
-  if (!copyRes.has_value()) {
+  if (copyRes.errored()) {
     FLOG_ERROR("failed to copy buffer");
     return FeErr{copyRes.error()};
   }
@@ -157,7 +157,7 @@ FeExpect<void, Error> BufferManager::ResizeBuffer(
 FeExpect<void, Error> BufferManager::BindBuffer(Context &ctx, VulkanBuffer &buffer, uint64 offset) {
   if (auto res = VkCheck(
           vkBindBufferMemory(ctx.device.logicalDevice, buffer.handle, buffer.memory, offset));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to bind buffer memory");
     return FeErr{res.error()};
   }
@@ -170,7 +170,7 @@ FeExpect<void *, Error> BufferManager::LockMemory(
   void *data;
   if (auto res =
           VkCheck(vkMapMemory(ctx.device.logicalDevice, buffer.memory, offset, size, flags, &data));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to map buffer memory");
     return FeErr{res.error()};
   }
@@ -191,7 +191,7 @@ FeExpect<void, Error> BufferManager::LoadData(Context &ctx,
   void *dataPtr;
   if (auto res = VkCheck(
           vkMapMemory(ctx.device.logicalDevice, buffer.memory, offset, size, flags, &dataPtr));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to map buffer memory");
     return FeErr{res.error()};
   }

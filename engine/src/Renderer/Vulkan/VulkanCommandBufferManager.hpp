@@ -29,9 +29,9 @@ public:
 
     CommandBuffer tmp{};
     {
-      auto allocRes = AllocateBuffer(ctx, &tmp, pool, /*isPrimary=*/FeTrue);
-      if (!allocRes.has_value()) {
-        FLOG_ERROR("failed to allocate temp command buffer");
+      auto allocRes = AllocateBuffer(ctx, &tmp, pool, /*isPrimary=*/FeTrue)
+                          .or_error("failed to allocate temp command buffer");
+      if (allocRes.errored()) {
         return FeErr{allocRes.error()};
       }
     }
@@ -44,10 +44,8 @@ public:
 
     // Reset fence only if it's valid
     if (fence != VK_NULL_HANDLE) {
-      if (auto res = VkCheck(vkResetFences(ctx.device.logicalDevice, 1, &fence));
-          !res.has_value()) {
-        FLOG_ERROR("failed to reset fence");
-        auto _ = FreeBuffer(ctx, &tmp, pool);
+      if (auto res = VkCheck(vkResetFences(ctx.device.logicalDevice, 1, &fence)).or_error("failed to reset fence"); res.errored()) {
+        FreeBuffer(ctx, &tmp, pool).or_log_error("failed to free buffer on reset fence error");
         return FeErr{res.error()};
       }
     }
@@ -56,7 +54,7 @@ public:
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &tmp.handle;
 
-    if (auto res = VkCheck(vkQueueSubmit(queue, 1, &submitInfo, fence)); !res.has_value()) {
+    if (auto res = VkCheck(vkQueueSubmit(queue, 1, &submitInfo, fence)); res.errored()) {
       FLOG_ERROR("vkQueueSubmit failed");
       auto _ = FreeBuffer(ctx, &tmp, pool);
       return FeErr{res.error()};
@@ -66,13 +64,13 @@ public:
     if (fence != VK_NULL_HANDLE) {
       if (auto res =
               VkCheck(vkWaitForFences(ctx.device.logicalDevice, 1, &fence, VK_TRUE, UINT64_MAX));
-          !res.has_value()) {
+          res.errored()) {
         FLOG_ERROR("vkWaitForFences failed");
         auto _ = FreeBuffer(ctx, &tmp, pool);
         return FeErr{res.error()};
       }
     } else {
-      if (auto res = VkCheck(vkQueueWaitIdle(queue)); !res.has_value()) {
+      if (auto res = VkCheck(vkQueueWaitIdle(queue)); res.errored()) {
         FLOG_ERROR("vkQueueWaitIdle failed");
         auto _ = FreeBuffer(ctx, &tmp, pool);
         return FeErr{res.error()};
@@ -81,7 +79,7 @@ public:
 
     {
       auto freeRes = FreeBuffer(ctx, &tmp, pool);
-      if (!freeRes.has_value()) {
+      if (freeRes.errored()) {
         FLOG_ERROR("ImmediateSubmit: failed to free temp command buffer");
         return FeErr{freeRes.error()};
       }

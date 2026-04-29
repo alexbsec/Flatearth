@@ -64,61 +64,43 @@ FeExpect<void, Error> Engine::Initialize(Game &game, ApplicationConfig &config) 
                                                                  _coreModule.Input(),
                                                                  _eventManager);
 
-  auto platInitRes = _pPlatform->Initialize();
-  if (!platInitRes.has_value()) {
-    FLOG_ERROR("engine failed to initialize platform");
-    return FeErr{platInitRes.error()};
-  }
-  _state.platformState = _pPlatform->State();
-
-  auto listenerRes = _engineListener->Initialize();
-  if (!listenerRes.has_value()) {
-    FLOG_ERROR("engine listener failed to initialize");
-    return FeErr{listenerRes.error()};
-  }
-
-  auto renderInitRes = _renderer.Initialize();
-  if (!renderInitRes.has_value()) {
-    FLOG_ERROR("renderer failed to initialize: {}", renderInitRes.error().message);
-    return FeErr{renderInitRes.error()};
-  }
-
-  auto coreInit = _coreModule.Initialize();
-  if (!coreInit.has_value()) {
-    FLOG_ERROR("core module failed to initialize");
-    return FeErr{coreInit.error()};
-  }
-
-  auto assetInit = _assetsModule.Initialize(&_renderer.FrontendReference());
-  if (!assetInit.has_value()) {
-    FLOG_ERROR("assets module failed to initialize");
-    return FeErr{assetInit.error()};
-  }
-
-  auto projectInit = _gameModule.Initialize();
-  if (!projectInit.has_value()) {
-    FLOG_ERROR("project module failed to initialize");
-    return FeErr{projectInit.error()};
-  }
-
-  _state.isRunning = FeTrue;
-  _state.isSuspended = FeFalse;
-  _state.platformState = _pPlatform->State();
-
-  if (_state.pGameInstance->Load != nullptr && !_state.pGameInstance->Load(_state.pGameInstance)) {
-    FLOG_FATAL("game failed to load resources");
-    return FeErr{Error("game Load() failed", ErrorType::GameInitializeError)};
-  }
-
-  auto registerRes = RegisterSystems();
-  if (!registerRes.has_value()) {
-    FLOG_ERROR("failed to register engine systems");
-    return FeErr{registerRes.error()};
-  }
-  _scheduler.BootSystems(_registry);
-
-  FLOG_INFO("engine successfully initialized");
-  return {};
+  return _pPlatform->Initialize()
+      .or_error("engine failed to initialize platform")
+      .and_then([&]() -> FeExpect<void, Error> {
+        _state.platformState = _pPlatform->State();
+        return _engineListener->Initialize().or_error("engine listener failed to initialize");
+      })
+      .and_then([&]() -> FeExpect<void, Error> {
+        return _renderer.Initialize().or_error("renderer failed to initialize");
+      })
+      .and_then([&]() -> FeExpect<void, Error> {
+        return _coreModule.Initialize().or_error("core module failed to initialize");
+      })
+      .and_then([&]() -> FeExpect<void, Error> {
+        return _assetsModule.Initialize(&_renderer.FrontendReference()).or_error("assets module failed to initialize");
+      })
+      .and_then([&]() -> FeExpect<void, Error> {
+        return _gameModule.Initialize().or_error("project module failed to initialize");
+      })
+      .and_then([&]() -> FeExpect<void, Error> {
+        _state.isRunning = FeTrue;
+        _state.isSuspended = FeFalse;
+        _state.platformState = _pPlatform->State();
+        if (_state.pGameInstance->Load != nullptr &&
+            !_state.pGameInstance->Load(_state.pGameInstance)) {
+          FLOG_FATAL("game failed to load resources");
+          return FeErr{Error("game Load() failed", ErrorType::GameInitializeError)};
+        }
+        return {};
+      })
+      .and_then([&]() -> FeExpect<void, Error> {
+        return RegisterSystems().or_error("failed to register engine systems");
+      })
+      .and_then([&]() -> FeExpect<void, Error> {
+        _scheduler.BootSystems(_registry);
+        FLOG_INFO("engine successfully initialized");
+        return {};
+      });
 }
 
 FeExpect<void, Error> Engine::Start() {
@@ -131,7 +113,7 @@ FeExpect<void, Error> Engine::Start() {
 
   while (_state.isRunning) {
     auto pollRes = _pPlatform->PollEvents();
-    if (!pollRes.has_value()) {
+    if (pollRes.errored()) {
       FLOG_ERROR("engine failed to poll events: {}", pollRes.error().message);
       return FeErr{pollRes.error()};
     }
@@ -176,7 +158,7 @@ FeExpect<void, Error> Engine::Start() {
     ImGui::Render();
 
     auto drawRes = _renderer.Draw(deltaTime);
-    if (!drawRes.has_value()) {
+    if (drawRes.errored()) {
       FLOG_ERROR("renderer failed to draw frame: {}", drawRes.error().message);
       return FeErr{drawRes.error()};
     }
@@ -208,32 +190,32 @@ FeExpect<void, Error> Engine::RegisterSystems() {
   _scheduler.Prune();
 
   auto transformRes = _scheduler.Register<systems::TransformSystem>(_memoryManager);
-  if (!transformRes.has_value()) {
+  if (transformRes.errored()) {
     FLOG_ERROR("could not register TransformSystem");
     return FeErr{transformRes.error()};
   }
 
   auto spriteRes = _scheduler.Register<systems::SpriteSystem>();
-  if (!spriteRes.has_value()) {
+  if (spriteRes.errored()) {
     FLOG_ERROR("could not register SpriteSystem");
     return FeErr{spriteRes.error()};
   }
 
   auto physicsRes = _scheduler.Register<physics::PhysicsSystem>(_gameModule.World());
-  if (!physicsRes.has_value()) {
+  if (physicsRes.errored()) {
     FLOG_ERROR("could not register PhysicsSystem");
     return FeErr{physicsRes.error()};
   }
   physicsRes.value().Before<systems::TransformSystem>();
 
   auto particleRes = _scheduler.Register<systems::ParticleSystem>();
-  if (!particleRes.has_value()) {
+  if (particleRes.errored()) {
     FLOG_ERROR("could not register ParticleSystem");
     return FeErr{particleRes.error()};
   }
 
   auto audioRes = _scheduler.Register<systems::AudioSystem>(_coreModule.Audio());
-  if (!audioRes.has_value()) {
+  if (audioRes.errored()) {
     FLOG_ERROR("could not register AudioSystem");
     return FeErr{audioRes.error()};
   }
@@ -243,7 +225,7 @@ FeExpect<void, Error> Engine::RegisterSystems() {
   }
 
   auto buildRes = _scheduler.Build();
-  if (!buildRes.has_value()) {
+  if (buildRes.errored()) {
     FLOG_ERROR("failed to build scheduler");
     return FeErr{buildRes.error()};
   }

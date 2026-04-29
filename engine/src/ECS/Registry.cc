@@ -2,6 +2,7 @@
 
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
+#include "ECS/EntityBuilder.hpp"
 
 namespace flatearth::ecs {
 
@@ -23,5 +24,7 @@ void Registry::Destroy(EntityId id) {
   _entityManager.Destroy(id);
   FLOG_DEBUG("entity '{}' destroyed", id);
 }
+
+EntityBuilder Registry::Spawn() { return EntityBuilder(_memoryManager, *this); }
 
 } // namespace flatearth::ecs

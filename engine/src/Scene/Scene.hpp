@@ -3,19 +3,16 @@
 
 #include "Defines.hpp"
 
-#include <cstring>
-
 namespace flatearth::scene {
 
-constexpr uint32 cSceneNameMax = 64;
+using SceneId = uint16;
+constexpr SceneId cNullScene = 0;
 
 struct SceneOwnership {
-  char sceneName[cSceneNameMax]{};
+  SceneId sceneId{cNullScene};
 
   SceneOwnership() = default;
-  explicit SceneOwnership(stringv name) {
-    std::strncpy(sceneName, name.data(), cSceneNameMax - 1);
-  }
+  explicit SceneOwnership(SceneId id) : sceneId(id) {}
 };
 
 } // namespace flatearth::scene

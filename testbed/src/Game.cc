@@ -19,9 +19,7 @@
 #include <Scene/Scene.hpp>
 #include <Scene/Systems/AudioSystem.hpp>
 #include <Scene/Systems/TransformSystem.hpp>
-#include <cstring>
 #include <imgui.h>
-#include <vector>
 
 namespace flatearth::testbed {
 
@@ -34,26 +32,20 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
 }
 
 void GameTest::GameRegisterSystems(flatearth::Game *gameInstance, ecs::SystemScheduler &scheduler) {
-  auto playerRes = scheduler.Register<PlayerSystem>(*gameInstance->pCtx, string("level1"));
-  if (!playerRes.has_value()) {
-    FLOG_FATAL("failed to register PlayerSystem: {}", playerRes.error().message);
-    std::exit(1);
-  }
-  playerRes.value().Before<systems::TransformSystem>();
+  EngineContext &ctx = *gameInstance->pCtx;
+  scene::SceneId level1 = ctx.project.RegisterScene("level1");
 
-  auto cameraRes = scheduler.Register<CameraFollowSystem>(*gameInstance->pCtx, string("level1"));
-  if (!cameraRes.has_value()) {
-    FLOG_FATAL("failed to register CameraFollowSystem: {}", cameraRes.error().message);
-    std::exit(1);
-  }
-  cameraRes.value().After<PlayerSystem>().Before<systems::TransformSystem>();
+  scheduler.Register<PlayerSystem>(ctx, level1)
+      .or_fatal("failed to register PlayerSystem")
+      .Before<systems::TransformSystem>();
 
-  auto worldRes = scheduler.Register<WorldSystem>(*gameInstance->pCtx, string("level1"));
-  if (!worldRes.has_value()) {
-    FLOG_FATAL("failed to register WorldSystem: {}", worldRes.error().message);
-    std::exit(1);
-  }
-  worldRes.value().Before<systems::AudioSystem>();
+  scheduler.Register<CameraFollowSystem>(ctx, level1)
+      .or_fatal("failed to register CameraFollowSystem")
+      .After<PlayerSystem>().Before<systems::TransformSystem>();
+
+  scheduler.Register<WorldSystem>(ctx, level1)
+      .or_fatal("failed to register WorldSystem")
+      .Before<systems::AudioSystem>();
 }
 
 // TODO: remove, just here for testing
@@ -167,15 +159,8 @@ void GameTest::GameUnload(flatearth::Game *gameInstance) {
 
   ctx.assets.Tilemap().Unload("assets/tiles/LevelEntrance.tmx");
 
-  std::vector<ecs::EntityId> toDestroy;
-  for (auto [id, ownership] : reg.ViewOf<scene::SceneOwnership>()) {
-    if (std::strncmp(ownership.sceneName, "level1", scene::cSceneNameMax) == 0) {
-      toDestroy.push_back(id);
-    }
-  }
-  for (auto id : toDestroy) {
-    reg.Destroy(id);
-  }
+  scene::SceneId level1 = ctx.project.GetSceneId("level1");
+  ctx.project.DestroyScene(level1);
 }
 
 void GameTest::Setup(flatearth::Game *gameInstance) {

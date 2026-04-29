@@ -19,10 +19,10 @@ TilemapManager::TilemapManager(memory::MemoryManager &memManager,
                                ecs::Registry &registry)
     : _assetManager(assetManager), _registry(registry), _baseSprites(memManager) {}
 
-FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, stringv sceneName) {
+FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::SceneId sceneId) {
   TilemapLoader loader{_assetManager};
   auto tmRes = loader.Load(tmxPath);
-  if (!tmRes.has_value())
+  if (tmRes.errored())
     return FeErr{tmRes.error()};
 
   resources::Tilemap tm = std::move(tmRes.value());
@@ -31,7 +31,7 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, stringv sce
   auto baseSpriteRes = _assetManager.SpriteFromTexture(tm.tileset.texture,
                                                        tm.tileset.name,
                                                        resources::MeshShape::Quad);
-  if (!baseSpriteRes.has_value())
+  if (baseSpriteRes.errored())
     return FeErr{baseSpriteRes.error()};
 
   scene::Sprite baseSprite = baseSpriteRes.value();
@@ -64,7 +64,7 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, stringv sce
 
         _registry.Insert(e, scene::Transform2D{wx, wy, 0.0f, 1.0f, 1.0f});
         _registry.Insert(e, tileSprite);
-        _registry.Insert(e, scene::SceneOwnership{sceneName});
+        _registry.Insert(e, scene::SceneOwnership{sceneId});
       }
     }
   }
@@ -82,7 +82,7 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, stringv sce
       _registry.Insert(e, scene::Transform2D{wx, wy});
       _registry.Insert(e, physics::RigidBody{.type = physics::BodyType::Static});
       _registry.Insert(e, physics::BoxCollider{.halfWidth = 0.5f, .halfHeight = 0.5f});
-      _registry.Insert(e, scene::SceneOwnership{sceneName});
+      _registry.Insert(e, scene::SceneOwnership{sceneId});
     }
   }
 
@@ -94,7 +94,7 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, stringv sce
 
   auto root = _registry.Create();
   _registry.Insert(root, scene::Transform2D{});
-  _registry.Insert(root, scene::SceneOwnership{sceneName});
+  _registry.Insert(root, scene::SceneOwnership{sceneId});
 
   FLOG_INFO("TilemapManager: loaded '{}' — {} render layers, {} collision tiles, {} objects",
             tmxPath, renderLayerCount, collTileCount, objectCount);

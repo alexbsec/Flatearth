@@ -55,32 +55,32 @@ VulkanBackend::~VulkanBackend() {
     }
 
     auto destroyRes = DestroyFence(&_ctx.inFlightFences[i]);
-    if (!destroyRes.has_value()) {
+    if (destroyRes.errored()) {
       FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}", destroyRes.error().message);
       return;
     }
   }
 
   auto destroyRes = _cmdBufferManager.DestroyBuffers(_ctx);
-  if (!destroyRes.has_value()) {
+  if (destroyRes.errored()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}", destroyRes.error().message);
     return;
   }
 
   destroyRes = _renderpassManager.DestroyRenderpass(_ctx, &_ctx.mainRenderpass);
-  if (!destroyRes.has_value()) {
+  if (destroyRes.errored()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}", destroyRes.error().message);
     return;
   }
 
   destroyRes = _swapchainManager.DestroySwapchain(_ctx, &_ctx.swapchain);
-  if (!destroyRes.has_value()) {
+  if (destroyRes.errored()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}", destroyRes.error().message);
     return;
   }
 
   destroyRes = _deviceManager.DestroyDevice(_ctx);
-  if (!destroyRes.has_value()) {
+  if (destroyRes.errored()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}", destroyRes.error().message);
     return;
   }
@@ -137,7 +137,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
   // Obtain list of available layers
   uint32 availableLayerCount = 0;
   if (auto res = VkCheck(vkEnumerateInstanceLayerProperties(&availableLayerCount, nullptr));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to enumerate instance layer porperty count");
     return FeErr{res.error()};
   }
@@ -146,7 +146,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
   availableLayers.Reserve(availableLayerCount);
   if (auto res =
           VkCheck(vkEnumerateInstanceLayerProperties(&availableLayerCount, availableLayers.Data()));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to enumerate instance layer properties");
     return FeErr{res.error()};
   }
@@ -178,7 +178,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
   createInfo.ppEnabledLayerNames = requiredValidationLayerNames.Data();
 
   if (auto res = VkCheck(vkCreateInstance(&createInfo, _ctx.pAllocator, &_ctx.instance));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to create Vulkan instance");
     return FeErr{res.error()};
   }
@@ -204,7 +204,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
                                                                 "vkCreateDebugUtilsMessengerEXT");
   if (auto res =
           VkCheck(func(_ctx.instance, &debugCreateInfo, _ctx.pAllocator, &_ctx.debugMessenger));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to get instance proc address");
     return FeErr{res.error()};
   }
@@ -212,14 +212,14 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
 #endif
 
   FLOG_DEBUG("creating Vulkan surface");
-  if (auto res = platform::CreateVulkanSurface(pEngState->platformState, _ctx); !res.has_value()) {
+  if (auto res = platform::CreateVulkanSurface(pEngState->platformState, _ctx); res.errored()) {
     FLOG_ERROR("failed to create Vulkan surface");
     return FeErr{res.error()};
   }
   FLOG_DEBUG("Vulkan surface created");
 
   auto deviceRes = _deviceManager.CreateDevice(_ctx);
-  if (!deviceRes.has_value()) {
+  if (deviceRes.errored()) {
     FLOG_ERROR("failed to create device");
     return FeErr{deviceRes.error()};
   }
@@ -227,7 +227,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
   FLOG_DEBUG("creating swapchain");
   auto swapRes = _swapchainManager.CreateSwapchain(
       _ctx, &_ctx.swapchain, _ctx.framebufferWidth, _ctx.framebufferHeight);
-  if (!swapRes.has_value()) {
+  if (swapRes.errored()) {
     FLOG_ERROR("failed to create swapchain");
     return FeErr{swapRes.error()};
   }
@@ -246,7 +246,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
                                                       1.0f,
                                                       1.0f,
                                                       0);
-  if (!rpassRes.has_value()) {
+  if (rpassRes.errored()) {
     FLOG_ERROR("failed to create renderpass");
     return FeErr{rpassRes.error()};
   }
@@ -260,7 +260,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
 
   auto frameBufRes =
       _swapchainManager.RegenerateFrameBuffer(_ctx, &_ctx.swapchain, &_ctx.mainRenderpass);
-  if (!frameBufRes.has_value()) {
+  if (frameBufRes.errored()) {
     FLOG_ERROR("failed regenerating frame buffers");
     return FeErr{frameBufRes.error()};
   }
@@ -268,7 +268,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
 
   FLOG_DEBUG("creating command buffers");
   auto cmdBufRes = _cmdBufferManager.CreateBuffers(_ctx);
-  if (!cmdBufRes.has_value()) {
+  if (cmdBufRes.errored()) {
     FLOG_ERROR("failed to create command buffers");
     return FeErr{cmdBufRes.error()};
   }
@@ -285,13 +285,13 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
                                              &semaphoreInfo,
                                              _ctx.pAllocator,
                                              &_ctx.imageAvailableSemaphores[i]));
-        !res.has_value()) {
+        res.errored()) {
       FLOG_ERROR("failed to create image available semaphore");
       return FeErr{res.error()};
     }
 
     auto fenceRes = CreateFence(&_ctx.inFlightFences[i], FeTrue);
-    if (!fenceRes.has_value()) {
+    if (fenceRes.errored()) {
       FLOG_ERROR("failed to create in-flight fence");
       return FeErr{fenceRes.error()};
     }
@@ -308,7 +308,7 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
                                              &semaphoreInfo,
                                              _ctx.pAllocator,
                                              &_ctx.queueCompleteSemaphores[i]));
-        !res.has_value()) {
+        res.errored()) {
       FLOG_ERROR("failed to create queue complete semaphore");
       return FeErr{res.error()};
     }
@@ -325,14 +325,14 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
 
   // create builtin shaders
   auto shaderRes = _vulkanShader.CreateObjectShader(_ctx, &_ctx.objectShader);
-  if (!shaderRes.has_value()) {
+  if (shaderRes.errored()) {
     FLOG_ERROR("failed to create object shader");
     return FeErr{shaderRes.error()};
   }
 
   // create vulkan buffer
   auto createBufferRes = CreateBuffers();
-  if (!createBufferRes.has_value()) {
+  if (createBufferRes.errored()) {
     FLOG_ERROR("vulkan buffers creation failed");
     return FeErr{createBufferRes.error()};
   }
@@ -388,13 +388,13 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
     FLOG_INFO("new framebuffer size: {}/{}", _cachedFrameBufferWidth, _cachedFrameBufferHeight);
     auto swapRes = _swapchainManager.RecreateSwapchain(
         _ctx, _cachedFrameBufferWidth, _cachedFrameBufferHeight);
-    if (!swapRes.has_value()) {
+    if (swapRes.errored()) {
       FLOG_ERROR("failed to recreate swapchain");
       return FeErr{swapRes.error()};
     }
 
     auto cmdBufRes = _cmdBufferManager.CreateBuffers(_ctx);
-    if (!cmdBufRes.has_value()) {
+    if (cmdBufRes.errored()) {
       FLOG_ERROR("failed to recreate command buffers");
       return FeErr{cmdBufRes.error()};
     }
@@ -403,7 +403,7 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
   }
 
   auto awaitRes = AwaitFence(&_ctx.inFlightFences[_ctx.currentFrame], UINT64_MAX);
-  if (!awaitRes.has_value()) {
+  if (awaitRes.errored()) {
     FLOG_ERROR("failed to await in-flight fence");
     return FeErr{awaitRes.error()};
   }
@@ -416,7 +416,7 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
                                          _ctx.imageAvailableSemaphores[_ctx.currentFrame],
                                          cFence,
                                          &_ctx.imageIndex);
-  if (!acquireRes.has_value()) {
+  if (acquireRes.errored()) {
     FLOG_ERROR("failed to acquire next image from swapchain");
     return FeErr{acquireRes.error()};
   }
@@ -444,7 +444,7 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
 
   if (_ctx.imagesInFlight[_ctx.imageIndex] != VK_NULL_HANDLE) {
     auto awaitRes = AwaitFence(_ctx.imagesInFlight[_ctx.imageIndex], UINT64_MAX);
-    if (!awaitRes.has_value()) {
+    if (awaitRes.errored()) {
       FLOG_ERROR("failed to await image in-flight fence");
       return FeErr{awaitRes.error()};
     }
@@ -453,7 +453,7 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
   _ctx.imagesInFlight[_ctx.imageIndex] = &_ctx.inFlightFences[_ctx.currentFrame];
 
   auto resetRes = ResetFence(&_ctx.inFlightFences[_ctx.currentFrame]);
-  if (!resetRes.has_value()) {
+  if (resetRes.errored()) {
     FLOG_ERROR("failed to reset in-flight fence");
     return FeErr{resetRes.error()};
   }
@@ -479,7 +479,7 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
                                   cSubmitCount,
                                   &submitInfo,
                                   _ctx.inFlightFences[_ctx.currentFrame].handle);
-  if (auto res = VkCheck(result); !res.has_value()) {
+  if (auto res = VkCheck(result); res.errored()) {
     FLOG_ERROR("failed to submit to graphics queue");
     return FeErr{res.error()};
   }
@@ -493,7 +493,7 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
                                          device.presentQueue,
                                          _ctx.queueCompleteSemaphores[_ctx.imageIndex],
                                          _ctx.imageIndex);
-  if (!presentRes.has_value()) {
+  if (presentRes.errored()) {
     FLOG_ERROR("failed to present swapchain image");
     return FeErr{presentRes.error()};
   }
@@ -514,7 +514,7 @@ FeExpect<void, Error> VulkanBackend::UpdateGlobalState(math::Mat4D projection,
   // TODO: other ubo properties
 
   auto updateRes = _vulkanShader.UpdateGlobalState(_ctx, _ctx.objectShader);
-  if (!updateRes.has_value()) {
+  if (updateRes.errored()) {
     FLOG_ERROR("failed to update global state");
     return FeErr{updateRes.error()};
   }
@@ -555,13 +555,13 @@ FeExpect<void, Error> VulkanBackend::CreateTexture(const string &name,
   VulkanBuffer staging;
   auto createRes =
       _bufferManager.CreateVulkanBuffer(_ctx, imageSize, usage, memFlags, FeTrue, &staging);
-  if (!createRes.has_value()) {
+  if (createRes.errored()) {
     FLOG_ERROR("failed to create vulkan buffer for texture");
     return FeErr{Error("texture creation failed", ErrorType::RendererVulkanError)};
   }
 
   auto loadRes = _bufferManager.LoadData(_ctx, staging, 0, imageSize, 0, pPixels);
-  if (!loadRes.has_value()) {
+  if (loadRes.errored()) {
     FLOG_ERROR("failed to load data for texture");
     return FeErr{Error("load texture failed", ErrorType::RendererVulkanError)};
   }
@@ -582,7 +582,7 @@ FeExpect<void, Error> VulkanBackend::CreateTexture(const string &name,
       FeTrue,
       VK_IMAGE_ASPECT_COLOR_BIT,
       filter);
-  if (!createRes.has_value()) {
+  if (createRes.errored()) {
     FLOG_ERROR("failed to create image for texture");
     return FeErr{Error("texture failed to create image", ErrorType::RendererVulkanError)};
   }
@@ -601,7 +601,7 @@ FeExpect<void, Error> VulkanBackend::CreateTexture(const string &name,
   auto submitRes = _cmdBufferManager.ImmediateSubmit(_ctx, pool, queue, tempFence, callback);
   vkDestroyFence(_ctx.device.logicalDevice, tempFence, _ctx.pAllocator);
   _bufferManager.DestroyVulkanBuffer(_ctx, &staging);
-  if (!submitRes.has_value()) {
+  if (submitRes.errored()) {
     FLOG_ERROR("failed to submit command buffer for texture creation");
     return FeErr{Error("texture creation failed during submit", ErrorType::RendererVulkanError)};
   }
@@ -632,7 +632,7 @@ FeExpect<void, Error> VulkanBackend::DestroyTexture(resources::Texture *pTexture
   }
 
   auto destroyRes = _imageManager.DestroyImage(_ctx, pTextureData->image);
-  if (!destroyRes.has_value()) {
+  if (destroyRes.errored()) {
     FLOG_ERROR("failed to destroy image for texture");
     return FeErr{Error("failed to destroy texture image", ErrorType::RendererVulkanError)};
   }
@@ -668,7 +668,7 @@ FeExpect<void, Error> VulkanBackend::CreateGeometry(uint32 id,
                                    vertexSize,
                                    _ctx.objectVertexBuffer,
                                    pVertices);
-  if (!uploadRes.has_value()) {
+  if (uploadRes.errored()) {
     vkDestroyFence(_ctx.device.logicalDevice, tempFence, _ctx.pAllocator);
     FLOG_ERROR("failed to upload data range in test");
     return FeErr{uploadRes.error()};
@@ -683,7 +683,7 @@ FeExpect<void, Error> VulkanBackend::CreateGeometry(uint32 id,
                               pIndices);
 
   vkDestroyFence(_ctx.device.logicalDevice, tempFence, _ctx.pAllocator);
-  if (!uploadRes.has_value()) {
+  if (uploadRes.errored()) {
     FLOG_ERROR("failed to upload index data");
     return FeErr{uploadRes.error()};
   }
@@ -693,7 +693,7 @@ FeExpect<void, Error> VulkanBackend::CreateGeometry(uint32 id,
   geom.indexBufferOffset = indexOffset;
   geom.indexCount = indexCount;
   auto insertRes = _geometries.Insert(id, geom);
-  if (!insertRes.has_value()) {
+  if (insertRes.errored()) {
     FLOG_ERROR("failed to insert geometry into hashmap");
     return FeErr{insertRes.error()};
   }
@@ -807,7 +807,7 @@ FeExpect<void, Error> VulkanBackend::CreateMaterial(resources::Material *pMateri
   allocInfo.pSetLayouts = &_ctx.objectShader.textureDescriptorSetLayout;
   if (auto res = VkCheck(vkAllocateDescriptorSets(
           _ctx.device.logicalDevice, &allocInfo, &pMatData->descriptorSet));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to allocate descriptor sets for material");
     return FeErr{res.error()};
   }
@@ -838,7 +838,7 @@ FeExpect<void, Error> VulkanBackend::DestroyMaterial(resources::Material *pMater
                                               _ctx.objectShader.textureDescriptorPool,
                                               1,
                                               &pMatData->descriptorSet));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to free descriptor set for material");
     return FeErr{res.error()};
   }
@@ -877,7 +877,7 @@ FeExpect<void, Error> VulkanBackend::CreateFence(Fence *pFence, bool signaled) {
 
   if (auto res = VkCheck(
           vkCreateFence(_ctx.device.logicalDevice, &createInfo, _ctx.pAllocator, &pFence->handle));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to create vulkan fence");
     return FeErr{res.error()};
   }
@@ -944,7 +944,7 @@ FeExpect<void, Error> VulkanBackend::ResetFence(Fence *pFence) {
 
   constexpr uint32 cFenceCount = 1;
   if (auto res = VkCheck(vkResetFences(_ctx.device.logicalDevice, cFenceCount, &pFence->handle));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to reset vulkan fence");
     return FeErr{res.error()};
   }
@@ -963,7 +963,7 @@ FeExpect<void, Error> VulkanBackend::CreateBuffers() {
   const uint64 cVertexBufferSize = sizeof(math::Vertex3D) * 1024 * 1024;
   auto createRes = _bufferManager.CreateVulkanBuffer(
       _ctx, cVertexBufferSize, usageFlags, memoryPropertyFlag, FeTrue, &_ctx.objectVertexBuffer);
-  if (!createRes.has_value()) {
+  if (createRes.errored()) {
     FLOG_ERROR("failed to create vulkan vertex buffer");
     return FeErr{createRes.error()};
   }
@@ -976,7 +976,7 @@ FeExpect<void, Error> VulkanBackend::CreateBuffers() {
   const uint64 cIndexBufferSize = sizeof(uint32) * 1024 * 1024;
   createRes = _bufferManager.CreateVulkanBuffer(
       _ctx, cIndexBufferSize, usageFlags, memoryPropertyFlag, FeTrue, &_ctx.objectIndexBuffer);
-  if (!createRes.has_value()) {
+  if (createRes.errored()) {
     FLOG_ERROR("failed to create vulkan index buffer");
     return FeErr{createRes.error()};
   }
@@ -999,20 +999,20 @@ FeExpect<void, Error> VulkanBackend::UploadDataRange(VkCommandPool pool,
 
   auto createRes =
       _bufferManager.CreateVulkanBuffer(_ctx, size, usageFlags, memoryFlags, FeTrue, &staging);
-  if (!createRes.has_value()) {
+  if (createRes.errored()) {
     FLOG_ERROR("failed to create vulkan buffer");
     return FeErr{createRes.error()};
   }
 
   auto loadRes = _bufferManager.LoadData(_ctx, staging, 0, size, 0, pData);
-  if (!loadRes.has_value()) {
+  if (loadRes.errored()) {
     FLOG_ERROR("failed to load data from vulkan buffer");
     return FeErr{loadRes.error()};
   }
 
   auto copyRes = _bufferManager.CopyBufferTo(
       _ctx, pool, fence, queue, staging.handle, 0, buffer.handle, offset, size);
-  if (!copyRes.has_value()) {
+  if (copyRes.errored()) {
     FLOG_ERROR("failed to copy buffer on upload");
     return FeErr{copyRes.error()};
   }
@@ -1032,7 +1032,7 @@ void VulkanBackend::TextureSubmitCallback(CommandBuffer cmd,
                                                            VK_IMAGE_LAYOUT_UNDEFINED,
                                                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-  if (!transitionRes.has_value()) {
+  if (transitionRes.errored()) {
     FLOG_ERROR("failed to transition image layout for texture upload");
     return;
   }
@@ -1059,7 +1059,7 @@ void VulkanBackend::TextureSubmitCallback(CommandBuffer cmd,
                                                       imageFormat,
                                                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-  if (!transitionRes.has_value()) {
+  if (transitionRes.errored()) {
     FLOG_ERROR("failed to transition image layout for texture upload");
     return;
   }

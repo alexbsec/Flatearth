@@ -33,8 +33,8 @@ FeExpect<Tileset, Error> TilesetLoader::Load(stringv tsxPath) {
 
   namespace stdfs = std::filesystem;
   const string cImagePath = (stdfs::path(tsxPath).parent_path() / imageElem->Attribute("source")).string();
-  auto texRes = _assetManager.LoadTexture(cImagePath);
-  if (!texRes.has_value()) {
+  auto texRes = _assetManager.LoadTexture(cImagePath).or_error("TilesetLoader: failed to load texture");
+  if (texRes.errored()) {
     return FeErr{texRes.error()};
   }
 
