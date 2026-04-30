@@ -10,15 +10,18 @@ namespace flatearth::detail {
   std::exit(1);
 }
 
-void ErrorLog(stringv userMsg, stringv errMsg) {
-  FLOG_ERROR("{}: {}", userMsg, errMsg);
+void ErrorLog(stringv userMsg, stringv errMsg, std::source_location loc) {
+  febundle::core::Logger::Self().Log(
+      febundle::core::LogLevel::Error, loc, "{}: {}", userMsg, errMsg);
 }
 
-void WarnLog(stringv userMsg, stringv errMsg) {
+void WarnLog(stringv userMsg, stringv errMsg, std::source_location loc) {
   if (errMsg.empty()) {
-    FLOG_WARN("{}", userMsg);
+    febundle::core::Logger::Self().Log(
+        febundle::core::LogLevel::Warn, loc, "{}", userMsg);
   } else {
-    FLOG_WARN("{}: {}", userMsg, errMsg);
+    febundle::core::Logger::Self().Log(
+        febundle::core::LogLevel::Warn, loc, "{}: {}", userMsg, errMsg);
   }
 }
 

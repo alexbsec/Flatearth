@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <source_location>
 #include <sstream>
 #include <string>
 
@@ -62,9 +63,19 @@ STATIC_ASSERT(sizeof(float64) == 8, "Expected float64 to be 8 bytes");
 
 namespace flatearth::detail {
 [[noreturn]] void FatalLog(stringv userMsg, stringv errMsg);
-void ErrorLog(stringv userMsg, stringv errMsg);
-void WarnLog(stringv userMsg, stringv errMsg = "");
+void ErrorLog(stringv userMsg, stringv errMsg, std::source_location loc);
+void WarnLog(stringv userMsg, stringv errMsg, std::source_location loc);
 } // namespace flatearth::detail
+
+template <typename... Args>
+struct FmtWithLoc {
+  stringv fmt;
+  std::source_location loc;
+  constexpr FmtWithLoc(const char *f, std::source_location l = std::source_location::current())
+      : fmt(f), loc(l) {}
+  constexpr FmtWithLoc(stringv f, std::source_location l = std::source_location::current())
+      : fmt(f), loc(l) {}
+};
 
 // Platform detection
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
@@ -155,7 +166,7 @@ struct FeExpect : std::expected<Ret, Err> {
   using Base = std::expected<Ret, Err>;
   using Base::Base;
 
-  auto or_fatal(stringv msg)
+  auto or_fatal(stringv msg, std::source_location src = std::source_location::current())
     requires requires(Err e) { e.message; }
   {
     if (!this->has_value()) {
@@ -167,35 +178,39 @@ struct FeExpect : std::expected<Ret, Err> {
   }
 
   template <typename... Args>
-  [[nodiscard]] FeExpect or_error(std::format_string<Args...> fmt, Args &&...args)
+  [[nodiscard]] FeExpect or_error(FmtWithLoc<std::type_identity_t<Args>...> fmtloc, Args &&...args)
     requires requires(Err e) { e.message; }
   {
     if (!this->has_value()) {
-      flatearth::detail::ErrorLog(std::format(fmt, std::forward<Args>(args)...),
-                                  this->error().message);
+      flatearth::detail::ErrorLog(std::vformat(fmtloc.fmt, std::make_format_args(args...)),
+                                  this->error().message,
+                                  fmtloc.loc);
     }
     return std::move(*this);
   }
 
   template <typename... Args>
-  void or_log_error(std::format_string<Args...> fmt, Args &&...args)
+  void or_log_error(FmtWithLoc<std::type_identity_t<Args>...> fmtloc, Args &&...args)
     requires requires(Err e) { e.message; }
   {
     if (!this->has_value()) {
-      flatearth::detail::ErrorLog(std::format(fmt, std::forward<Args>(args)...),
-                                  this->error().message);
+      flatearth::detail::ErrorLog(std::vformat(fmtloc.fmt, std::make_format_args(args...)),
+                                  this->error().message,
+                                  fmtloc.loc);
     }
   }
 
   template <typename... Args>
-  void or_log_warn(std::format_string<Args...> fmt, Args &&...args)
+  void or_log_warn(FmtWithLoc<std::type_identity_t<Args>...> fmtloc, Args &&...args)
     requires requires(Err e) { e.message; }
   {
     if (!this->has_value()) {
-      flatearth::detail::WarnLog(std::format(fmt, std::forward<Args>(args)...),
-                                 this->error().message);
+      flatearth::detail::WarnLog(std::vformat(fmtloc.fmt, std::make_format_args(args...)),
+                                 this->error().message,
+                                 fmtloc.loc);
     } else {
-      flatearth::detail::WarnLog(std::format(fmt, std::forward<Args>(args)...));
+      flatearth::detail::WarnLog(
+          std::vformat(fmtloc.fmt, std::make_format_args(args...)), "", fmtloc.loc);
     }
   }
 

@@ -64,57 +64,68 @@ FeExpect<void, Error> Engine::Initialize(Game &game, ApplicationConfig &config) 
                                                                  _coreModule.Input(),
                                                                  _eventManager);
 
-  return _pPlatform->Initialize()
-      .or_error("engine failed to initialize platform")
-      .and_then([&]() -> FeExpect<void, Error> {
-        _state.platformState = _pPlatform->State();
-        return _engineListener->Initialize().or_error("engine listener failed to initialize");
-      })
-      .and_then([&]() -> FeExpect<void, Error> {
-        return _renderer.Initialize().or_error("renderer failed to initialize");
-      })
-      .and_then([&]() -> FeExpect<void, Error> {
-        return _coreModule.Initialize().or_error("core module failed to initialize");
-      })
-      .and_then([&]() -> FeExpect<void, Error> {
-        return _assetsModule.Initialize(&_renderer.FrontendReference()).or_error("assets module failed to initialize");
-      })
-      .and_then([&]() -> FeExpect<void, Error> {
-        return _gameModule.Initialize().or_error("project module failed to initialize");
-      })
-      .and_then([&]() -> FeExpect<void, Error> {
-        _state.isRunning = FeTrue;
-        _state.isSuspended = FeFalse;
-        _state.platformState = _pPlatform->State();
-        if (_state.pGameInstance->Load != nullptr &&
-            !_state.pGameInstance->Load(_state.pGameInstance)) {
-          FLOG_FATAL("game failed to load resources");
-          return FeErr{Error("game Load() failed", ErrorType::GameInitializeError)};
-        }
-        return {};
-      })
-      .and_then([&]() -> FeExpect<void, Error> {
-        return RegisterSystems().or_error("failed to register engine systems");
-      })
-      .and_then([&]() -> FeExpect<void, Error> {
-        _scheduler.BootSystems(_registry);
-        FLOG_INFO("engine successfully initialized");
-        return {};
-      });
+  auto platInitRes = _pPlatform->Initialize().or_error("failed to initialize OS platform");
+  if (platInitRes.errored()) {
+    return FeErr{platInitRes.error()};
+  }
+  _state.platformState = _pPlatform->State();
+
+  auto listenerRes =
+      _engineListener->Initialize().or_error("failed to initialize engine event listener");
+  if (listenerRes.errored()) {
+    return FeErr{listenerRes.error()};
+  }
+
+  auto rendererInit = _renderer.Initialize().or_error("failed to initialize game renderer");
+  if (rendererInit.errored()) {
+    return FeErr{rendererInit.error()};
+  }
+
+  auto coreInit = _coreModule.Initialize().or_error("failed to initialize core module");
+  if (coreInit.errored()) {
+    return FeErr{coreInit.error()};
+  }
+
+  auto assetsInit = _assetsModule.Initialize(&_renderer.FrontendReference())
+                        .or_error("failed to initialize assets module");
+  if (assetsInit.errored()) {
+    return FeErr{assetsInit.error()};
+  }
+
+  auto gameInit = _gameModule.Initialize().or_error("failed to initialize game project module");
+  if (gameInit.errored()) {
+    return FeErr{gameInit.error()};
+  }
+
+  _state.isRunning = FeTrue;
+  _state.isSuspended = FeFalse;
+  if (_state.pGameInstance->Load != nullptr && !_state.pGameInstance->Load(_state.pGameInstance)) {
+    FLOG_FATAL("game failed to load resources");
+    return FeErr{Error("game Load() failed", ErrorType::GameInitializeError)};
+  }
+
+  auto systemRes = RegisterSystems().or_error("failed to register engine systems");
+  if (systemRes.errored()) {
+    return FeErr{systemRes.error()};
+  }
+  _scheduler.BootSystems(_registry);
+
+  FLOG_INFO("engine successfully initialized");
+  return {};
 }
 
 FeExpect<void, Error> Engine::Start() {
   _state.clock.Start();
   _state.clock.Update();
   _state.lastTime = _state.clock.Elapsed();
+
   float64 runningTime = 0.0;
   uint8 frameCount = 0;
   float64 targetFrameSeconds = 1.0 / 60;
 
   while (_state.isRunning) {
-    auto pollRes = _pPlatform->PollEvents();
+    auto pollRes = _pPlatform->PollEvents().or_error("engine failed to poll events");
     if (pollRes.errored()) {
-      FLOG_ERROR("engine failed to poll events: {}", pollRes.error().message);
       return FeErr{pollRes.error()};
     }
     if (!pollRes.value()) {
@@ -157,9 +168,8 @@ FeExpect<void, Error> Engine::Start() {
     _devConsole.Draw(_coreModule.KVarsRegistry());
     ImGui::Render();
 
-    auto drawRes = _renderer.Draw(deltaTime);
+    auto drawRes = _renderer.Draw(deltaTime).or_error("renderer failed to draw frame");
     if (drawRes.errored()) {
-      FLOG_ERROR("renderer failed to draw frame: {}", drawRes.error().message);
       return FeErr{drawRes.error()};
     }
     _ctx.drawCallCount = _renderer.LastDrawCallCount();

@@ -425,6 +425,16 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
     return FeFalse;
   }
 
+  // Wait for the previous frame that was using this swapchain image to finish,
+  // so we don't re-record a command buffer the GPU is still executing.
+  if (_ctx.imagesInFlight[_ctx.imageIndex] != VK_NULL_HANDLE) {
+    auto imageWaitRes = AwaitFence(_ctx.imagesInFlight[_ctx.imageIndex], UINT64_MAX);
+    if (imageWaitRes.errored()) {
+      FLOG_ERROR("failed to await image in-flight fence");
+      return FeErr{imageWaitRes.error()};
+    }
+  }
+
   CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
   _cmdBufferManager.ResetBuffer(_ctx, cmdBuffer);
   _cmdBufferManager.BeginBuffer(_ctx, cmdBuffer, FeFalse, FeFalse, FeFalse);
@@ -441,14 +451,6 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
 
   _renderpassManager.EndRenderpass(_ctx, &cmdBuffer, &_ctx.mainRenderpass);
   _cmdBufferManager.EndBuffer(_ctx, cmdBuffer);
-
-  if (_ctx.imagesInFlight[_ctx.imageIndex] != VK_NULL_HANDLE) {
-    auto awaitRes = AwaitFence(_ctx.imagesInFlight[_ctx.imageIndex], UINT64_MAX);
-    if (awaitRes.errored()) {
-      FLOG_ERROR("failed to await image in-flight fence");
-      return FeErr{awaitRes.error()};
-    }
-  }
 
   _ctx.imagesInFlight[_ctx.imageIndex] = &_ctx.inFlightFences[_ctx.currentFrame];
 

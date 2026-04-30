@@ -155,46 +155,7 @@ add_custom_command(TARGET ${BINARY_NAME} POST_BUILD
 )
 
 ############################################################################
-#   RUNTIME ASSETS (assets/ next to executable + compile shaders to .spv)
-get_filename_component(REPO_ROOT "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
-
-set(ASSET_SRC_DIR  "${REPO_ROOT}/assets")
-set(SHADER_SRC_DIR "${ASSET_SRC_DIR}/shaders")
-
-set(RUNTIME_DIR     "$<TARGET_FILE_DIR:${BINARY_NAME}>")
-set(ASSET_OUT_DIR   "${RUNTIME_DIR}/assets")
-set(SHADER_OUT_DIR  "${ASSET_OUT_DIR}/shaders")
-
-# Find glslc (Windows + Linux)
-if(WIN32)
-  set(GLSLC "$ENV{VULKAN_SDK}/Bin/glslc.exe")
-else()
-  set(GLSLC "$ENV{VULKAN_SDK}/bin/glslc")
-endif()
-
-if(NOT EXISTS "${GLSLC}")
-  find_program(GLSLC glslc)
-endif()
-
-if(NOT GLSLC)
-  message(FATAL_ERROR "glslc not found. Install Vulkan SDK or put glslc in PATH / set VULKAN_SDK.")
-endif()
-
-add_custom_command(
-  TARGET ${BINARY_NAME}
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E make_directory "${ASSET_OUT_DIR}"
-
-  COMMAND ${CMAKE_COMMAND} -E make_directory "${SHADER_OUT_DIR}"
-
-  COMMAND "${GLSLC}" -fshader-stage=vert
-          "${SHADER_SRC_DIR}/Builtin.ObjectShader.vert.glsl"
-          -o "${SHADER_OUT_DIR}/Builtin.ObjectShader.vert.spv"
-
-  COMMAND "${GLSLC}" -fshader-stage=frag
-          "${SHADER_SRC_DIR}/Builtin.ObjectShader.frag.glsl"
-          -o "${SHADER_OUT_DIR}/Builtin.ObjectShader.frag.spv"
-
-  COMMENT "Copying assets/ next to executable + compiling shaders to assets/shaders/*.spv"
-  VERBATIM
-)
+#   RUNTIME ASSETS
+# Built-in shaders are embedded in the engine library at compile time.
+# Only game assets (textures, tiles, audio) need to be deployed next to
+# the executable — handled by the root Makefile's asset-copy step.

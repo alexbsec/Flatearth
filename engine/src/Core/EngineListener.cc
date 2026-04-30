@@ -251,14 +251,7 @@ FeExpect<bool, Error> EngineListener::OnButtonRelease(const event::EventDispatch
   using event::Uint16x8;
 
   Uint16x8 buttonContext = eventCtx.Get<Uint16x8>();
-  auto button = static_cast<input::Button>(buttonContext[0]);
-  if (button == input::Button::Left) {
-    FLOG_DEBUG("mouse left click released");
-  } else if (button == input::Button::Middle) {
-    FLOG_DEBUG("mouse wheel released");
-  } else {
-    FLOG_DEBUG("mouse right click released");
-  }
+  // NOTE to cast mouse click: auto button = static_cast<input::Button>(buttonContext[0]);
 
   return FeTrue;
 }
