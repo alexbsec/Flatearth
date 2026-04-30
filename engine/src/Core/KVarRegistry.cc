@@ -26,7 +26,7 @@ FeExpect<void, Error> KVarRegistry::Register(stringv name, stringv desc, KVarVal
   kvar.defaultValue = defaultVal;
 
   auto insertRes = _localMap.Insert(key, kvar);
-  if (!insertRes.has_value()) {
+  if (insertRes.errored()) {
     FLOG_ERROR("inserting new kvar failed");
     return FeErr{insertRes.error()};
   }
@@ -50,7 +50,7 @@ FeExpect<bool, Error> KVarRegistry::ParseAndSet(stringv name, stringv strValue) 
   const KVarValue oldValue = pKvar->value;
 
   auto parseRes = ParseKVarValue(strValue, *pKvar);
-  if (!parseRes.has_value()) {
+  if (parseRes.errored()) {
     return FeErr{parseRes.error()};
   }
 

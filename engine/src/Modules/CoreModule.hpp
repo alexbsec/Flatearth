@@ -15,7 +15,7 @@ public:
       : _memoryManager(mm), _input(em), _audio(mm), _kvars(mm) {
   }
 
-  FeExpect<bool, Error> Initialize();
+  FeExpect<void, Error> Initialize();
   void Shutdown();
 
   // Gives access to Core Memory internals

@@ -3,10 +3,13 @@
 
 #include <atomic>
 #include <cstdint>
+#include <cstdlib>
 #include <expected>
+#include <format>
 #include <functional>
 #include <memory>
 #include <optional>
+#include <source_location>
 #include <sstream>
 #include <string>
 
@@ -57,6 +60,22 @@ STATIC_ASSERT(sizeof(float64) == 8, "Expected float64 to be 8 bytes");
 
 #define FeTrue true
 #define FeFalse false
+
+namespace flatearth::detail {
+[[noreturn]] void FatalLog(stringv userMsg, stringv errMsg);
+void ErrorLog(stringv userMsg, stringv errMsg, std::source_location loc);
+void WarnLog(stringv userMsg, stringv errMsg, std::source_location loc);
+} // namespace flatearth::detail
+
+template <typename... Args>
+struct FmtWithLoc {
+  stringv fmt;
+  std::source_location loc;
+  constexpr FmtWithLoc(const char *f, std::source_location l = std::source_location::current())
+      : fmt(f), loc(l) {}
+  constexpr FmtWithLoc(stringv f, std::source_location l = std::source_location::current())
+      : fmt(f), loc(l) {}
+};
 
 // Platform detection
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
@@ -139,8 +158,98 @@ using FeSharedPtr = std::shared_ptr<T>;
 template <typename T, typename D>
 using FeCustomDeleterPtr = std::unique_ptr<T, D>;
 
+template <typename T>
+using FeOptional = std::optional<T>;
+
 template <typename Ret, typename Err>
-using FeExpect = std::expected<Ret, Err>;
+struct FeExpect : std::expected<Ret, Err> {
+  using Base = std::expected<Ret, Err>;
+  using Base::Base;
+
+  auto or_fatal(stringv msg, std::source_location src = std::source_location::current())
+    requires requires(Err e) { e.message; }
+  {
+    if (!this->has_value()) {
+      flatearth::detail::FatalLog(msg, this->error().message);
+    }
+    if constexpr (!std::is_void_v<Ret>) {
+      return std::move(this->value());
+    }
+  }
+
+  template <typename... Args>
+  [[nodiscard]] FeExpect or_error(FmtWithLoc<std::type_identity_t<Args>...> fmtloc, Args &&...args)
+    requires requires(Err e) { e.message; }
+  {
+    if (!this->has_value()) {
+      flatearth::detail::ErrorLog(std::vformat(fmtloc.fmt, std::make_format_args(args...)),
+                                  this->error().message,
+                                  fmtloc.loc);
+    }
+    return std::move(*this);
+  }
+
+  template <typename... Args>
+  void or_log_error(FmtWithLoc<std::type_identity_t<Args>...> fmtloc, Args &&...args)
+    requires requires(Err e) { e.message; }
+  {
+    if (!this->has_value()) {
+      flatearth::detail::ErrorLog(std::vformat(fmtloc.fmt, std::make_format_args(args...)),
+                                  this->error().message,
+                                  fmtloc.loc);
+    }
+  }
+
+  template <typename... Args>
+  void or_log_warn(FmtWithLoc<std::type_identity_t<Args>...> fmtloc, Args &&...args)
+    requires requires(Err e) { e.message; }
+  {
+    if (!this->has_value()) {
+      flatearth::detail::WarnLog(std::vformat(fmtloc.fmt, std::make_format_args(args...)),
+                                 this->error().message,
+                                 fmtloc.loc);
+    } else {
+      flatearth::detail::WarnLog(
+          std::vformat(fmtloc.fmt, std::make_format_args(args...)), "", fmtloc.loc);
+    }
+  }
+
+  bool errored() const
+    requires requires(Err e) { e.message; }
+  {
+    return !this->has_value();
+  }
+
+  template <typename Fn>
+  auto and_then(Fn &&fn) && {
+    if constexpr (std::is_void_v<Ret>) {
+      using ResultType = std::invoke_result_t<Fn>;
+      if (this->has_value())
+        return std::invoke(std::forward<Fn>(fn));
+      return ResultType(std::unexpect, std::move(this->error()));
+    } else {
+      using ResultType = std::invoke_result_t<Fn, Ret &&>;
+      if (this->has_value())
+        return std::invoke(std::forward<Fn>(fn), std::move(this->value()));
+      return ResultType(std::unexpect, std::move(this->error()));
+    }
+  }
+
+  template <typename Fn>
+  auto and_then(Fn &&fn) const & {
+    if constexpr (std::is_void_v<Ret>) {
+      using ResultType = std::invoke_result_t<Fn>;
+      if (this->has_value())
+        return std::invoke(std::forward<Fn>(fn));
+      return ResultType(std::unexpect, this->error());
+    } else {
+      using ResultType = std::invoke_result_t<Fn, const Ret &>;
+      if (this->has_value())
+        return std::invoke(std::forward<Fn>(fn), this->value());
+      return ResultType(std::unexpect, this->error());
+    }
+  }
+};
 
 template <typename Err>
 using FeErr = std::unexpected<Err>;
@@ -164,8 +273,12 @@ inline T *FeCastPermissive(void *ptr) {
 
 #define FECLAMP(value, min, max) (value <= min) ? min : (value >= max) ? max : value;
 
-template <typename T>
-using FeOptional = std::optional<T>;
+#define FE_RIPPLE(expr)                                          \
+  do {                                                           \
+    auto _fe_ripple_tmp = (expr);                                \
+    if (!_fe_ripple_tmp.has_value())                             \
+      return std::unexpected(std::move(_fe_ripple_tmp.error())); \
+  } while (0)
 
 #define FE_MOVE_ONLY(Type)                     \
   Type(Type &&) noexcept = default;            \

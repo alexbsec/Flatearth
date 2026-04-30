@@ -136,10 +136,12 @@ PipelineManager::CreateGraphicsPipeline(Context &ctx,
   pipelineLayoutInfo.pSetLayouts = pDescriptorLayouts;
   pipelineLayoutInfo.pushConstantRangeCount = 1;
   pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
-  auto res = VkCheck(vkCreatePipelineLayout(
-      ctx.device.logicalDevice, &pipelineLayoutInfo, ctx.pAllocator, &pPipeline->layout));
-  if (!res.has_value()) {
-    FLOG_ERROR("failed to create pipeline layout");
+  auto res =
+      VkCheck(
+          vkCreatePipelineLayout(
+              ctx.device.logicalDevice, &pipelineLayoutInfo, ctx.pAllocator, &pPipeline->layout))
+          .or_error("failed to create pipeline layout");
+  if (res.errored()) {
     return FeErr{res.error()};
   }
 

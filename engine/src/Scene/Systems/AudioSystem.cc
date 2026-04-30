@@ -38,7 +38,7 @@ void AudioSystem::Update(Registry &registry, float32 delatTime) {
 
     if (!hasHandle) {
       auto res = _audio.AcquireSound(audioSrc.path);
-      if (!res.has_value()) {
+      if (res.errored()) {
         FLOG_ERROR("failed to acquire sound: {}", audioSrc.path);
         continue;
       }

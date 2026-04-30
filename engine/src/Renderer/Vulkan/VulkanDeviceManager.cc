@@ -113,7 +113,7 @@ FeExpect<void, Error> DeviceManager::CreateDevice(Context &ctx) {
 
   if (auto res = VkCheck(vkCreateDevice(
           ctx.device.physicalDevice, &deviceCreateInfo, ctx.pAllocator, &ctx.device.logicalDevice));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_FATAL("failed to create logical device");
     return FeErr{res.error()};
   }
@@ -133,7 +133,7 @@ FeExpect<void, Error> DeviceManager::CreateDevice(Context &ctx) {
                                              &poolCreateInfo,
                                              ctx.pAllocator,
                                              &ctx.device.graphicsCommandPool));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_FATAL("failed to create command pool");
     return FeErr{res.error()};
   }
@@ -196,7 +196,7 @@ FeExpect<void, Error> DeviceManager::DestroyDevice(Context &ctx) {
 bool DeviceManager::SelectPhysicalDevice(Context &ctx) {
   uint32 physicalDeviceCount = 0;
   if (auto res = VkCheck(vkEnumeratePhysicalDevices(ctx.instance, &physicalDeviceCount, nullptr));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_FATAL("failed to enumerate physical devices: {}", res.error().message);
     return FeFalse;
   }
@@ -214,7 +214,7 @@ bool DeviceManager::SelectPhysicalDevice(Context &ctx) {
 
   if (auto res = VkCheck(
           vkEnumeratePhysicalDevices(ctx.instance, &physicalDeviceCount, physicalDevices.Data()));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_FATAL("failed to store enumerated physical devices: {}", res.error().message);
     return FeFalse;
   }
@@ -364,7 +364,7 @@ bool DeviceManager::PhysicalDeviceMeetsRequirements(VkPhysicalDevice device,
     VkBool32 supportsPresent = VK_FALSE;
     auto presRes =
         VkCheck(vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &supportsPresent));
-    if (!presRes.has_value()) {
+    if (presRes.errored()) {
       FLOG_FATAL("failed to get physical device surface support: {}", presRes.error().message);
       _memoryManager.RawFree(FeCast<std::byte>(queueFamilies),
                              sizeof(VkQueueFamilyProperties) * queueFamilyCount,
@@ -452,7 +452,7 @@ bool DeviceManager::PhysicalDeviceMeetsRequirements(VkPhysicalDevice device,
 
   FLOG_TRACE("swapchain queried");
 
-  if (!swapRes.has_value()) {
+  if (swapRes.errored()) {
     FLOG_ERROR("failed to query swapchain support: {}", swapRes.error().message);
     return FeFalse;
   }
@@ -467,7 +467,7 @@ bool DeviceManager::PhysicalDeviceMeetsRequirements(VkPhysicalDevice device,
     uint32 extCount = 0;
     if (auto res =
             VkCheck(vkEnumerateDeviceExtensionProperties(device, nullptr, &extCount, nullptr));
-        !res.has_value()) {
+        res.errored()) {
       FLOG_ERROR("failed to get device extension property count");
       return FeFalse;
     }

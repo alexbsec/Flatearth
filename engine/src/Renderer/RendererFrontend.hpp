@@ -24,7 +24,7 @@ public:
                             platform::FileSystem &fs);
   ~FrontendRenderer();
 
-  FeExpect<bool, Error> Initialize();
+  FeExpect<void, Error> Initialize();
   FeExpect<bool, Error> BeginFrame(float32 deltaTime);
   FeExpect<bool, Error> EndFrame(float32 deltaTime);
   FeExpect<bool, Error> DrawFrame(RenderPacket *pRenderPacket);

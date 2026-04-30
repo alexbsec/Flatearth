@@ -28,9 +28,8 @@ public:
       return;
     }
 
-    if (auto res = Destroy(&pEntry->resource); !res.has_value()) {
-      FLOG_FATAL("failed to destroy resource '{}' — GPU resource leaked", pEntry->name);
-    }
+    Destroy(&pEntry->resource)
+        .or_log_error("failed to destroy resource '{}' — GPU resource leaked", pEntry->name);
 
     _nameHandleMap.Erase(pEntry->name);
     _handleEntryMap.Erase(handle);
@@ -59,9 +58,8 @@ public:
                   pEntry->refCount);
       }
 
-      if (auto res = Destroy(&pEntry->resource); !res.has_value()) {
-        FLOG_FATAL("ResourceCache::Shutdown — failed to destroy '{}'", pEntry->name);
-      }
+      Destroy(&pEntry->resource)
+          .or_log_error("ResourceCache::Shutdown — failed to destroy '{}'", pEntry->name);
 
       _nameHandleMap.Erase(pEntry->name);
       _handleEntryMap.Erase(handle);
@@ -94,21 +92,24 @@ protected:
     entry.name = name;
     entry.refCount = 1;
 
-    if (auto res = Create(&entry.resource, _nextHandle, name); !res.has_value()) {
-      FLOG_ERROR("failed to create resource '{}'", name);
+    if (auto res = Create(&entry.resource, _nextHandle, name)
+                       .or_error("failed to create resource '{}'", name);
+        res.errored()) {
       return FeErr{res.error()};
     }
 
-    if (auto res = _nameHandleMap.Insert(name, _nextHandle); !res.has_value()) {
-      auto _ = Destroy(&entry.resource);
-      FLOG_ERROR("failed to cache name->handle for '{}'", name);
+    if (auto res = _nameHandleMap.Insert(name, _nextHandle)
+                       .or_error("failed to cache name->handle for '{}'", name);
+        res.errored()) {
+      Destroy(&entry.resource).or_log_error("failed to destroy resource");
       return FeErr{res.error()};
     }
 
-    if (auto res = _handleEntryMap.Insert(_nextHandle, entry); !res.has_value()) {
+    if (auto res = _handleEntryMap.Insert(_nextHandle, entry)
+                       .or_error("failed to cache handle->entry for '{}'", name);
+        res.errored()) {
       _nameHandleMap.Erase(name);
-      auto _ = Destroy(&entry.resource);
-      FLOG_ERROR("failed to cache handle->entry for '{}'", name);
+      Destroy(&entry.resource).or_log_error("failed to destroy resource");
       return FeErr{res.error()};
     }
 

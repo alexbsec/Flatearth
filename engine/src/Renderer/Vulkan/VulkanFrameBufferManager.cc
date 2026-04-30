@@ -50,7 +50,7 @@ FeExpect<void, Error> FrameBufferManager::CreateFrameBuffer(Context &ctx,
 
   if (auto res = VkCheck(vkCreateFramebuffer(
           ctx.device.logicalDevice, &createInfo, ctx.pAllocator, &pFrameBuffer->handle));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to create vulkan framebuffer");
     return FeErr{res.error()};
   }

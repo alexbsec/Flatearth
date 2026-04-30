@@ -56,9 +56,8 @@ public:
     pNode->pSystem =
         _memoryManager.Allocate<ISystem, T>(memory::Tag::Entity, std::forward<Args>(args)...);
     SystemBuilder builder{*pNode};
-    auto res = _nodesMap.Insert(typeId, std::move(pNode));
-    if (!res.has_value()) {
-      FLOG_ERROR("failed to insert system node into hashmap: {}", res.error().message);
+    auto res = _nodesMap.Insert(typeId, std::move(pNode)).or_error("failed to insert system node into hashmap");
+    if (res.errored()) {
       return FeErr{res.error()};
     }
 

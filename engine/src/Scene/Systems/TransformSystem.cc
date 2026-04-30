@@ -32,7 +32,7 @@ void TransformSystem::Update(ecs::Registry &registry, float32) {
       }
 
       auto res = matusalemSet.Insert(antecessorId);
-      if (!res.has_value()) {
+      if (res.errored()) {
         FLOG_ERROR("failed to insert entity '{}' into antecessor's (matusalem) map", antecessorId);
       }
       continue;

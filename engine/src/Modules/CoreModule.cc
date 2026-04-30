@@ -2,18 +2,18 @@
 
 namespace flatearth::modules {
 
-FeExpect<bool, Error> Core::Initialize() {
+FeExpect<void, Error> Core::Initialize() {
   if (_initialized) {
-    return FeFalse;
+    return {};
   }
 
   auto initRes = _audio.Initialize();
-  if (!initRes.has_value()) {
+  if (initRes.errored()) {
     return FeErr{initRes.error()};
   }
 
   _initialized = FeTrue;
-  return FeTrue;
+  return {};
 }
 
 void Core::Shutdown() {

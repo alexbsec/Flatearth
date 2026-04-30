@@ -38,7 +38,7 @@ FeExpect<scene::Sprite, Error> AssetManager::LoadSprite(stringv path,
                                                         resources::MeshShape shape,
                                                         resources::TextureFilter filter) {
   auto loadRes = LoadTexture(string(path), filter);
-  if (!loadRes.has_value()) {
+  if (loadRes.errored()) {
     return FeErr{loadRes.error()};
   }
 
@@ -52,13 +52,13 @@ FeExpect<scene::Sprite, Error> AssetManager::LoadSprite(stringv path,
   }
 
   auto acMatRes = _pRenderer->AcquireMaterial(string(path), pTexture);
-  if (!acMatRes.has_value()) {
+  if (acMatRes.errored()) {
     return FeErr{acMatRes.error()};
   }
   sprite.matHandle = acMatRes.value();
 
   auto acMeshRes = _pRenderer->AcquireMesh(shape);
-  if (!acMeshRes.has_value()) {
+  if (acMeshRes.errored()) {
     return FeErr{acMeshRes.error()};
   }
   sprite.meshHandle = acMeshRes.value();
@@ -77,12 +77,12 @@ FeExpect<scene::Sprite, Error> AssetManager::SpriteFromTexture(resources::Textur
   sprite.texHandle = texHandle;
 
   auto acMatRes = _pRenderer->AcquireMaterial(string(name), pTexture);
-  if (!acMatRes.has_value())
+  if (acMatRes.errored())
     return FeErr{acMatRes.error()};
   sprite.matHandle = acMatRes.value();
 
   auto acMeshRes = _pRenderer->AcquireMesh(shape);
-  if (!acMeshRes.has_value())
+  if (acMeshRes.errored())
     return FeErr{acMeshRes.error()};
   sprite.meshHandle = acMeshRes.value();
 

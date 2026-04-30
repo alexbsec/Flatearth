@@ -1,12 +1,15 @@
 #include "EngineListener.hpp"
 
 #include "Core/Logger.hpp"
-#include "GameTypes.hpp"
 #include "Renderer/GameRenderer.hpp"
+#include "GameTypes.hpp"
 
 namespace flatearth {
 
+constexpr stringv cUngracefulShutdown = "engine did not shutdown gracefully";
+
 const char *KeyToString(input::Keys key);
+constexpr string RegisterFailedMessageFor(stringv system);
 
 EngineListener::EngineListener(event::EventManager &eventManager,
                                renderer::GameRenderer &renderer,
@@ -21,49 +24,38 @@ EngineListener::~EngineListener() {
   }
 
   using event::SystemEventCode;
-  auto appQuitUnregisterRes = _eventManager.UnregisterEvent(SystemEventCode::ApplicationQuit, this);
-  if (!appQuitUnregisterRes.has_value() || !appQuitUnregisterRes.value()) {
-    FLOG_ERROR("engine did not shutdown gracefully");
+  auto appQuitUnregisterRes = _eventManager.UnregisterEvent(SystemEventCode::ApplicationQuit, this)
+      .or_error(cUngracefulShutdown);
+  if (appQuitUnregisterRes.errored() || !appQuitUnregisterRes.value()) {
     return;
   }
 
-  auto keyPressUnregisterRes = _eventManager.UnregisterEvent(SystemEventCode::KeyPressed, this);
-  if (!keyPressUnregisterRes.has_value() || !keyPressUnregisterRes.value()) {
-    FLOG_ERROR("engine did not shutdown gracefully");
+  auto keyPressUnregisterRes = _eventManager.UnregisterEvent(SystemEventCode::KeyPressed, this)
+      .or_error(cUngracefulShutdown);
+  if (keyPressUnregisterRes.errored() || !keyPressUnregisterRes.value()) {
     return;
   }
 
-  auto keyReleaseUnregisterRes = _eventManager.UnregisterEvent(SystemEventCode::KeyReleased, this);
-  if (!keyReleaseUnregisterRes.has_value() || !keyReleaseUnregisterRes.value()) {
-    FLOG_ERROR("engine did not shutdown gracefully");
+  auto keyReleaseUnregisterRes = _eventManager.UnregisterEvent(SystemEventCode::KeyReleased, this)
+      .or_error(cUngracefulShutdown);
+  if (keyReleaseUnregisterRes.errored() || !keyReleaseUnregisterRes.value()) {
     return;
   }
 
-  auto resizeUnregisterRes = _eventManager.UnregisterEvent(SystemEventCode::WindowResized, this);
-  if (!resizeUnregisterRes.has_value() || !resizeUnregisterRes.value()) {
-    FLOG_ERROR("engine did not shutdown gracefully");
+  auto resizeUnregisterRes = _eventManager.UnregisterEvent(SystemEventCode::WindowResized, this)
+      .or_error(cUngracefulShutdown);
+  if (resizeUnregisterRes.errored() || !resizeUnregisterRes.value()) {
     return;
   }
 
-  auto buttonPressUnregisterRes =
-      _eventManager.UnregisterEvent(SystemEventCode::ButtonPressed, this);
-  if (!buttonPressUnregisterRes.has_value()) {
-    FLOG_ERROR("engine did not shutdown gracefully");
-    return;
-  }
+  _eventManager.UnregisterEvent(SystemEventCode::ButtonPressed, this)
+      .or_log_error(cUngracefulShutdown);
 
-  auto buttonReleaseUnregisterRes =
-      _eventManager.UnregisterEvent(SystemEventCode::ButtonReleased, this);
-  if (!buttonReleaseUnregisterRes.has_value()) {
-    FLOG_ERROR("engine did not shutdhow gracefully");
-    return;
-  }
+  _eventManager.UnregisterEvent(SystemEventCode::ButtonReleased, this)
+      .or_log_error(cUngracefulShutdown);
 
-  auto mouseMoveUnregisterRes = _eventManager.UnregisterEvent(SystemEventCode::MouseMoved, this);
-  if (!mouseMoveUnregisterRes.has_value()) {
-    FLOG_ERROR("engine did not shutdown gracefully");
-    return;
-  }
+  _eventManager.UnregisterEvent(SystemEventCode::MouseMoved, this)
+      .or_log_error(cUngracefulShutdown);
 
   _allInitialized = FeFalse;
   FLOG_INFO("engine listener successfully shutdown");
@@ -109,7 +101,7 @@ FeExpect<bool, Error> EngineListener::OnResize(const event::EventDispatchContext
   }
 
   auto res = _renderer.FrontendReference().OnResize(width, height);
-  if (!res.has_value()) {
+  if (res.errored()) {
     FLOG_ERROR("renderer failed to resize to {}x{}", width, height);
     return FeFalse;
   }
@@ -168,46 +160,45 @@ FeExpect<bool, Error> EngineListener::OnMouseMove(const event::EventDispatchCont
 FeExpect<void, Error> EngineListener::WireEvents() {
   using event::SystemEventCode;
 
-  auto resizeRegisterRes = _eventManager.RegisterEvent(SystemEventCode::WindowResized, this);
-  if (!resizeRegisterRes.has_value()) {
-    FLOG_ERROR("failed to register resize event");
+  auto resizeRegisterRes = _eventManager.RegisterEvent(SystemEventCode::WindowResized, this)
+      .or_error("failed to register resize event");
+  if (resizeRegisterRes.errored()) {
     return FeErr{resizeRegisterRes.error()};
   }
 
-  auto keyPressRegisterRes = _eventManager.RegisterEvent(SystemEventCode::KeyPressed, this);
-  if (!keyPressRegisterRes.has_value()) {
-    FLOG_ERROR("failed to register key press event");
+  auto keyPressRegisterRes = _eventManager.RegisterEvent(SystemEventCode::KeyPressed, this)
+      .or_error("failed to register key press event");
+  if (keyPressRegisterRes.errored()) {
     return FeErr{keyPressRegisterRes.error()};
   }
 
-  auto keyReleasedRegisterRes = _eventManager.RegisterEvent(SystemEventCode::KeyReleased, this);
-  if (!keyReleasedRegisterRes.has_value()) {
-    FLOG_ERROR("failed to register key release event");
+  auto keyReleasedRegisterRes = _eventManager.RegisterEvent(SystemEventCode::KeyReleased, this)
+      .or_error("failed to register key release event");
+  if (keyReleasedRegisterRes.errored()) {
     return FeErr{keyReleasedRegisterRes.error()};
   }
 
-  auto appQuitRegisterRes = _eventManager.RegisterEvent(SystemEventCode::ApplicationQuit, this);
-  if (!appQuitRegisterRes.has_value()) {
-    FLOG_ERROR("failed to register application quit event");
+  auto appQuitRegisterRes = _eventManager.RegisterEvent(SystemEventCode::ApplicationQuit, this)
+      .or_error("failed to register application quit event");
+  if (appQuitRegisterRes.errored()) {
     return FeErr{appQuitRegisterRes.error()};
   }
 
-  auto buttonPressRegisterRes = _eventManager.RegisterEvent(SystemEventCode::ButtonPressed, this);
-  if (!buttonPressRegisterRes.has_value()) {
-    FLOG_ERROR("failed to register mouse button press event");
+  auto buttonPressRegisterRes = _eventManager.RegisterEvent(SystemEventCode::ButtonPressed, this)
+      .or_error("failed to register mouse button press event");
+  if (buttonPressRegisterRes.errored()) {
     return FeErr{buttonPressRegisterRes.error()};
   }
 
-  auto buttonReleaseRegisterRes =
-      _eventManager.RegisterEvent(SystemEventCode::ButtonReleased, this);
-  if (!buttonReleaseRegisterRes.has_value()) {
-    FLOG_ERROR("failed to register mouse button release event");
+  auto buttonReleaseRegisterRes = _eventManager.RegisterEvent(SystemEventCode::ButtonReleased, this)
+      .or_error("failed to register mouse button release event");
+  if (buttonReleaseRegisterRes.errored()) {
     return FeErr{buttonReleaseRegisterRes.error()};
   }
 
-  auto mouseMoveRegisterRes = _eventManager.RegisterEvent(SystemEventCode::MouseMoved, this);
-  if (!mouseMoveRegisterRes.has_value()) {
-    FLOG_ERROR("failed to register mouse move event");
+  auto mouseMoveRegisterRes = _eventManager.RegisterEvent(SystemEventCode::MouseMoved, this)
+      .or_error("failed to register mouse move event");
+  if (mouseMoveRegisterRes.errored()) {
     return FeErr{mouseMoveRegisterRes.error()};
   }
 
@@ -226,12 +217,6 @@ FeExpect<bool, Error> EngineListener::OnKeyPress(const event::EventDispatchConte
     return _eventManager.FireEvent(SystemEventCode::ApplicationQuit, this, eventCtx);
   }
 
-  if (keyCode == input::Keys::KEY_A) {
-    FLOG_DEBUG("Explicit - A pressed");
-  } else {
-    FLOG_DEBUG("{} key pressed in window", KeyToString(keyCode));
-  }
-
   return FeTrue;
 }
 
@@ -246,12 +231,6 @@ FeExpect<bool, Error> EngineListener::OnKeyRelease(const event::EventDispatchCon
     return _eventManager.FireEvent(SystemEventCode::ApplicationQuit, this, eventCtx);
   }
 
-  if (keyCode == input::Keys::KEY_A) {
-    FLOG_DEBUG("Explicit - A released");
-  } else {
-    FLOG_DEBUG("{} key released in window", KeyToString(keyCode));
-  }
-
   return FeTrue;
 }
 
@@ -261,14 +240,7 @@ FeExpect<bool, Error> EngineListener::OnButtonPress(const event::EventDispatchCo
   using event::Uint16x8;
 
   Uint16x8 buttonContext = eventCtx.Get<Uint16x8>();
-  auto button = static_cast<input::Button>(buttonContext[0]);
-  if (button == input::Button::Left) {
-    FLOG_DEBUG("mouse left click pressed");
-  } else if (button == input::Button::Middle) {
-    FLOG_DEBUG("mouse wheel pressed");
-  } else {
-    FLOG_DEBUG("mouse right click pressed");
-  }
+  // NOTE to get button: auto button = static_cast<input::Button>(buttonContext[0]);
 
   return FeTrue;
 }
@@ -279,14 +251,7 @@ FeExpect<bool, Error> EngineListener::OnButtonRelease(const event::EventDispatch
   using event::Uint16x8;
 
   Uint16x8 buttonContext = eventCtx.Get<Uint16x8>();
-  auto button = static_cast<input::Button>(buttonContext[0]);
-  if (button == input::Button::Left) {
-    FLOG_DEBUG("mouse left click released");
-  } else if (button == input::Button::Middle) {
-    FLOG_DEBUG("mouse wheel released");
-  } else {
-    FLOG_DEBUG("mouse right click released");
-  }
+  // NOTE to cast mouse click: auto button = static_cast<input::Button>(buttonContext[0]);
 
   return FeTrue;
 }
@@ -550,6 +515,10 @@ const char *KeyToString(input::Keys key) {
     default:
       return "Unknown Key";
   }
+}
+
+constexpr string RegisterFailedMessageFor(stringv system) {
+  return "failed to register " + string(system) + " event";
 }
 
 } // namespace flatearth

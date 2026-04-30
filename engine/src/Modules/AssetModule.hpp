@@ -13,7 +13,7 @@ public:
   explicit Assets(memory::MemoryManager &mm, platform::FileSystem &fs, ecs::Registry &reg)
       : _manager(mm, fs), _tilemap(mm, _manager, reg), _prefab(mm) {}
 
-  FeExpect<bool, Error> Initialize(renderer::FrontendRenderer *pRenderer);
+  FeExpect<void, Error> Initialize(renderer::FrontendRenderer *pRenderer);
   void Shutdown();
 
   FEAPI assets::AssetManager &Manager() { return _manager; }

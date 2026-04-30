@@ -37,12 +37,12 @@ void FrontendRenderer::Shutdown() {
   _materialCache.Shutdown();
 }
 
-FeExpect<bool, Error> FrontendRenderer::Initialize() {
+FeExpect<void, Error> FrontendRenderer::Initialize() {
   if (_pEngState->pAppConfig)
     _applicationName = _pEngState->pAppConfig->name;
 
   auto backendsRes = MakeBackends();
-  if (!backendsRes.has_value()) {
+  if (backendsRes.errored()) {
     FLOG_ERROR("failed to scaffold renderer backends: {}", backendsRes.error().message);
     return FeErr{backendsRes.error()};
   }
@@ -56,7 +56,7 @@ FeExpect<bool, Error> FrontendRenderer::Initialize() {
 
   _rendererState.pActiveBackend = _pBackends[vulkanIndex].get();
   auto backendInitRes = _rendererState.pActiveBackend->Initialize(_pEngState);
-  if (!backendInitRes.has_value()) {
+  if (backendInitRes.errored()) {
     FLOG_ERROR("failed to initialize backend renderer");
     return FeErr{backendInitRes.error()};
   }
@@ -67,7 +67,7 @@ FeExpect<bool, Error> FrontendRenderer::Initialize() {
       -aspect, aspect, -1.0f, 1.0f, _rendererState.nearClip, _rendererState.farClip);
 
   FLOG_INFO("frontend renderer successfully initialized");
-  return FeTrue;
+  return {};
 }
 
 FeExpect<bool, Error> FrontendRenderer::BeginFrame(float32 deltaTime) {
@@ -77,7 +77,7 @@ FeExpect<bool, Error> FrontendRenderer::BeginFrame(float32 deltaTime) {
   }
 
   auto res = _rendererState.pActiveBackend->BeginFrame(deltaTime);
-  if (!res.has_value()) {
+  if (res.errored()) {
     FLOG_ERROR("backend renderer failed to begin frame");
     return FeErr{res.error()};
   }
@@ -92,7 +92,7 @@ FeExpect<bool, Error> FrontendRenderer::EndFrame(float32 deltaTime) {
   }
 
   auto res = _rendererState.pActiveBackend->EndFrame(deltaTime);
-  if (!res.has_value()) {
+  if (res.errored()) {
     FLOG_ERROR("backend renderer failed to end frame");
     return FeErr{res.error()};
   }
@@ -107,7 +107,7 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
   }
 
   auto beginRes = BeginFrame(pRenderPacket->deltaTime);
-  if (!beginRes.has_value()) {
+  if (beginRes.errored()) {
     FLOG_ERROR("failed to begin frame");
     return FeErr{beginRes.error()};
   }
@@ -119,7 +119,7 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
 
   auto updateRes = _rendererState.pActiveBackend->UpdateGlobalState(
       _rendererState.projection, pRenderPacket->view, math::Vec3D::Zero(), 0);
-  if (!updateRes.has_value()) {
+  if (updateRes.errored()) {
     FLOG_ERROR("failed to update global state on frontend renderer");
     return FeErr{updateRes.error()};
   }
@@ -146,7 +146,7 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
   _rendererState.pActiveBackend->DrawImGui();
 
   auto endRes = EndFrame(pRenderPacket->deltaTime);
-  if (!endRes.has_value()) {
+  if (endRes.errored()) {
     FLOG_ERROR("failed to end frame");
     return FeErr{endRes.error()};
   }
@@ -164,7 +164,7 @@ FeExpect<void, Error> FrontendRenderer::OnResize(uint32 width, uint32 height) {
   _rendererState.projection = math::Mat4D::Orthographic(
       -aspect, aspect, -1.0f, 1.0f, _rendererState.nearClip, _rendererState.farClip);
   auto res = _rendererState.pActiveBackend->OnResize(width, height);
-  if (!res.has_value()) {
+  if (res.errored()) {
     FLOG_ERROR("backend renderer failed to resize");
     return FeErr{res.error()};
   }

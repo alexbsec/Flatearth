@@ -170,6 +170,56 @@ install(
 )
 
 ############################################################################
+#   BUILT-IN SHADER EMBEDDING
+
+if(WIN32)
+    set(_glslc_hint "$ENV{VULKAN_SDK}/Bin/glslc.exe")
+else()
+    set(_glslc_hint "$ENV{VULKAN_SDK}/bin/glslc")
+endif()
+
+find_program(GLSLC glslc HINTS "${_glslc_hint}")
+if(NOT GLSLC)
+    message(FATAL_ERROR "glslc not found. Install the Vulkan SDK or add glslc to PATH.")
+endif()
+
+get_filename_component(_repo_root "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
+set(_shader_src "${_repo_root}/assets/shaders")
+set(_vert_glsl  "${_shader_src}/Builtin.ObjectShader.vert.glsl")
+set(_frag_glsl  "${_shader_src}/Builtin.ObjectShader.frag.glsl")
+set(_vert_spv   "${CMAKE_CURRENT_BINARY_DIR}/Builtin.ObjectShader.vert.spv")
+set(_frag_spv   "${CMAKE_CURRENT_BINARY_DIR}/Builtin.ObjectShader.frag.spv")
+set(_gen_dir    "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(_shaders_hpp "${_gen_dir}/BuiltinShaders.hpp")
+
+file(MAKE_DIRECTORY "${_gen_dir}")
+
+add_custom_command(
+    OUTPUT "${_vert_spv}" "${_frag_spv}"
+    COMMAND "${GLSLC}" -fshader-stage=vert "${_vert_glsl}" -o "${_vert_spv}"
+    COMMAND "${GLSLC}" -fshader-stage=frag "${_frag_glsl}" -o "${_frag_spv}"
+    DEPENDS "${_vert_glsl}" "${_frag_glsl}"
+    COMMENT "Compiling built-in GLSL shaders to SPIR-V"
+    VERBATIM
+)
+
+add_custom_command(
+    OUTPUT "${_shaders_hpp}"
+    COMMAND ${CMAKE_COMMAND}
+        -DVERT_SPV=${_vert_spv}
+        -DFRAG_SPV=${_frag_spv}
+        -DOUT_FILE=${_shaders_hpp}
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/EmbedShaders.cmake"
+    DEPENDS "${_vert_spv}" "${_frag_spv}"
+    COMMENT "Embedding built-in shaders into BuiltinShaders.hpp"
+    VERBATIM
+)
+
+add_custom_target(flatearth_builtin_shaders DEPENDS "${_shaders_hpp}")
+add_dependencies(${BINARY_NAME} flatearth_builtin_shaders)
+target_include_directories(${BINARY_NAME} PRIVATE "${_gen_dir}")
+
+############################################################################
 #   BUILD OPTIONS
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

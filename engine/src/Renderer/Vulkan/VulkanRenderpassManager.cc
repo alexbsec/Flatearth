@@ -123,7 +123,7 @@ FeExpect<void, Error> RenderpassManager::CreateRenderpass(Context &ctx,
 
   if (auto res = VkCheck(vkCreateRenderPass(
           ctx.device.logicalDevice, &renderPassCreateInfo, ctx.pAllocator, &pRenderpass->handle));
-      !res.has_value()) {
+      res.errored()) {
     FLOG_ERROR("failed to create renderpass");
     return FeErr{res.error()};
   }

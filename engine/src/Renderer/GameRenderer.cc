@@ -15,7 +15,7 @@ GameRenderer::GameRenderer(EngineState *pEngState,
     : _memoryManager(memManager), _frontendRenderer(pEngState, memManager, fs), _registry(reg) {
 }
 
-FeExpect<bool, Error> GameRenderer::Initialize() {
+FeExpect<void, Error> GameRenderer::Initialize() {
   return _frontendRenderer.Initialize();
 }
 
