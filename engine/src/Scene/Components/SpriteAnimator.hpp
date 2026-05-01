@@ -1,8 +1,8 @@
 #ifndef _FLATEARTH_ENGINE_SCENE_COMPONENTS_SPRITE_ANIMATOR_HPP
 #define _FLATEARTH_ENGINE_SCENE_COMPONENTS_SPRITE_ANIMATOR_HPP
 
-#include "Math/Vector2D.hpp"
 #include "Core/FeString.hpp"
+#include "Math/Vector2D.hpp"
 
 namespace flatearth::scene {
 
@@ -29,6 +29,15 @@ struct SpriteAnimator {
   uint8 currentFrame{0};
   float32 elapsed{0.0f};
   bool playing{FeFalse};
+};
+
+struct SheetClip {
+  stringv sheet{};
+  uint32 tileWidth{32}, tileHeight{32};
+  uint32 row{0};
+  uint32 colStart{0}, colEnd{0};
+  float32 duration{0.5f};
+  bool loop{FeTrue};
 };
 
 } // namespace flatearth::scene

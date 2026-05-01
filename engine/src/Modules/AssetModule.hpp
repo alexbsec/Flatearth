@@ -12,7 +12,7 @@ namespace flatearth::modules {
 class Assets {
 public:
   explicit Assets(memory::MemoryManager &mm, platform::FileSystem &fs, ecs::Registry &reg)
-      : _manager(mm, fs), _tilemap(mm, _manager, reg), _prefab(mm), _animations(mm) {}
+      : _manager(mm, fs), _tilemap(mm, _manager, reg), _prefab(mm), _animations(mm, _manager) {}
 
   FeExpect<void, Error> Initialize(renderer::FrontendRenderer *pRenderer);
   void Shutdown();

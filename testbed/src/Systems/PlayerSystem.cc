@@ -10,12 +10,8 @@
 #include <Scene/Components/SpriteAnimator.hpp>
 #include <Scene/Components/Transform2D.hpp>
 #include <Scene/Scene.hpp>
-#include <execution>
 
 namespace flatearth::testbed {
-
-static constexpr float32 kUVW = 32.0f / 128.0f;
-static constexpr float32 kUVH = 32.0f / 128.0f;
 
 PlayerSystem::PlayerSystem(EngineContext &ctx, scene::SceneId sceneId)
     : _ctx(ctx), _sceneId(sceneId) {
@@ -26,27 +22,20 @@ void PlayerSystem::Initialize(ecs::Registry &) {
       .Register("player.speed", "Player movement speed (units/s)", 1.5f)
       .or_log_error("failed to register kvar for player speed");
 
-  // Register one walk clip per direction row (rows 1-4 in the spritesheet)
   for (uint8 row = 0; row < 4; ++row) {
-    auto clipRes =
-        _ctx.assets.Animations()
-            .NewClip(std::format("player_walk_{}", row), "assets/textures/Human_Walk.png")
-            .or_error("failed to create NewClip");
-    if (clipRes.errored()) {
-      return;
-    }
-
-    scene::AnimationClip clip = clipRes.value();
-    clip.frameCount = 4;
-    clip.loop = FeTrue;
-    for (uint8 col = 0; col < 4; ++col) {
-      clip.frames[col] = {
-          .uvOffset = {col * kUVW, (row + 1) * kUVH},
-          .uvScale = {kUVW, -kUVH},
-          .duration = 0.2f,
-      };
-    }
-    _ctx.assets.Animations().RegisterClip(clip);
+    _ctx.assets.Animations()
+        .AddClip(std::format("player_walk_{}", row),
+                 scene::SheetClip{
+                     .sheet = "assets/textures/Human_Walk.png",
+                     .tileWidth = 32,
+                     .tileHeight = 32,
+                     .row = static_cast<uint32>(row + 1),
+                     .colStart = 0,
+                     .colEnd = 3,
+                     .duration = 0.2f,
+                     .loop = true,
+                 })
+        .or_log_error("failed to register walk clip");
   }
 
   _ctx.assets.Prefab().Register<PlayerPrefab>([&](ecs::EntityBuilder &b) {
@@ -63,12 +52,7 @@ void PlayerSystem::Initialize(ecs::Registry &) {
     animator.currentClip.Set("player_walk_1").or_log_error("failed to set initial clip");
     animator.playing = FeTrue;
 
-    const scene::AnimationClip *clip = _ctx.assets.Animations().Get("player_walk_1");
     scene::Sprite playerSprite = playerSpriteRes.value();
-    if (clip && clip->frameCount > 0) {
-      playerSprite.uvOffset = clip->frames[0].uvOffset;
-      playerSprite.uvScale = clip->frames[0].uvScale;
-    }
     playerSprite.layer = renderer::RenderLayer::Entities;
 
     b.With(scene::Transform2D{0.0f, 0.0f})

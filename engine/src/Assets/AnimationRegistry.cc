@@ -2,10 +2,52 @@
 
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
+#include "Scene/Components/SpriteAnimator.hpp"
 
 namespace flatearth::assets {
 
-AnimationRegistry::AnimationRegistry(memory::MemoryManager &mm) : _clipsMap(mm) {
+AnimationRegistry::AnimationRegistry(memory::MemoryManager &mm, AssetManager &am)
+    : _clipsMap(mm), _assetManager(am) {
+}
+
+FeExpect<void, Error> AnimationRegistry::AddClip(stringv name, const scene::SheetClip &sheetClip) {
+  auto texRes = _assetManager.LoadTexture(string(sheetClip.sheet))
+                    .or_error("failed to load texture for animation clip");
+  if (texRes.errored()) {
+    return FeErr{texRes.error()};
+  }
+
+  resources::Texture *tex = _assetManager.GetTexture(texRes.value());
+  if (tex == nullptr) {
+    return FeErr{Error("failed to get texture for sheet clip", ErrorType::NullptrException)};
+  }
+
+  float32 sheetW = static_cast<float32>(tex->width);
+  float32 sheetH = static_cast<float32>(tex->height);
+  float32 tileW = static_cast<float32>(sheetClip.tileWidth);
+  float32 tileH = static_cast<float32>(sheetClip.tileHeight);
+
+  auto clipRes =
+      NewClip(name, sheetClip.sheet).or_error("failed to create new clip from sheet clip");
+  if (clipRes.errored()) {
+    return FeErr{clipRes.error()};
+  }
+
+  scene::AnimationClip clip = clipRes.value();
+  clip.loop = sheetClip.loop;
+  clip.frameCount = static_cast<uint8>(sheetClip.colEnd - sheetClip.colStart + 1);
+
+  for (uint8 i = 0; i < clip.frameCount && i < scene::cMaxAnimationFrames; i++) {
+    uint32 col = sheetClip.colStart + i;
+    clip.frames[i] = scene::AnimationFrame{
+        .uvOffset = math::Vec2D{col * tileW / sheetW, sheetClip.row * tileH / sheetH},
+        .uvScale = math::Vec2D{tileW / sheetW, -tileH / sheetH},
+        .duration = sheetClip.duration,
+    };
+  }
+
+  RegisterClip(clip);
+  return {};
 }
 
 FeExpect<scene::AnimationClip, Error> AnimationRegistry::NewClip(stringv name,
