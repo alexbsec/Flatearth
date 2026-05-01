@@ -20,7 +20,7 @@ public:
 private:
   ApplicationConfig _appConfig{};
   memory::MemoryManager _memoryManager;
-  Engine _engine;
+  FePtr<Engine> _engine;
   bool _initialized{false};
 };
 

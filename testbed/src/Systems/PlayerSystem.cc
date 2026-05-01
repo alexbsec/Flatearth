@@ -10,12 +10,8 @@
 #include <Scene/Components/SpriteAnimator.hpp>
 #include <Scene/Components/Transform2D.hpp>
 #include <Scene/Scene.hpp>
-#include <execution>
 
 namespace flatearth::testbed {
-
-static constexpr float32 kUVW = 32.0f / 128.0f;
-static constexpr float32 kUVH = 32.0f / 128.0f;
 
 PlayerSystem::PlayerSystem(EngineContext &ctx, scene::SceneId sceneId)
     : _ctx(ctx), _sceneId(sceneId) {
@@ -26,36 +22,37 @@ void PlayerSystem::Initialize(ecs::Registry &) {
       .Register("player.speed", "Player movement speed (units/s)", 1.5f)
       .or_log_error("failed to register kvar for player speed");
 
+  for (uint8 row = 0; row < 4; ++row) {
+    _ctx.assets.Animations()
+        .AddClip(std::format("player_walk_{}", row),
+                 scene::SheetClip{
+                     .sheet = "assets/textures/Human_Walk.png",
+                     .tileWidth = 32,
+                     .tileHeight = 32,
+                     .row = static_cast<uint32>(row + 1),
+                     .colStart = 0,
+                     .colEnd = 3,
+                     .duration = 0.2f,
+                     .loop = true,
+                 })
+        .or_log_error("failed to register walk clip");
+  }
+
   _ctx.assets.Prefab().Register<PlayerPrefab>([&](ecs::EntityBuilder &b) {
     auto walkTexRes = _ctx.assets.Manager().LoadTexture("assets/textures/Human_Walk.png");
-    if (walkTexRes.errored()) {
+    if (walkTexRes.errored())
       return;
-    }
 
     auto playerSpriteRes = _ctx.assets.Manager().SpriteFromTexture(
         walkTexRes.value(), "player_walk", resources::MeshShape::Quad);
-    if (playerSpriteRes.errored()) {
+    if (playerSpriteRes.errored())
       return;
-    }
-
-    constexpr float32 uvW = 32.0f / 128.0f;
-    constexpr float32 uvH = 32.0f / 128.0f;
 
     scene::SpriteAnimator animator{};
-    animator.frameCount = 4;
-    animator.loop = FeTrue;
+    animator.currentClip.Set("player_walk_1").or_log_error("failed to set initial clip");
     animator.playing = FeTrue;
-    for (uint8 col = 0; col < 4; ++col) {
-      animator.frames[col] = {
-          .uvOffset = {col * uvW, 1.0f * uvH},
-          .uvScale = {uvW, -uvH},
-          .duration = 0.2f,
-      };
-    }
 
     scene::Sprite playerSprite = playerSpriteRes.value();
-    playerSprite.uvOffset = animator.frames[0].uvOffset;
-    playerSprite.uvScale = animator.frames[0].uvScale;
     playerSprite.layer = renderer::RenderLayer::Entities;
 
     b.With(scene::Transform2D{0.0f, 0.0f})
@@ -173,19 +170,20 @@ void PlayerSystem::Update(ecs::Registry &, float32 deltaTime) {
       mv.lastDirRow = dirRow;
     }
 
-    for (uint8 col = 0; col < 4; ++col) {
-      anim.frames[col].uvOffset = {col * kUVW, (dirRow + 1) * kUVH};
-      anim.frames[col].uvScale = {kUVW, -kUVH};
-    }
-
+    anim.currentClip.Set(std::format("player_walk_{}", dirRow))
+        .or_log_error("failed to set walk clip");
     anim.playing = moving;
+
     if (!moving) {
       anim.currentFrame = 0;
       anim.elapsed = 0.0f;
+      const scene::AnimationClip *clip = _ctx.assets.Animations().Get(anim.currentClip.View());
+      if (clip && clip->frameCount > 0) {
+        sprite.uvOffset = clip->frames[0].uvOffset;
+        sprite.uvScale = clip->frames[0].uvScale;
+        sprite.dirty = FeTrue;
+      }
     }
-    sprite.uvOffset = anim.frames[anim.currentFrame].uvOffset;
-    sprite.uvScale = anim.frames[anim.currentFrame].uvScale;
-    sprite.dirty = FeTrue;
 
     xform.x += dx * speed * deltaTime;
     xform.y += dy * speed * deltaTime;

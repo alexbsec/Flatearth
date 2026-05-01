@@ -9,6 +9,7 @@
 namespace flatearth::scene {
 
 struct Sprite {
+public:
   renderer::RenderLayer layer{renderer::RenderLayer::Entities};
   resources::MeshShape meshShape{resources::MeshShape::Quad};
   math::Vec2D uvOffset{0.0f, 0.0f};

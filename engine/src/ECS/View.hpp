@@ -36,8 +36,10 @@ public:
 
   private:
     void Advance() {
-      while (_index < _view._pDriver->Length() && !_view.HasAll(_view._pDriver->Entities()[_index]))
+      while (_index < _view._pDriver->Length() &&
+             !_view.HasAll(_view._pDriver->Entities()[_index])) {
         ++_index;
+      }
     }
   };
 
