@@ -1,6 +1,7 @@
 #ifndef _FLATEARTH_ENGINE_MODULES_ASSET_MODULE_HPP
 #define _FLATEARTH_ENGINE_MODULES_ASSET_MODULE_HPP
 
+#include "Assets/AnimationRegistry.hpp"
 #include "Assets/AssetManager.hpp"
 #include "Assets/PrefabManager.hpp"
 #include "Assets/TilemapManager.hpp"
@@ -11,7 +12,7 @@ namespace flatearth::modules {
 class Assets {
 public:
   explicit Assets(memory::MemoryManager &mm, platform::FileSystem &fs, ecs::Registry &reg)
-      : _manager(mm, fs), _tilemap(mm, _manager, reg), _prefab(mm) {}
+      : _manager(mm, fs), _tilemap(mm, _manager, reg), _prefab(mm), _animations(mm) {}
 
   FeExpect<void, Error> Initialize(renderer::FrontendRenderer *pRenderer);
   void Shutdown();
@@ -25,10 +26,14 @@ public:
   FEAPI assets::PrefabManager &Prefab() { return _prefab; }
   FEAPI const assets::PrefabManager &Prefab() const { return _prefab; }
 
+  FEAPI assets::AnimationRegistry &Animations() { return _animations; }
+  FEAPI const assets::AnimationRegistry &Animations() const { return _animations; }
+
 private:
   assets::AssetManager _manager;
   assets::TilemapManager _tilemap;
   assets::PrefabManager _prefab;
+  assets::AnimationRegistry _animations;
 
   bool _initialized{FeFalse};
 };

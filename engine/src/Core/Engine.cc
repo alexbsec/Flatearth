@@ -205,7 +205,7 @@ FeExpect<void, Error> Engine::RegisterSystems() {
     return FeErr{transformRes.error()};
   }
 
-  auto spriteRes = _scheduler.Register<systems::SpriteSystem>();
+  auto spriteRes = _scheduler.Register<systems::SpriteSystem>(_assetsModule.Animations());
   if (spriteRes.errored()) {
     FLOG_ERROR("could not register SpriteSystem");
     return FeErr{spriteRes.error()};

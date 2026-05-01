@@ -30,6 +30,7 @@ enum class ErrorType {
   LogicalError,
   SystemError,
   FileReadError,
+  SizeOverflow,
 };
 
 struct Error {

@@ -1,0 +1,29 @@
+#ifndef _FLATEARTH_ENGINE_ASSETS_ANIMATION_REGISTRY_HPP
+#define _FLATEARTH_ENGINE_ASSETS_ANIMATION_REGISTRY_HPP
+
+#include "Containers/HashMap.hpp"
+#include "Core/FeMemory.hpp"
+#include "Scene/Components/SpriteAnimator.hpp"
+
+namespace flatearth::assets {
+
+class AnimationRegistry {
+public:
+  explicit AnimationRegistry(memory::MemoryManager &);
+
+  FEAPI FeExpect<scene::AnimationClip, Error> NewClip(stringv name, stringv spritesheetPath);
+  FEAPI void RegisterClip(scene::AnimationClip clip);
+  FEAPI void UnregisterClip(stringv name);
+  FEAPI void UnregisterAll(stringv spritesheetPath);
+  FEAPI void Clear();
+
+  FEAPI const scene::AnimationClip *Get(stringv name) const;
+  FEAPI bool Has(stringv name) const;
+
+private:
+  containers::HashMap<string, scene::AnimationClip> _clipsMap;
+};
+
+} // namespace flatearth::assets
+
+#endif // _FLATEARTH_ENGINE_ASSETS_ANIMATION_REGISTRY_HPP

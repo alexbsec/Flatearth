@@ -1,6 +1,8 @@
 #include "Utils.hpp"
 
 #include "Core/Logger.hpp"
+#include "Core/FeMemory.hpp"
+#include "Error.hpp"
 #include "Scene/Components/AudioSource.hpp"
 
 #include <cstring>
@@ -18,5 +20,6 @@ void SetAudioPath(AudioSource &source, const string &path) {
 
   std::strncpy(source.path, path.c_str(), scene::cAudioPathMax - 1);
 }
+
 
 } // namespace flatearth::scene

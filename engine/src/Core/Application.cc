@@ -5,7 +5,8 @@
 
 namespace flatearth {
 
-Application::Application() : _engine(_memoryManager) {
+Application::Application()
+    : _engine(_memoryManager.Allocate<Engine>(memory::Tag::Application, _memoryManager)) {
 }
 
 FeExpect<void, Error> Application::Initialize(Game &game, const ApplicationConfig &config) {
@@ -13,13 +14,13 @@ FeExpect<void, Error> Application::Initialize(Game &game, const ApplicationConfi
     return {};
   FILE_LOGGING(FeTrue);
   _appConfig = config;
-  FE_RIPPLE(_engine.Initialize(game, _appConfig).or_error("engine failed to initialize"));
+  FE_RIPPLE(_engine->Initialize(game, _appConfig).or_error("engine failed to initialize"));
   _initialized = true;
   return {};
 }
 
 FeExpect<void, Error> Application::Start() {
-  return _engine.Start();
+  return _engine->Start();
 }
 
 void Application::Shutdown() {
@@ -27,7 +28,7 @@ void Application::Shutdown() {
 }
 
 Engine &Application::GetEngine() {
-  return _engine;
+  return *_engine;
 }
 
 } // namespace flatearth
