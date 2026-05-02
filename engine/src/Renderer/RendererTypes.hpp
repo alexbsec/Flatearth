@@ -15,6 +15,11 @@ enum class RenderLayer : uint32 {
   UI = 4,
 };
 
+struct Tint {
+  math::Vec3D rgb{};
+  float32 alpha{1.0f};
+};
+
 struct RenderObject {
   uint32 geometryId;
   math::Mat4D model;
@@ -22,6 +27,8 @@ struct RenderObject {
   math::Vec2D uvScale;
   RenderLayer layer{RenderLayer::Background};
   resources::Material *pMaterial{nullptr};
+  Tint tint{};
+  float32 useTexture{0.0f};
 };
 
 struct RenderPacket {
@@ -38,11 +45,6 @@ struct GlobalUniformObject {
   // These below are so that GlobalUniformObject always
   // has a size of 256 bytes
   math::Mat4D reservedSpace1, reservedSpace2;
-};
-
-struct Tint {
-  math::Vec3D rgb{};
-  float32 alpha;
 };
 
 struct UIPushConstantData {

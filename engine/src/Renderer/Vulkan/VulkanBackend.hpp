@@ -30,7 +30,8 @@ public:
   FeExpect<void, Error> UpdateGlobalState(math::Mat4D projection,
                                           math::Mat4D view,
                                           math::Vec3D viewPosition,
-                                          int32 mode) override;
+                                          int32 mode,
+                                          stringv shaderName = "Builtin.ObjectShader") override;
 
   FeExpect<void, Error> CreateTexture(const string &name,
                                       bool autoRelease,

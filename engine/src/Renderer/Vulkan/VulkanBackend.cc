@@ -563,10 +563,11 @@ FeExpect<bool, Error> VulkanBackend::EndFrame(float32 deltaTime) {
 FeExpect<void, Error> VulkanBackend::UpdateGlobalState(math::Mat4D projection,
                                                        math::Mat4D view,
                                                        math::Vec3D viewPosition,
-                                                       int32 mode) {
+                                                       int32 mode,
+                                                       stringv shaderName) {
   EnsureGPUMatrixLayout(projection, view);
 
-  Shader *pShader = _ctx.shaderRegistry.RetrieveShader("Builtin.ObjectShader");
+  Shader *pShader = _ctx.shaderRegistry.RetrieveShader(shaderName);
   if (pShader == nullptr || pShader->interpreter != ShaderInterpreter::Vulkan) {
     return FeErr{Error("failed to retrieve object shader", ErrorType::NullptrException)};
   }

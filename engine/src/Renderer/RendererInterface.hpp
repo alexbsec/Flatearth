@@ -27,7 +27,8 @@ public:
   virtual FeExpect<void, Error> UpdateGlobalState(math::Mat4D projection,
                                                   math::Mat4D view,
                                                   math::Vec3D viewPosition,
-                                                  int32 mode) = 0;
+                                                  int32 mode,
+                                                  stringv shaderName = "Builtin.ObjectShader") = 0;
   virtual FeExpect<void, Error> CreateTexture(const string &name,
                                               bool autoRelease,
                                               int32 width,

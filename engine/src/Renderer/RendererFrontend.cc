@@ -7,6 +7,7 @@
 #include "Math/Matrix4D.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererInterface.hpp"
+#include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/VulkanBackend.hpp"
 #include "Resources/ResourceTypes.hpp"
 
@@ -141,7 +142,28 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
     const RenderObject &object = pRenderPacket->objects[i];
     const PushConstantData data{object.model, object.uvOffset, object.uvScale};
     const string name = "Builtin.ObjectShader";
-    _rendererState.pActiveBackend->DrawGeometry(object.geometryId, name, &data, sizeof(PushConstantData), object.pMaterial);
+    _rendererState.pActiveBackend->DrawGeometry(
+        object.geometryId, name, &data, sizeof(PushConstantData), object.pMaterial);
+  }
+
+  auto uiUpdateRes = _rendererState.pActiveBackend
+                         ->UpdateGlobalState(math::Mat4D::Identity(),
+                                             math::Mat4D::Identity(),
+                                             math::Vec3D::Zero(),
+                                             0,
+                                             "Builtin.UIShader")
+                         .or_error("failed to update UI global state");
+  if (uiUpdateRes.errored()) {
+    return FeErr{uiUpdateRes.error()};
+  }
+
+  for (uint32 i = 0; i < pRenderPacket->uiObjects.Length(); i++) {
+    const RenderObject &object = pRenderPacket->uiObjects[i];
+    const UIPushConstantData data{
+        object.model, object.uvOffset, object.uvScale, object.tint, object.useTexture};
+    const string name = "Builtin.UIShader";
+    _rendererState.pActiveBackend->DrawGeometry(
+        object.geometryId, name, &data, sizeof(UIPushConstantData), object.pMaterial);
   }
 
   _rendererState.pActiveBackend->DrawImGui();
