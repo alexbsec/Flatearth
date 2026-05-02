@@ -65,10 +65,30 @@ FeExpect<bool, Error> GameRenderer::Draw(float32 deltaTime) {
   View<UIAnchor, Sprite> uiObjectView = _registry.ViewOf<UIAnchor, Sprite>();
   for (auto [entity, uiAnchor, sprite] : uiObjectView) {
     resources::Mesh *pMesh = _frontendRenderer.GetMesh(sprite.meshHandle);
-    resources::Material *pMaterial = _frontendRenderer.GetMaterial(sprite.matHandle);
+    resources::Material *pMat = _frontendRenderer.GetMaterial(sprite.matHandle);
+    if (pMesh == nullptr || pMat == nullptr) {
+      continue;
+    }
+
+    float32 ndcX = uiAnchor.normalizedX * 2 - 1, ndcY = uiAnchor.normalizedY * 2 - 1;
+    math::Mat4D model = math::Mat4D::Translation(ndcX, ndcY, 0.0f) *
+                        math::Mat4D::RotationZ(uiAnchor.rotation) *
+                        math::Mat4D::Scale(uiAnchor.scaleX, uiAnchor.scaleY, 1.0f);
+
+    RenderObject object{
+        .geometryId = pMesh->id,
+        .model = model,
+        .uvOffset = sprite.uvOffset,
+        .uvScale = sprite.uvScale,
+        .layer = RenderLayer::UI,
+        .pMaterial = pMat,
+        .tint = {math::Vec3D{1.0f, 1.0f, 1.0f}, 1.0f},
+        .useTexture = 1.0f,
+    };
+    packet.uiObjects.Push(object);
   }
 
-  _lastDrawCallCount = packet.objects.Length();
+  _lastDrawCallCount = packet.objects.Length() + packet.uiObjects.Length();
   return _frontendRenderer.DrawFrame(&packet);
 }
 
