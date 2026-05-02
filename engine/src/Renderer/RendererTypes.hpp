@@ -25,12 +25,12 @@ struct RenderObject {
 };
 
 struct RenderPacket {
-  float32 deltaTime;
-  math::Mat4D view;
+  float32 deltaTime{0.0f};
+  math::Mat4D view{};
   containers::DArray<RenderObject> objects;
+  containers::DArray<RenderObject> uiObjects;
 
-  RenderPacket(memory::MemoryManager &memManager)
-    : objects(memManager) {}
+  RenderPacket(memory::MemoryManager &memManager) : objects(memManager), uiObjects(memManager) {}
 };
 
 struct GlobalUniformObject {
@@ -40,11 +40,37 @@ struct GlobalUniformObject {
   math::Mat4D reservedSpace1, reservedSpace2;
 };
 
+struct Tint {
+  math::Vec3D rgb{};
+  float32 alpha;
+};
+
+struct UIPushConstantData {
+  math::Mat4D model{};
+  math::Vec2D uvOffset{};
+  math::Vec2D uvScale{};
+  Tint tint{};
+  float32 useTexture{0.0f};
+};
+
 struct PushConstantData {
   math::Mat4D model;
   math::Vec2D uvOffset;
   math::Vec2D uvScale;
 };
+
+using ShaderHandle = uint32;
+
+enum class ShaderInterpreter {
+  Vulkan,
+  OpenGL,
+};
+
+struct Shader {
+  ShaderInterpreter interpreter{ShaderInterpreter::Vulkan};
+  virtual ~Shader() = default;
+};
+
 
 } // namespace flatearth::renderer
 

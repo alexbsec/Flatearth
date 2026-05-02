@@ -1,4 +1,4 @@
-#include "ObjectShader.hpp"
+#include "VulkanShader.hpp"
 
 #include "Core/Logger.hpp"
 #include "Math/Vector3D.hpp"
@@ -86,7 +86,11 @@ VulkanShader::~VulkanShader() {
   FLOG_INFO("vulkan shader successfully destroyed");
 }
 
-FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShader *pObjShader) {
+FeExpect<bool, Error> VulkanShader::CreateShader(Context &ctx,
+                                                 ObjectShader *pObjShader,
+                                                 stringv name,
+                                                 uint32 pushConstantSize,
+                                                 VkShaderStageFlags pushConstantStageFlags) {
   if (pObjShader == nullptr) {
     FLOG_ERROR("cannot create shader object on nullptr object shader");
     return FeErr{Error("object shader is nullptr", ErrorType::NullptrException)};
@@ -102,14 +106,9 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
       VK_SHADER_STAGE_FRAGMENT_BIT,
   };
 
-  const string cBuiltinShaderName = "Builtin.ObjectShader";
   for (uint32 i = 0; i < cObjectShaderStageCount; i++) {
-    auto createRes = CreateShaderModule(ctx,
-                                        cBuiltinShaderName,
-                                        cStageTypeStrs[i],
-                                        cStageTypes[i],
-                                        i,
-                                        pObjShader->shaderStages.data());
+    auto createRes = CreateShaderModule(
+        ctx, string(name), cStageTypeStrs[i], cStageTypes[i], i, pObjShader->shaderStages.data());
     if (createRes.errored()) {
       FLOG_ERROR("failed to create shader module at index {}", i);
       return FeErr{createRes.error()};
@@ -144,8 +143,7 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
   // -----------------------------
   // Texture pool
   // -----------------------------
-  if (auto res = MakeDescriptorPool(ctx, pObjShader, DescriptorBinding::Texture);
-      res.errored()) {
+  if (auto res = MakeDescriptorPool(ctx, pObjShader, DescriptorBinding::Texture); res.errored()) {
     FLOG_ERROR("failed to create texture descriptor pool");
     return FeErr{res.error()};
   }
@@ -196,6 +194,9 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
     stageInfos[i] = pObjShader->shaderStages[i].shaderStageCreateInfo;
   }
 
+  pObjShader->pushConstantStages = pushConstantStageFlags;
+
+  const bool isWireFrame = FeFalse;
   auto pipelineRes = _pipelineManager.CreateGraphicsPipeline(ctx,
                                                              &ctx.mainRenderpass,
                                                              attributeCount,
@@ -206,7 +207,9 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
                                                              stageInfos.data(),
                                                              viewport,
                                                              scissor,
-                                                             FeFalse,
+                                                             isWireFrame,
+                                                             pushConstantSize,
+                                                             pushConstantStageFlags,
                                                              &pObjShader->pipeline);
   if (pipelineRes.errored()) {
     FLOG_ERROR("failed to create graphics pipeline");
@@ -279,7 +282,7 @@ FeExpect<bool, Error> VulkanShader::CreateObjectShader(Context &ctx, ObjectShade
   return FeTrue;
 }
 
-void VulkanShader::DestroyObjectShader(Context &ctx, ObjectShader *pObjShader) {
+void VulkanShader::DestroyShader(Context &ctx, ObjectShader *pObjShader) {
   if (!pObjShader)
     return;
 
@@ -340,18 +343,14 @@ FeExpect<void, Error> VulkanShader::UpdateGlobalState(Context &ctx, ObjectShader
   return {};
 }
 
-void VulkanShader::UpdateObject(Context &ctx,
-                                ObjectShader &objShader,
-                                const PushConstantData &data) {
+void VulkanShader::UpdateShader(Context &ctx,
+                                ObjectShader &shader,
+                                const void *data,
+                                uint32 size,
+                                VkShaderStageFlags stageFlags) {
   uint32 imageIndex = ctx.imageIndex;
   VkCommandBuffer cmdBuffer = ctx.graphicsCommandBuffer[imageIndex].handle;
-
-  vkCmdPushConstants(cmdBuffer,
-                     objShader.pipeline.layout,
-                     VK_SHADER_STAGE_VERTEX_BIT,
-                     0,
-                     sizeof(PushConstantData),
-                     &data);
+  vkCmdPushConstants(cmdBuffer, shader.pipeline.layout, stageFlags, 0, size, data);
 }
 
 FeExpect<void, Error> VulkanShader::AcquireTextureResources(Context &ctx,

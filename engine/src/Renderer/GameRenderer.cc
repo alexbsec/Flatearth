@@ -2,9 +2,11 @@
 
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererFrontend.hpp"
+#include "Renderer/RendererTypes.hpp"
 #include "Scene/Components/Camera2D.hpp"
 #include "Scene/Components/Sprite.hpp"
 #include "Scene/Components/Transform2D.hpp"
+#include "UI/Components/UIAnchor.hpp"
 
 namespace flatearth::renderer {
 
@@ -22,6 +24,7 @@ FeExpect<void, Error> GameRenderer::Initialize() {
 FeExpect<bool, Error> GameRenderer::Draw(float32 deltaTime) {
   using namespace scene;
   using namespace ecs;
+  using namespace ui;
 
   math::Mat4D view = math::Mat4D::Identity();
   auto cameraView = _registry.ViewOf<Transform2D, Camera2D>();
@@ -37,8 +40,8 @@ FeExpect<bool, Error> GameRenderer::Draw(float32 deltaTime) {
   packet.deltaTime = deltaTime;
   packet.view = view;
 
-  View<Transform2D, Sprite> spriteView = _registry.ViewOf<Transform2D, Sprite>();
-  for (auto [entity, transform, sprite] : spriteView) {
+  View<Transform2D, Sprite> gameObjectView = _registry.ViewOf<Transform2D, Sprite>();
+  for (auto [entity, transform, sprite] : gameObjectView) {
     resources::Mesh *pMesh = _frontendRenderer.GetMesh(sprite.meshHandle);
     resources::Material *pMat = _frontendRenderer.GetMaterial(sprite.matHandle);
     if (pMesh == nullptr || pMat == nullptr) {
@@ -57,6 +60,12 @@ FeExpect<bool, Error> GameRenderer::Draw(float32 deltaTime) {
         .pMaterial = pMat,
     };
     packet.objects.Push(object);
+  }
+
+  View<UIAnchor, Sprite> uiObjectView = _registry.ViewOf<UIAnchor, Sprite>();
+  for (auto [entity, uiAnchor, sprite] : uiObjectView) {
+    resources::Mesh *pMesh = _frontendRenderer.GetMesh(sprite.meshHandle);
+    resources::Material *pMaterial = _frontendRenderer.GetMaterial(sprite.matHandle);
   }
 
   _lastDrawCallCount = packet.objects.Length();

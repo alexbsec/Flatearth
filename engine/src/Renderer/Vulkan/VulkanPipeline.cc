@@ -20,6 +20,8 @@ PipelineManager::CreateGraphicsPipeline(Context &ctx,
                                         VkViewport viewport,
                                         VkRect2D scissor,
                                         bool isWireframe,
+                                        uint32 pushConstantSize,
+                                        VkShaderStageFlags pushConstantStageFlags,
                                         Pipeline *pPipeline) {
   if (pRenderpass == nullptr) {
     FLOG_ERROR("cannot create graphics pipeline with nullptr renderpass");
@@ -128,9 +130,9 @@ PipelineManager::CreateGraphicsPipeline(Context &ctx,
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
   // Push constants
   VkPushConstantRange pushConstant;
-  pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  pushConstant.offset = sizeof(PushConstantData) * 0;
-  pushConstant.size = sizeof(PushConstantData) * 1;
+  pushConstant.stageFlags = pushConstantStageFlags;
+  pushConstant.offset = 0;
+  pushConstant.size = pushConstantSize;
 
   pipelineLayoutInfo.setLayoutCount = descriptorSetLayoutCount;
   pipelineLayoutInfo.pSetLayouts = pDescriptorLayouts;

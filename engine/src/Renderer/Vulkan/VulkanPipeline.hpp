@@ -20,6 +20,8 @@ public:
                                                VkViewport viewport,
                                                VkRect2D scissor,
                                                bool isWireframe,
+                                               uint32 pushConstantSize,
+                                               VkShaderStageFlags pushConstantStageFlags,
                                                Pipeline *pPipeline);
 
   void DestroyGraphicsPipeline(Context &ctx, Pipeline *pPipeline);

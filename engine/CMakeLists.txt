@@ -185,20 +185,26 @@ endif()
 
 get_filename_component(_repo_root "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
 set(_shader_src "${_repo_root}/assets/shaders")
-set(_vert_glsl  "${_shader_src}/Builtin.ObjectShader.vert.glsl")
-set(_frag_glsl  "${_shader_src}/Builtin.ObjectShader.frag.glsl")
-set(_vert_spv   "${CMAKE_CURRENT_BINARY_DIR}/Builtin.ObjectShader.vert.spv")
-set(_frag_spv   "${CMAKE_CURRENT_BINARY_DIR}/Builtin.ObjectShader.frag.spv")
+set(_vert_glsl     "${_shader_src}/Builtin.ObjectShader.vert.glsl")
+set(_frag_glsl     "${_shader_src}/Builtin.ObjectShader.frag.glsl")
+set(_vert_spv      "${CMAKE_CURRENT_BINARY_DIR}/Builtin.ObjectShader.vert.spv")
+set(_frag_spv      "${CMAKE_CURRENT_BINARY_DIR}/Builtin.ObjectShader.frag.spv")
+set(_ui_vert_glsl  "${_shader_src}/Builtin.UIShader.vert.glsl")
+set(_ui_frag_glsl  "${_shader_src}/Builtin.UIShader.frag.glsl")
+set(_ui_vert_spv   "${CMAKE_CURRENT_BINARY_DIR}/Builtin.UIShader.vert.spv")
+set(_ui_frag_spv   "${CMAKE_CURRENT_BINARY_DIR}/Builtin.UIShader.frag.spv")
 set(_gen_dir    "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(_shaders_hpp "${_gen_dir}/BuiltinShaders.hpp")
 
 file(MAKE_DIRECTORY "${_gen_dir}")
 
 add_custom_command(
-    OUTPUT "${_vert_spv}" "${_frag_spv}"
-    COMMAND "${GLSLC}" -fshader-stage=vert "${_vert_glsl}" -o "${_vert_spv}"
-    COMMAND "${GLSLC}" -fshader-stage=frag "${_frag_glsl}" -o "${_frag_spv}"
-    DEPENDS "${_vert_glsl}" "${_frag_glsl}"
+    OUTPUT "${_vert_spv}" "${_frag_spv}" "${_ui_vert_spv}" "${_ui_frag_spv}"
+    COMMAND "${GLSLC}" -fshader-stage=vert "${_vert_glsl}"    -o "${_vert_spv}"
+    COMMAND "${GLSLC}" -fshader-stage=frag "${_frag_glsl}"    -o "${_frag_spv}"
+    COMMAND "${GLSLC}" -fshader-stage=vert "${_ui_vert_glsl}" -o "${_ui_vert_spv}"
+    COMMAND "${GLSLC}" -fshader-stage=frag "${_ui_frag_glsl}" -o "${_ui_frag_spv}"
+    DEPENDS "${_vert_glsl}" "${_frag_glsl}" "${_ui_vert_glsl}" "${_ui_frag_glsl}"
     COMMENT "Compiling built-in GLSL shaders to SPIR-V"
     VERBATIM
 )
@@ -208,9 +214,11 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND}
         -DVERT_SPV=${_vert_spv}
         -DFRAG_SPV=${_frag_spv}
+        -DUI_VERT_SPV=${_ui_vert_spv}
+        -DUI_FRAG_SPV=${_ui_frag_spv}
         -DOUT_FILE=${_shaders_hpp}
         -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/EmbedShaders.cmake"
-    DEPENDS "${_vert_spv}" "${_frag_spv}"
+    DEPENDS "${_vert_spv}" "${_frag_spv}" "${_ui_vert_spv}" "${_ui_frag_spv}"
     COMMENT "Embedding built-in shaders into BuiltinShaders.hpp"
     VERBATIM
 )

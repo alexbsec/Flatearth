@@ -14,9 +14,11 @@ public:
   void Update(ecs::Registry &registry, float32 deltaTime) override;
 
 private:
-  assets::AnimationRegistry &_animRegistry;
   void UpdateAnimator(scene::SpriteAnimator &animator, scene::Sprite &sprite, float32 deltaTime);
   void UpdateSprite(scene::Sprite &sprite);
+
+private:
+  assets::AnimationRegistry &_animRegistry;
 };
 
 } // namespace flatearth::systems

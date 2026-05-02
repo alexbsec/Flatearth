@@ -24,6 +24,7 @@ enum class ErrorType {
   InvalidFileMode,
   FileOpenError,
   FileCloseError,
+  NotImplemented,
   InvalidFileHandle,
   MathError,
   NullptrException,

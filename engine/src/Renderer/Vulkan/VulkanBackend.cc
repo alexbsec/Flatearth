@@ -9,9 +9,9 @@
 #include "Renderer/Vulkan/VulkanUtils.hpp"
 #include "Resources/ResourceTypes.hpp"
 
-#include <imgui.h>
 #include <backends/imgui_impl_vulkan.h>
 #include <cstdint>
+#include <imgui.h>
 #include <vulkan/vulkan_core.h>
 
 namespace flatearth::renderer::vulkan {
@@ -26,7 +26,8 @@ VulkanBackend::VulkanBackend(memory::MemoryManager &memManager, platform::FileSy
     : _memoryManager(memManager), _deviceManager(memManager),
       _swapchainManager(memManager, _imageManager), _renderpassManager(memManager),
       _cmdBufferManager(memManager), _bufferManager(_cmdBufferManager),
-      _vulkanShader(memManager, _bufferManager), _ctx(memManager, fs), _geometries(memManager) {
+      _vulkanShader(memManager, _bufferManager), _shaderRegistry(memManager),
+      _ctx(memManager, fs, _shaderRegistry), _geometries(memManager) {
 }
 
 VulkanBackend::~VulkanBackend() {
@@ -35,7 +36,24 @@ VulkanBackend::~VulkanBackend() {
 
   _bufferManager.DestroyVulkanBuffer(_ctx, &_ctx.objectVertexBuffer);
   _bufferManager.DestroyVulkanBuffer(_ctx, &_ctx.objectIndexBuffer);
-  _vulkanShader.DestroyObjectShader(_ctx, &_ctx.objectShader);
+
+  // Destroy builtin shaders
+  for (uint64 i = 0; i < _ctx.shaderNames.Length(); i++) {
+    stringv shaderName = _ctx.shaderNames[i].View();
+    Shader *pShader = _ctx.shaderRegistry.RetrieveShader(shaderName);
+    if (pShader == nullptr) {
+      FLOG_WARN("shader ptr for '{}' is already nullptr before releasing it!", shaderName);
+      continue;
+    }
+
+    if (pShader->interpreter != ShaderInterpreter::Vulkan) {
+      continue;
+    }
+
+    ObjectShader *pVkShader = CastToVulkanShader(pShader);
+    _vulkanShader.DestroyShader(_ctx, pVkShader);
+    pVkShader = nullptr;
+  }
 
   for (uint32 i = 0; i < _ctx.swapchain.imageCount; i++) {
     if (_ctx.queueCompleteSemaphores[i] != nullptr) {
@@ -324,10 +342,50 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
   }
 
   // create builtin shaders
-  auto shaderRes = _vulkanShader.CreateObjectShader(_ctx, &_ctx.objectShader);
-  if (shaderRes.errored()) {
-    FLOG_ERROR("failed to create object shader");
-    return FeErr{shaderRes.error()};
+  constexpr std::array<stringv, 2> cBuiltinShaderNames{
+      "Builtin.ObjectShader",
+      "Builtin.UIShader",
+  };
+
+  for (const auto &name : cBuiltinShaderNames) {
+    FeString<cMaxShaderNameLength> s;
+    s.Set(name).or_log_error("failed to store builtin shader name");
+    _ctx.shaderNames.Push(s);
+    auto newShRes =
+        _shaderRegistry.NewShader(name).or_error("failed to register new shader for '{}'", name);
+    if (newShRes.errored()) {
+      return FeErr{newShRes.error()};
+    }
+
+    Shader *pShader = _shaderRegistry.RetrieveShader(newShRes.value());
+    if (pShader == nullptr) {
+      return FeErr{Error("fatal error: retrieved shader is nullptr but handle exists",
+                         ErrorType::NullptrException)};
+    }
+
+    if (pShader->interpreter != ShaderInterpreter::Vulkan) {
+      continue;
+    }
+
+    uint32 size;
+    VkShaderStageFlags bit;
+    if (name == "Builtin.ObjectShader") {
+      size = sizeof(PushConstantData);
+      bit = VK_SHADER_STAGE_VERTEX_BIT;
+    } else if (name == "Builtin.UIShader") {
+      size = sizeof(UIPushConstantData);
+      bit = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    } else {
+      FLOG_ERROR("unknown builtin shader file {}", name);
+      return FeErr{Error("unknown builtin shader file error", ErrorType::RendererVulkanError)};
+    }
+
+    ObjectShader *pVkShader = CastToVulkanShader(pShader);
+    auto createRes = _vulkanShader.CreateShader(_ctx, pVkShader, name, size, bit)
+                         .or_error("failed to create vulkan shader {}", name);
+    if (createRes.errored()) {
+      return FeErr{Error("creation for vulkan shader failed", ErrorType::RendererVulkanError)};
+    }
   }
 
   // create vulkan buffer
@@ -338,7 +396,6 @@ FeExpect<bool, Error> VulkanBackend::Initialize(EngineState *pEngState) {
   }
 
   InitImGui();
-
   FLOG_INFO("sync objects & fences created successfully");
   FLOG_INFO("Vulkan backend initialized successfully");
   return FeTrue;
@@ -362,8 +419,8 @@ FeExpect<bool, Error> VulkanBackend::BeginFrame(float32 deltaTime) {
 
   // Reset per-frame draw state
   _cpLastBoundMaterial = nullptr;
+  _cpLastBoundShader = nullptr;
   _lastBoundGeometry = UINT32_MAX;
-  _frameStatebound = FeFalse;
 
   // check if recreating swapchain is happening
   if (_ctx.recreatingSwapchain) {
@@ -508,14 +565,19 @@ FeExpect<void, Error> VulkanBackend::UpdateGlobalState(math::Mat4D projection,
                                                        math::Vec3D viewPosition,
                                                        int32 mode) {
   EnsureGPUMatrixLayout(projection, view);
-  CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
-  _vulkanShader.UseShader(_ctx, _ctx.objectShader);
 
-  _ctx.objectShader.globalUBO.projection = projection;
-  _ctx.objectShader.globalUBO.view = view;
-  // TODO: other ubo properties
+  Shader *pShader = _ctx.shaderRegistry.RetrieveShader("Builtin.ObjectShader");
+  if (pShader == nullptr || pShader->interpreter != ShaderInterpreter::Vulkan) {
+    return FeErr{Error("failed to retrieve object shader", ErrorType::NullptrException)};
+  }
 
-  auto updateRes = _vulkanShader.UpdateGlobalState(_ctx, _ctx.objectShader);
+  ObjectShader *pVkShader = CastToVulkanShader(pShader);
+  _vulkanShader.UseShader(_ctx, *pVkShader);
+
+  pVkShader->globalUBO.projection = projection;
+  pVkShader->globalUBO.view = view;
+
+  auto updateRes = _vulkanShader.UpdateGlobalState(_ctx, *pVkShader);
   if (updateRes.errored()) {
     FLOG_ERROR("failed to update global state");
     return FeErr{updateRes.error()};
@@ -710,23 +772,40 @@ FeExpect<void, Error> VulkanBackend::DestroyGeometry(uint32 id) {
 }
 
 void VulkanBackend::DrawGeometry(uint32 id,
-                                 const PushConstantData &data,
+                                 stringv shaderName,
+                                 const void *pPushData,
+                                 uint32 pushSize,
                                  const resources::Material *pMaterial) {
   CommandBuffer &cmdBuffer = _ctx.graphicsCommandBuffer[_ctx.imageIndex];
-  PushConstantData gpuData = data;
-  gpuData.model = data.model.ToGPUMatrix();
 
-  // Push constants
-  _vulkanShader.UpdateObject(_ctx, _ctx.objectShader, gpuData);
+  Shader *pShader = _ctx.shaderRegistry.RetrieveShader(shaderName);
+  if (pShader == nullptr) {
+    FLOG_WARN("DrawGeometry: unknown shader '{}'", shaderName);
+    return;
+  }
 
-  // Pipeline + set0 + viewport/scissor
-  if (!_frameStatebound) {
-    _vulkanShader.UseShader(_ctx, _ctx.objectShader);
+  if (pShader->interpreter != ShaderInterpreter::Vulkan) {
+    return;
+  }
 
-    VkDescriptorSet set0 = _ctx.objectShader.globalDescriptorSets[_ctx.imageIndex];
+  ObjectShader *pVkShader = CastToVulkanShader(pShader);
+
+  // Copy push data and fix GPU matrix layout (model is always first field)
+  uint8 pushCopy[128]{};
+  memcpy(pushCopy, pPushData, pushSize);
+  *reinterpret_cast<math::Mat4D *>(pushCopy) =
+      reinterpret_cast<const math::Mat4D *>(pPushData)->ToGPUMatrix();
+
+  _vulkanShader.UpdateShader(_ctx, *pVkShader, pushCopy, pushSize, pVkShader->pushConstantStages);
+
+  // Rebind pipeline, set0, and viewport only on shader switch
+  if (pVkShader != _cpLastBoundShader) {
+    _vulkanShader.UseShader(_ctx, *pVkShader);
+
+    VkDescriptorSet set0 = pVkShader->globalDescriptorSets[_ctx.imageIndex];
     vkCmdBindDescriptorSets(cmdBuffer.handle,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            _ctx.objectShader.pipeline.layout,
+                            pVkShader->pipeline.layout,
                             0,
                             1,
                             &set0,
@@ -748,7 +827,7 @@ void VulkanBackend::DrawGeometry(uint32 id,
     vkCmdSetViewport(cmdBuffer.handle, 0, 1, &viewport);
     vkCmdSetScissor(cmdBuffer.handle, 0, 1, &scissor);
 
-    _frameStatebound = FeTrue;
+    _cpLastBoundShader = pVkShader;
   }
 
   // Material descriptor set
@@ -761,7 +840,7 @@ void VulkanBackend::DrawGeometry(uint32 id,
       const MaterialData *pMatData = FeCast<MaterialData>(pMaterial->pInternalData);
       vkCmdBindDescriptorSets(cmdBuffer.handle,
                               VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              _ctx.objectShader.pipeline.layout,
+                              pVkShader->pipeline.layout,
                               1,
                               1,
                               &pMatData->descriptorSet,
@@ -803,10 +882,23 @@ FeExpect<void, Error> VulkanBackend::CreateMaterial(resources::Material *pMateri
       _memoryManager.RawAlloc(sizeof(MaterialData), alignof(MaterialData), memory::Tag::Renderer));
   pMaterial->pInternalData = pMatData;
 
+  Shader *pShader = _ctx.shaderRegistry.RetrieveShader("Builtin.ObjectShader");
+  if (pShader == nullptr) {
+    FLOG_FATAL("could not get Builtin.ObjectShader");
+    return FeErr{
+        Error("fatal error on retrieving Builtin.ObjectShader", ErrorType::RendererVulkanError)};
+  }
+
+  if (pShader->interpreter != ShaderInterpreter::Vulkan) {
+    return {};
+  }
+
+  ObjectShader *pVkShader = CastToVulkanShader(pShader);
+
   VkDescriptorSetAllocateInfo allocInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
-  allocInfo.descriptorPool = _ctx.objectShader.textureDescriptorPool;
+  allocInfo.descriptorPool = pVkShader->textureDescriptorPool;
   allocInfo.descriptorSetCount = 1;
-  allocInfo.pSetLayouts = &_ctx.objectShader.textureDescriptorSetLayout;
+  allocInfo.pSetLayouts = &pVkShader->textureDescriptorSetLayout;
   if (auto res = VkCheck(vkAllocateDescriptorSets(
           _ctx.device.logicalDevice, &allocInfo, &pMatData->descriptorSet));
       res.errored()) {
@@ -835,9 +927,22 @@ FeExpect<void, Error> VulkanBackend::DestroyMaterial(resources::Material *pMater
     return {};
   }
 
+  Shader *pShader = _ctx.shaderRegistry.RetrieveShader("Builtin.ObjectShader");
+  if (pShader == nullptr) {
+    FLOG_FATAL("could not get Builtin.ObjectShader");
+    return FeErr{
+        Error("fatal error on retrieving Builtin.ObjectShader", ErrorType::RendererVulkanError)};
+  }
+
+  if (pShader->interpreter != ShaderInterpreter::Vulkan) {
+    return {};
+  }
+
+  ObjectShader *pVkShader = CastToVulkanShader(pShader);
+
   MaterialData *pMatData = FeCast<MaterialData>(pMaterial->pInternalData);
   if (auto res = VkCheck(vkFreeDescriptorSets(_ctx.device.logicalDevice,
-                                              _ctx.objectShader.textureDescriptorPool,
+                                              pVkShader->textureDescriptorPool,
                                               1,
                                               &pMatData->descriptorSet));
       res.errored()) {

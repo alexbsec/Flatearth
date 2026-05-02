@@ -45,6 +45,16 @@ echo "assets/shaders/Builtin.ObjectShader.frag.glsl -> ${SHADER_DIR}/Builtin.Obj
   assets/shaders/Builtin.ObjectShader.frag.glsl \
   -o "${SHADER_DIR}/Builtin.ObjectShader.frag.spv"
 
+echo "assets/shaders/Builtin.UIShader.vert.glsl -> ${SHADER_DIR}/Builtin.UIShader.vert.spv"
+"${VULKAN_SDK}/bin/glslc" -fshader-stage=vert \
+  assets/shaders/Builtin.UIShader.vert.glsl \
+  -o "${SHADER_DIR}/Builtin.UIShader.vert.spv"
+
+echo "assets/shaders/Builtin.UIShader.frag.glsl -> ${SHADER_DIR}/Builtin.UIShader.frag.spv"
+"${VULKAN_SDK}/bin/glslc" -fshader-stage=frag \
+  assets/shaders/Builtin.UIShader.frag.glsl \
+  -o "${SHADER_DIR}/Builtin.UIShader.frag.spv"
+
 echo "Copying assets into ${BIN_DIR}..."
 
 mkdir -p "${ASSET_DIR}/textures"

@@ -140,7 +140,8 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
   for (uint32 i = 0; i < pRenderPacket->objects.Length(); i++) {
     const RenderObject &object = pRenderPacket->objects[i];
     const PushConstantData data{object.model, object.uvOffset, object.uvScale};
-    _rendererState.pActiveBackend->DrawGeometry(object.geometryId, data, object.pMaterial);
+    const string name = "Builtin.ObjectShader";
+    _rendererState.pActiveBackend->DrawGeometry(object.geometryId, name, &data, sizeof(PushConstantData), object.pMaterial);
   }
 
   _rendererState.pActiveBackend->DrawImGui();
