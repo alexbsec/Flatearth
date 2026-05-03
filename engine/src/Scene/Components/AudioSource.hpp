@@ -18,6 +18,6 @@ struct AudioSource {
   bool dirty{FeTrue};
 };
 
-}
+} // namespace flatearth::scene
 
 #endif // _FLATEARTH_ENGINE_SCENE_COMPONENTS_AUDIO_SOURCE_HPP

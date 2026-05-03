@@ -26,6 +26,13 @@ FrontendRenderer::~FrontendRenderer() {
   FLOG_INFO("frontend renderer exited gracefully");
 }
 
+float32 FrontendRenderer::AspectRatio() const {
+  if (_pEngState == nullptr || _pEngState->height == 0) {
+    return 1.0f;
+  }
+  return static_cast<float32>(_pEngState->width) / static_cast<float32>(_pEngState->height);
+}
+
 void FrontendRenderer::Flush() {
   if (_rendererState.pActiveBackend) {
     _rendererState.pActiveBackend->Flush();
@@ -248,6 +255,10 @@ resources::Mesh *FrontendRenderer::GetMesh(resources::MeshHandle handle) {
   return _meshCache.Get(handle);
 }
 
+const resources::Mesh *FrontendRenderer::GetMesh(resources::MeshHandle handle) const {
+  return const_cast<FrontendRenderer *>(this)->GetMesh(handle);
+}
+
 FeExpect<resources::MaterialHandle, Error>
 FrontendRenderer::AcquireMaterial(const string &name, resources::Texture *pTexture) {
   return _materialCache.AcquireMaterial(name, pTexture);
@@ -259,6 +270,10 @@ void FrontendRenderer::ReleaseMaterial(resources::MaterialHandle handle) {
 
 resources::Material *FrontendRenderer::GetMaterial(resources::MaterialHandle handle) {
   return _materialCache.Get(handle);
+}
+
+const resources::Material *FrontendRenderer::GetMaterial(resources::MaterialHandle handle) const {
+  return const_cast<FrontendRenderer *>(this)->GetMaterial(handle);
 }
 
 void FrontendRenderer::BeginImGuiFrame() {

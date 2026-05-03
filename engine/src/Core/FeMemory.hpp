@@ -85,7 +85,8 @@ public:
 
     T *object = new (raw) T(std::forward<Args>(args)...);
     return FeSharedPtr<T>(object, [this, tag](T *ptr) {
-      if (!ptr) return;
+      if (!ptr)
+        return;
       ptr->~T();
       RawFree(ptr, sizeof(T), tag);
     });

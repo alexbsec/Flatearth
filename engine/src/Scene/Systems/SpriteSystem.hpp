@@ -6,7 +6,7 @@
 #include "Scene/Components/Sprite.hpp"
 #include "Scene/Components/SpriteAnimator.hpp"
 
-namespace flatearth::systems {
+namespace flatearth::scene::systems {
 
 class SpriteSystem : public ecs::ISystem {
 public:
@@ -21,6 +21,6 @@ private:
   assets::AnimationRegistry &_animRegistry;
 };
 
-} // namespace flatearth::systems
+} // namespace flatearth::scene::systems
 
 #endif // _FLATEARTH_ENGINE_SCENE_SYSTEMS_SPRITE_SYSTEM_HPP

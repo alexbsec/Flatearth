@@ -13,6 +13,6 @@ struct UIAnchor {
   float32 scaleY{1.0f};
 };
 
-}
+} // namespace flatearth::ui
 
 #endif // _FLATEARTH_ENGINE_UI_COMPONENTS_UI_ANCHOR_HPP

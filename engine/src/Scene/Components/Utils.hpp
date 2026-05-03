@@ -1,8 +1,8 @@
 #ifndef _FLATEARTH_ENGINE_SCENE_COMPONENETS_UTILS_HPP
 #define _FLATEARTH_ENGINE_SCENE_COMPONENETS_UTILS_HPP
 
-#include "Defines.hpp"
 #include "AudioSource.hpp"
+#include "Defines.hpp"
 
 namespace flatearth::scene {
 

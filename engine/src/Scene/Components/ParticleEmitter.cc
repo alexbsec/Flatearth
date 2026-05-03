@@ -1,4 +1,5 @@
 #include "ParticleEmitter.hpp"
+
 #include "ECS/Reflect/FieldType.hpp"
 #include "ECS/Reflect/Reflect.hpp"
 
@@ -15,4 +16,4 @@ FIELD(spawnRate, ecs::reflect::FieldType::Float32)
 FIELD(layer, ecs::reflect::FieldType::Uint32)
 END_REFLECT
 
-}
+} // namespace flatearth::scene

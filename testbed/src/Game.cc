@@ -2,6 +2,7 @@
 
 #include "Components/Tags.hpp"
 #include "Systems/CameraFollowSystem.hpp"
+#include "Systems/HPBarSystem.hpp"
 #include "Systems/PlayerSystem.hpp"
 #include "Systems/WorldSystem.hpp"
 
@@ -37,15 +38,20 @@ void GameTest::GameRegisterSystems(flatearth::Game *gameInstance, ecs::SystemSch
 
   scheduler.Register<PlayerSystem>(ctx, level1)
       .or_fatal("failed to register PlayerSystem")
-      .Before<systems::TransformSystem>();
+      .Before<scene::systems::TransformSystem>();
 
   scheduler.Register<CameraFollowSystem>(ctx, level1)
       .or_fatal("failed to register CameraFollowSystem")
-      .After<PlayerSystem>().Before<systems::TransformSystem>();
+      .After<PlayerSystem>()
+      .Before<scene::systems::TransformSystem>();
 
   scheduler.Register<WorldSystem>(ctx, level1)
       .or_fatal("failed to register WorldSystem")
-      .Before<systems::AudioSystem>();
+      .Before<scene::systems::AudioSystem>();
+
+  scheduler.Register<HPBarSystem>(ctx, level1)
+      .or_fatal("failed to register HPBarSystem")
+      .After<PlayerSystem>();
 }
 
 // TODO: remove, just here for testing

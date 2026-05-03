@@ -7,7 +7,7 @@
 #include "Scene/Components/Children.hpp"
 #include "Scene/Components/Transform2D.hpp"
 
-namespace flatearth::systems {
+namespace flatearth::scene::systems {
 
 using ecs::cNullEntity;
 using scene::Children;
@@ -108,4 +108,4 @@ void TransformSystem::PropagateTransformForward(ecs::Registry &registry,
   }
 }
 
-} // namespace flatearth::systems
+} // namespace flatearth::scene::systems

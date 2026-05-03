@@ -15,6 +15,6 @@ struct CircleCollider {
   FeShapeHandle shapeId{};
 };
 
-}
+} // namespace flatearth::physics
 
 #endif // _FLATEARTH_ENGINE_PHYSICS_CIRCLE_COLLIDER_HPP

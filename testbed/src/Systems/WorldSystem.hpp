@@ -9,7 +9,7 @@ namespace flatearth::testbed {
 
 class WorldSystem : public ecs::ISystem {
 public:
-  explicit WorldSystem(EngineContext& ctx, scene::SceneId sceneId);
+  explicit WorldSystem(EngineContext &ctx, scene::SceneId sceneId);
   void Initialize(ecs::Registry &) override;
   void Update(ecs::Registry &, float32) override;
 
@@ -18,6 +18,6 @@ private:
   scene::SceneId _sceneId{scene::cNullScene};
 };
 
-}
+} // namespace flatearth::testbed
 
 #endif // _FLATEARTH_TESTBED_SYSTEMS_WORLD_SYSTEM_HPP

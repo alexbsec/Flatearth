@@ -21,6 +21,6 @@ private:
   FlatearthWorld &_world;
 };
 
-}
+} // namespace flatearth::physics
 
 #endif // _FLATEARTH_ENGINE_PHYSICS_PHYSICS_SYSTEM_HPP

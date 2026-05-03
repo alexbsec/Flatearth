@@ -1,8 +1,8 @@
 #include "EngineListener.hpp"
 
 #include "Core/Logger.hpp"
-#include "Renderer/GameRenderer.hpp"
 #include "GameTypes.hpp"
+#include "Renderer/GameRenderer.hpp"
 
 namespace flatearth {
 
@@ -25,25 +25,25 @@ EngineListener::~EngineListener() {
 
   using event::SystemEventCode;
   auto appQuitUnregisterRes = _eventManager.UnregisterEvent(SystemEventCode::ApplicationQuit, this)
-      .or_error(cUngracefulShutdown);
+                                  .or_error(cUngracefulShutdown);
   if (appQuitUnregisterRes.errored() || !appQuitUnregisterRes.value()) {
     return;
   }
 
   auto keyPressUnregisterRes = _eventManager.UnregisterEvent(SystemEventCode::KeyPressed, this)
-      .or_error(cUngracefulShutdown);
+                                   .or_error(cUngracefulShutdown);
   if (keyPressUnregisterRes.errored() || !keyPressUnregisterRes.value()) {
     return;
   }
 
   auto keyReleaseUnregisterRes = _eventManager.UnregisterEvent(SystemEventCode::KeyReleased, this)
-      .or_error(cUngracefulShutdown);
+                                     .or_error(cUngracefulShutdown);
   if (keyReleaseUnregisterRes.errored() || !keyReleaseUnregisterRes.value()) {
     return;
   }
 
   auto resizeUnregisterRes = _eventManager.UnregisterEvent(SystemEventCode::WindowResized, this)
-      .or_error(cUngracefulShutdown);
+                                 .or_error(cUngracefulShutdown);
   if (resizeUnregisterRes.errored() || !resizeUnregisterRes.value()) {
     return;
   }
@@ -161,43 +161,43 @@ FeExpect<void, Error> EngineListener::WireEvents() {
   using event::SystemEventCode;
 
   auto resizeRegisterRes = _eventManager.RegisterEvent(SystemEventCode::WindowResized, this)
-      .or_error("failed to register resize event");
+                               .or_error("failed to register resize event");
   if (resizeRegisterRes.errored()) {
     return FeErr{resizeRegisterRes.error()};
   }
 
   auto keyPressRegisterRes = _eventManager.RegisterEvent(SystemEventCode::KeyPressed, this)
-      .or_error("failed to register key press event");
+                                 .or_error("failed to register key press event");
   if (keyPressRegisterRes.errored()) {
     return FeErr{keyPressRegisterRes.error()};
   }
 
   auto keyReleasedRegisterRes = _eventManager.RegisterEvent(SystemEventCode::KeyReleased, this)
-      .or_error("failed to register key release event");
+                                    .or_error("failed to register key release event");
   if (keyReleasedRegisterRes.errored()) {
     return FeErr{keyReleasedRegisterRes.error()};
   }
 
   auto appQuitRegisterRes = _eventManager.RegisterEvent(SystemEventCode::ApplicationQuit, this)
-      .or_error("failed to register application quit event");
+                                .or_error("failed to register application quit event");
   if (appQuitRegisterRes.errored()) {
     return FeErr{appQuitRegisterRes.error()};
   }
 
   auto buttonPressRegisterRes = _eventManager.RegisterEvent(SystemEventCode::ButtonPressed, this)
-      .or_error("failed to register mouse button press event");
+                                    .or_error("failed to register mouse button press event");
   if (buttonPressRegisterRes.errored()) {
     return FeErr{buttonPressRegisterRes.error()};
   }
 
   auto buttonReleaseRegisterRes = _eventManager.RegisterEvent(SystemEventCode::ButtonReleased, this)
-      .or_error("failed to register mouse button release event");
+                                      .or_error("failed to register mouse button release event");
   if (buttonReleaseRegisterRes.errored()) {
     return FeErr{buttonReleaseRegisterRes.error()};
   }
 
   auto mouseMoveRegisterRes = _eventManager.RegisterEvent(SystemEventCode::MouseMoved, this)
-      .or_error("failed to register mouse move event");
+                                  .or_error("failed to register mouse move event");
   if (mouseMoveRegisterRes.errored()) {
     return FeErr{mouseMoveRegisterRes.error()};
   }

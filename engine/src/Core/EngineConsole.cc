@@ -14,7 +14,8 @@ DevConsole::DevConsole(input::InputManager &im) : _isOpen(FeFalse), _inputBuffer
 void DevConsole::Draw(KVarRegistry &kvars) {
   if (_input.IsKeyDown(KEY_GRAVE) && !_input.WasKeyDown(KEY_GRAVE)) {
     _isOpen = !_isOpen;
-    if (_isOpen) _justOpened = FeTrue;
+    if (_isOpen)
+      _justOpened = FeTrue;
   }
 
   if (!_isOpen) {

@@ -281,8 +281,7 @@ private:
 #if FLATEARTH_LOGGING_ENABLED
 
 #define FLOG_SRC_FATAL(fmt, src, ...) \
-  febundle::core::Logger::Self().Log( \
-    febundle::core::LogLevel::Fatal, src, fmt, ##__VA_ARGS__)
+  febundle::core::Logger::Self().Log(febundle::core::LogLevel::Fatal, src, fmt, ##__VA_ARGS__)
 
 #define LOG_TRACE(fmt, ...)           \
   febundle::core::Logger::Self().Log( \

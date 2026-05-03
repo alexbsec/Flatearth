@@ -91,8 +91,7 @@ FeExpect<resources::Tilemap, Error> TilemapLoader::Load(stringv tmxPath) {
 
     if (layer.name == "Collision") {
       tm.collisionLayer = std::move(layer);
-    }
-    else {
+    } else {
       tm.renderLayers.push_back(std::move(layer));
     }
   }

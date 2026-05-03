@@ -23,13 +23,13 @@ public:
   std::function<void(struct Game *gameInstance)> OnImGui;
 
   explicit Game()
-      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), OnResize(nullptr), OnImGui(nullptr),
-        gameName(cGameName), windowStartWidth(scDefaultStartWidth),
+      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), OnResize(nullptr),
+        OnImGui(nullptr), gameName(cGameName), windowStartWidth(scDefaultStartWidth),
         windowStartHeight(scDefaultStartHeight) {}
 
   Game(const string &name)
-      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), OnResize(nullptr), OnImGui(nullptr),
-        gameName(name), windowStartWidth(scDefaultStartWidth),
+      : Initialize(nullptr), Load(nullptr), Unload(nullptr), Update(nullptr), OnResize(nullptr),
+        OnImGui(nullptr), gameName(name), windowStartWidth(scDefaultStartWidth),
         windowStartHeight(scDefaultStartHeight) {}
 
 public:

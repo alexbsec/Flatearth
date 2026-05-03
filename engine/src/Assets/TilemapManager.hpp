@@ -4,12 +4,14 @@
 #include "Containers/HashMap.hpp"
 #include "Core/FeMemory.hpp"
 #include "Defines.hpp"
-#include "Error.hpp"
 #include "ECS/ECSTypes.hpp"
+#include "Error.hpp"
 #include "Scene/Components/Sprite.hpp"
 #include "Scene/Scene.hpp"
 
-namespace flatearth::ecs { class Registry; }
+namespace flatearth::ecs {
+class Registry;
+}
 
 namespace flatearth::assets {
 
@@ -25,8 +27,8 @@ public:
   FEAPI void Unload(stringv tmxPath);
 
 private:
-  AssetManager   &_assetManager;
-  ecs::Registry  &_registry;
+  AssetManager &_assetManager;
+  ecs::Registry &_registry;
   containers::HashMap<string, scene::Sprite> _baseSprites;
 };
 

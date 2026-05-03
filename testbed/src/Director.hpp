@@ -31,6 +31,6 @@ private:
   scene::SceneId _sceneIds[4]{};
 };
 
-}
+} // namespace flatearth::testbed
 
 #endif // _FLATEARTH_TESTBED_DIRECTOR_HPP

@@ -6,7 +6,7 @@
 
 #include <cstring>
 
-namespace flatearth::systems {
+namespace flatearth::scene::systems {
 
 using namespace ecs;
 using scene::AudioSource;
@@ -64,4 +64,4 @@ void AudioSystem::Update(Registry &registry, float32 delatTime) {
   }
 }
 
-} // namespace flatearth::systems
+} // namespace flatearth::scene::systems

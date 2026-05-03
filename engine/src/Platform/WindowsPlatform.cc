@@ -325,30 +325,58 @@ LRESULT Platform::ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 static ImGuiKey TranslateVKToImGuiKey(WPARAM vk) {
   switch (vk) {
-    case VK_BACK:     return ImGuiKey_Backspace;
-    case VK_RETURN:   return ImGuiKey_Enter;
-    case VK_TAB:      return ImGuiKey_Tab;
-    case VK_ESCAPE:   return ImGuiKey_Escape;
-    case VK_DELETE:   return ImGuiKey_Delete;
-    case VK_INSERT:   return ImGuiKey_Insert;
-    case VK_HOME:     return ImGuiKey_Home;
-    case VK_END:      return ImGuiKey_End;
-    case VK_PRIOR:    return ImGuiKey_PageUp;
-    case VK_NEXT:     return ImGuiKey_PageDown;
-    case VK_LEFT:     return ImGuiKey_LeftArrow;
-    case VK_RIGHT:    return ImGuiKey_RightArrow;
-    case VK_UP:       return ImGuiKey_UpArrow;
-    case VK_DOWN:     return ImGuiKey_DownArrow;
-    case VK_LSHIFT:   return ImGuiKey_LeftShift;
-    case VK_RSHIFT:   return ImGuiKey_RightShift;
-    case VK_LCONTROL: return ImGuiKey_LeftCtrl;
-    case VK_RCONTROL: return ImGuiKey_RightCtrl;
-    case VK_LMENU:    return ImGuiKey_LeftAlt;
-    case VK_RMENU:    return ImGuiKey_RightAlt;
-    case 'A': return ImGuiKey_A; case 'C': return ImGuiKey_C;
-    case 'V': return ImGuiKey_V; case 'X': return ImGuiKey_X;
-    case 'Z': return ImGuiKey_Z;
-    default:  return ImGuiKey_None;
+    case VK_BACK:
+      return ImGuiKey_Backspace;
+    case VK_RETURN:
+      return ImGuiKey_Enter;
+    case VK_TAB:
+      return ImGuiKey_Tab;
+    case VK_ESCAPE:
+      return ImGuiKey_Escape;
+    case VK_DELETE:
+      return ImGuiKey_Delete;
+    case VK_INSERT:
+      return ImGuiKey_Insert;
+    case VK_HOME:
+      return ImGuiKey_Home;
+    case VK_END:
+      return ImGuiKey_End;
+    case VK_PRIOR:
+      return ImGuiKey_PageUp;
+    case VK_NEXT:
+      return ImGuiKey_PageDown;
+    case VK_LEFT:
+      return ImGuiKey_LeftArrow;
+    case VK_RIGHT:
+      return ImGuiKey_RightArrow;
+    case VK_UP:
+      return ImGuiKey_UpArrow;
+    case VK_DOWN:
+      return ImGuiKey_DownArrow;
+    case VK_LSHIFT:
+      return ImGuiKey_LeftShift;
+    case VK_RSHIFT:
+      return ImGuiKey_RightShift;
+    case VK_LCONTROL:
+      return ImGuiKey_LeftCtrl;
+    case VK_RCONTROL:
+      return ImGuiKey_RightCtrl;
+    case VK_LMENU:
+      return ImGuiKey_LeftAlt;
+    case VK_RMENU:
+      return ImGuiKey_RightAlt;
+    case 'A':
+      return ImGuiKey_A;
+    case 'C':
+      return ImGuiKey_C;
+    case 'V':
+      return ImGuiKey_V;
+    case 'X':
+      return ImGuiKey_X;
+    case 'Z':
+      return ImGuiKey_Z;
+    default:
+      return ImGuiKey_None;
   }
 }
 

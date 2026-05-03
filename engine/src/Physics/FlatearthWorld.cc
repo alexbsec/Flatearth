@@ -1,4 +1,5 @@
 #include "FlatearthWorld.hpp"
+
 #include "box2d/box2d.h"
 
 #include <cstring>
@@ -17,9 +18,12 @@ static FeWorldHandle FromB2(b2WorldId id) {
   return h;
 }
 
-FlatearthWorld::FlatearthWorld(memory::MemoryManager &memManager) {}
+FlatearthWorld::FlatearthWorld(memory::MemoryManager &memManager) {
+}
 
-FeWorldHandle FlatearthWorld::WorldId() const { return _worldHandle; }
+FeWorldHandle FlatearthWorld::WorldId() const {
+  return _worldHandle;
+}
 
 void FlatearthWorld::Initialize(float32 gravityX, float32 gravityY) {
   if (_initialized) {

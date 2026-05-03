@@ -21,6 +21,6 @@ private:
   ma_engine &_miniaudio;
 };
 
-}
+} // namespace flatearth::resources
 
 #endif // _FLATEARTH_ENGINE_RESOURCES_AUDIO_CACHE_HPP

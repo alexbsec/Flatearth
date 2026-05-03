@@ -12,4 +12,4 @@ FIELD(scaleX, ecs::reflect::FieldType::Float32)
 FIELD(scaleY, ecs::reflect::FieldType::Float32)
 END_REFLECT
 
-}
+} // namespace flatearth::ui

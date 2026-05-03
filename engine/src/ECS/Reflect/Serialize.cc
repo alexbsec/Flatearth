@@ -75,6 +75,13 @@ static json FieldToJson(const void *ptr, FieldType type) {
       std::memcpy(&y, static_cast<const char *>(ptr) + 4, 4);
       return json{{"x", x}, {"y", y}};
     }
+    case FieldType::Vec3D: {
+      float x, y, z;
+      std::memcpy(&x, ptr, 4);
+      std::memcpy(&y, static_cast<const char *>(ptr) + 4, 4);
+      std::memcpy(&z, static_cast<const char *>(ptr) + 8, 4);
+      return json{{"x", x}, {"y", y}, {"z", z}};
+    }
     case FieldType::String:
       return *static_cast<const string *>(ptr);
     case FieldType::CString:
@@ -154,12 +161,24 @@ static bool FieldFromJson(void *ptr, FieldType type, const json &val, uint32 arr
         std::memcpy(static_cast<char *>(ptr) + 4, &y, 4);
         return true;
       }
+      case FieldType::Vec3D: {
+        if (!val.is_object())
+          return false;
+        float x = val.at("x").get<float>();
+        float y = val.at("y").get<float>();
+        float z = val.at("z").get<float>();
+        std::memcpy(ptr, &x, 4);
+        std::memcpy(static_cast<char *>(ptr) + 4, &y, 4);
+        std::memcpy(static_cast<char *>(ptr) + 8, &z, 4);
+        return true;
+      }
       case FieldType::String: {
         *static_cast<string *>(ptr) = val.get<string>();
         return true;
       }
       case FieldType::CString: {
-        if (arraySize == 0) return false;
+        if (arraySize == 0)
+          return false;
         string s = val.get<string>();
         std::strncpy(static_cast<char *>(ptr), s.c_str(), arraySize - 1);
         static_cast<char *>(ptr)[arraySize - 1] = '\0';
@@ -225,8 +244,8 @@ std::vector<std::byte> Serialize::ToBinaryRaw(const void *component, const TypeD
 
   for (const auto &f : desc.fields) {
     if (f.type == FieldType::String) {
-      const string &s = *reinterpret_cast<const string *>(
-          static_cast<const char *>(component) + f.offset);
+      const string &s =
+          *reinterpret_cast<const string *>(static_cast<const char *>(component) + f.offset);
       writeU32(static_cast<uint32_t>(s.size()));
       const auto *src = reinterpret_cast<const std::byte *>(s.data());
       buf.insert(buf.end(), src, src + s.size());
@@ -273,15 +292,19 @@ bool Serialize::FromBinaryRaw(void *component,
   for (const auto &f : desc.fields) {
     if (f.type == FieldType::String) {
       uint32_t len;
-      if (!readU32(len)) return false;
-      if (cursor + len > data.size()) return false;
+      if (!readU32(len))
+        return false;
+      if (cursor + len > data.size())
+        return false;
       string *s = reinterpret_cast<string *>(static_cast<char *>(component) + f.offset);
       *s = string(reinterpret_cast<const char *>(data.data() + cursor), len);
       cursor += len;
     } else if (f.type == FieldType::CString) {
       uint32_t len;
-      if (!readU32(len)) return false;
-      if (cursor + len > data.size()) return false;
+      if (!readU32(len))
+        return false;
+      if (cursor + len > data.size())
+        return false;
       char *dst = static_cast<char *>(component) + f.offset;
       uint32_t cap = f.arraySize > 0 ? f.arraySize : len + 1;
       uint32_t copy = len < cap ? len : cap - 1;

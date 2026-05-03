@@ -34,14 +34,14 @@ public:
   }
 
   ~HashSet() {
-    if (_ppBuckets == nullptr) return;
+    if (_ppBuckets == nullptr)
+      return;
 
     for (uint64 i = 0; i < _bucketCount; i++) {
       _ppBuckets[i].~FePtr<Node<T>>();
     }
 
-    _memoryManager.RawFree(
-        _ppBuckets, sizeof(FePtr<Node<T>>) * _bucketCount, memory::Tag::HashSet);
+    _memoryManager.RawFree(_ppBuckets, sizeof(FePtr<Node<T>>) * _bucketCount, memory::Tag::HashSet);
   }
 
   inline FeExpect<bool, Error> Insert(const T &value) {

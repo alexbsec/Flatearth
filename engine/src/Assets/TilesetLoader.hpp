@@ -15,6 +15,6 @@ private:
   assets::AssetManager &_assetManager;
 };
 
-}
+} // namespace flatearth::assets
 
 #endif // _FLATEARTH_ENGINE_ASSETS_TILESET_LOADER_HPP

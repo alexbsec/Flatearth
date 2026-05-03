@@ -19,5 +19,4 @@ void SetAudioPath(AudioSource &source, const string &path) {
   std::strncpy(source.path, path.c_str(), scene::cAudioPathMax - 1);
 }
 
-
 } // namespace flatearth::scene

@@ -31,9 +31,9 @@ public:
 
 private:
   memory::MemoryManager &_memoryManager;
-  ma_engine              _miniaudio{};
-  resources::AudioCache  _soundCache;
-  bool                   _initialized{FeFalse};
+  ma_engine _miniaudio{};
+  resources::AudioCache _soundCache;
+  bool _initialized{FeFalse};
 };
 
 } // namespace flatearth::audio

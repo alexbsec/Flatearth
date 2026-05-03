@@ -4,8 +4,8 @@
 #include "Containers/DArray.hpp"
 #include "Core/FeMemory.hpp"
 #include "ECS/ECSTypes.hpp"
-#include "Scene/Scene.hpp"
 #include "ECS/Registry.hpp"
+#include "Scene/Scene.hpp"
 
 namespace flatearth::ecs {
 
@@ -25,11 +25,11 @@ public:
     _memoryManager.FCopyMemory(pData, &component, sizeof(T));
 
     _inserts.Push(DeferredInsert{
-      [](Registry &reg, EntityId id, const void *data) {
-        reg.Insert(id, *static_cast<const T *>(data));
-      },
-      pData,
-      sizeof(T),
+        [](Registry &reg, EntityId id, const void *data) {
+          reg.Insert(id, *static_cast<const T *>(data));
+        },
+        pData,
+        sizeof(T),
     });
 
     return *this;

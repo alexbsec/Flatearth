@@ -19,7 +19,6 @@ struct EngineState {
   clock::Clock clock;
 };
 
-
-}
+} // namespace flatearth
 
 #endif // _FLATEARTH_ENGINE_CORE_CORE_TYPES_HPP

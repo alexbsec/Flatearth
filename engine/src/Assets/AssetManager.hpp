@@ -4,6 +4,7 @@
 #include "Core/FeMemory.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererFrontend.hpp"
+#include "Resources/FontCache.hpp"
 #include "Resources/ResourceTypes.hpp"
 #include "Resources/TextureCache.hpp"
 
@@ -35,12 +36,18 @@ public:
 
   FEAPI void ReleaseSprite(scene::Sprite &sprite);
 
+  FEAPI FeExpect<resources::FontHandle, Error>
+  LoadFont(const string &path, const string &ttfPath, float32 fontSize, int32 atlasSize = 512);
+  FEAPI void ReleaseFont(resources::FontHandle handle);
+  FEAPI resources::FontAtlas *GetFontAtlas(resources::FontHandle handle);
+
   FEAPI void Shutdown();
 
   FEAPI bool Initialized() const;
 
 private:
   resources::TextureCache _textureCache;
+  resources::FontCache _fontCache;
   memory::MemoryManager &_memoryManager;
   platform::FileSystem &_fs;
   renderer::FrontendRenderer *_pRenderer;

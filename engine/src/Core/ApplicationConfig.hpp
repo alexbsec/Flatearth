@@ -15,7 +15,6 @@ struct ApplicationConfig {
   string name;
 };
 
-
 } // namespace flatearth
 
 #endif // _FLATEARTH_ENGINE_CORE_APPLICATION_CONFIG_HPP

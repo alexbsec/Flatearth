@@ -15,6 +15,7 @@ add_executable(${BINARY_NAME}
     src/Systems/PlayerSystem.cc
     src/Systems/CameraFollowSystem.cc
     src/Systems/WorldSystem.cc
+    src/Systems/HPBarSystem.cc
 )
 
 ############################################################################

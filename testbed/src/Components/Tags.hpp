@@ -15,6 +15,11 @@ struct PlayerMovementState {
   uint8 horzRow{1};
 };
 
+struct Health {
+  float32 current{100.0f};
+  float32 max{100.0f};
+};
+
 } // namespace flatearth::testbed
 
 #endif // _FLATEARTH_TESTBED_COMPONENTS_TAGS_HPP

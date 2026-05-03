@@ -9,7 +9,8 @@
 namespace flatearth::assets {
 
 AssetManager::AssetManager(memory::MemoryManager &memManager, platform::FileSystem &fs)
-    : _textureCache(memManager, fs), _memoryManager(memManager), _fs(fs) {
+    : _textureCache(memManager, fs), _fontCache(memManager, fs), _memoryManager(memManager),
+      _fs(fs) {
 }
 
 void AssetManager::Initialize(renderer::FrontendRenderer *pRenderer) {
@@ -18,6 +19,7 @@ void AssetManager::Initialize(renderer::FrontendRenderer *pRenderer) {
   }
 
   _textureCache.Initialize(pRenderer);
+  _fontCache.Initialize(pRenderer);
   _pRenderer = pRenderer;
 }
 
@@ -67,8 +69,8 @@ FeExpect<scene::Sprite, Error> AssetManager::LoadSprite(stringv path,
 }
 
 FeExpect<scene::Sprite, Error> AssetManager::SpriteFromTexture(resources::TextureHandle texHandle,
-                                                                stringv name,
-                                                                resources::MeshShape shape) {
+                                                               stringv name,
+                                                               resources::MeshShape shape) {
   resources::Texture *pTexture = GetTexture(texHandle);
   if (pTexture == nullptr)
     return FeErr{Error("SpriteFromTexture: invalid texture handle", ErrorType::NullptrException)};
@@ -96,8 +98,24 @@ void AssetManager::ReleaseSprite(scene::Sprite &sprite) {
   sprite = scene::Sprite{};
 }
 
+FeExpect<resources::FontHandle, Error> AssetManager::LoadFont(const string &path,
+                                                              const string &ttfPath,
+                                                              float32 fontSize,
+                                                              int32 atlasSize) {
+  return _fontCache.AcquireFont(path, ttfPath, fontSize, atlasSize);
+}
+
+void AssetManager::ReleaseFont(resources::FontHandle handle) {
+  return _fontCache.Release(handle);
+}
+
+resources::FontAtlas *AssetManager::GetFontAtlas(resources::FontHandle handle) {
+  return _fontCache.Get(handle);
+}
+
 void AssetManager::Shutdown() {
   _textureCache.Shutdown();
+  _fontCache.Shutdown();
 }
 
 bool AssetManager::Initialized() const {
