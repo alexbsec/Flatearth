@@ -1,5 +1,5 @@
-#ifndef _FLATEARTH_ENGINE_RENDERER_VULKAN_SHADERS_OBJECT_SHADER_HPP
-#define _FLATEARTH_ENGINE_RENDERER_VULKAN_SHADERS_OBJECT_SHADER_HPP
+#ifndef _FLATEARTH_ENGINE_RENDERER_VULKAN_SHADERS_VULKAN_SHADER_HPP
+#define _FLATEARTH_ENGINE_RENDERER_VULKAN_SHADERS_VULKAN_SHADER_HPP
 
 #include "Renderer/Vulkan/VulkanBuffer.hpp"
 #include "Renderer/Vulkan/VulkanPipeline.hpp"
@@ -23,14 +23,20 @@ public:
   explicit VulkanShader(memory::MemoryManager &memManager, BufferManager &bufferManager);
   ~VulkanShader();
 
-  FeExpect<bool, Error> CreateObjectShader(Context &ctx, ObjectShader *pObjShader);
-  void DestroyObjectShader(Context &ctx, ObjectShader *pObjShader);
+  FeExpect<bool, Error> CreateShader(Context &ctx,
+                                     ObjectShader *pObjShader,
+                                     stringv name,
+                                     uint32 pushConstantSize,
+                                     VkShaderStageFlags pushConstantStageFlags);
+  void DestroyShader(Context &ctx, ObjectShader *pObjectShader);
+  void UpdateShader(Context &ctx,
+                    ObjectShader &shader,
+                    const void *data,
+                    uint32 size,
+                    VkShaderStageFlags stageFlags);
 
   void UseShader(Context &ctx, ObjectShader &objShader);
   FeExpect<void, Error> UpdateGlobalState(Context &ctx, ObjectShader &objShader);
-
-  // temp method
-  void UpdateObject(Context &ctx, ObjectShader &objShader, const PushConstantData &data);
 
   FeExpect<void, Error>
   AcquireTextureResources(Context &ctx, ObjectShader &objShader, TextureData *pTextureData);
@@ -43,4 +49,4 @@ private:
 
 } // namespace flatearth::renderer::vulkan::shaders
 
-#endif // _FLATEARTH_ENGINE_RENDERER_VULKAN_TYPES_HPP
+#endif // _FLATEARTH_ENGINE_RENDERER_VULKAN_SHADERS_VULKAN_SHADER_HPP

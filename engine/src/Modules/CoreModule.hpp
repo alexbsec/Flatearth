@@ -12,8 +12,7 @@ namespace flatearth::modules {
 class Core {
 public:
   explicit Core(memory::MemoryManager &mm, event::EventManager &em)
-      : _memoryManager(mm), _input(em), _audio(mm), _kvars(mm) {
-  }
+      : _memoryManager(mm), _input(em), _audio(mm), _kvars(mm) {}
 
   FeExpect<void, Error> Initialize();
   void Shutdown();

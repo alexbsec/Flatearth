@@ -25,6 +25,8 @@ void Registry::Destroy(EntityId id) {
   FLOG_DEBUG("entity '{}' destroyed", id);
 }
 
-EntityBuilder Registry::Spawn() { return EntityBuilder(_memoryManager, *this); }
+EntityBuilder Registry::Spawn() {
+  return EntityBuilder(_memoryManager, *this);
+}
 
 } // namespace flatearth::ecs

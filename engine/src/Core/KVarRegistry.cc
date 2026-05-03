@@ -65,16 +65,23 @@ FeExpect<bool, Error> KVarRegistry::ParseAndSet(stringv name, stringv strValue) 
 string KVarRegistry::GetAsString(stringv name) const {
   const string key{name};
   const KVar *pKvar = _localMap.Retrieve(key);
-  if (pKvar == nullptr) return "<not found>";
+  if (pKvar == nullptr)
+    return "<not found>";
 
-  return std::visit([](const auto &v) -> string {
-    using T = std::decay_t<decltype(v)>;
-    if constexpr (std::is_same_v<T, bool>)    return v ? "true" : "false";
-    if constexpr (std::is_same_v<T, int32>)   return std::to_string(v);
-    if constexpr (std::is_same_v<T, float32>) return std::to_string(v);
-    if constexpr (std::is_same_v<T, string>)  return v;
-    return "<unknown>";
-  }, pKvar->value);
+  return std::visit(
+      [](const auto &v) -> string {
+        using T = std::decay_t<decltype(v)>;
+        if constexpr (std::is_same_v<T, bool>)
+          return v ? "true" : "false";
+        if constexpr (std::is_same_v<T, int32>)
+          return std::to_string(v);
+        if constexpr (std::is_same_v<T, float32>)
+          return std::to_string(v);
+        if constexpr (std::is_same_v<T, string>)
+          return v;
+        return "<unknown>";
+      },
+      pKvar->value);
 }
 
 FeExpect<void, Error> KVarRegistry::ParseKVarValue(stringv strValue, KVar &outVar) {

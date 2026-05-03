@@ -5,6 +5,7 @@
 #include "Core/FeMemory.hpp"
 #include "ECS/EntityBuilder.hpp"
 #include "ECS/Registry.hpp"
+
 #include <Scene/Scene.hpp>
 
 namespace flatearth::assets {

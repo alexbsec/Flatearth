@@ -19,5 +19,4 @@ private:
   scene::SceneId _sceneId;
 };
 
-
 } // namespace flatearth::testbed

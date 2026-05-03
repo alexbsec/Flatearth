@@ -4,8 +4,8 @@
 #include "Defines.hpp"
 #include "Error.hpp"
 
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
 
 namespace flatearth {
 
@@ -25,13 +25,9 @@ public:
     return {};
   }
 
-  stringv View() const {
-    return stringv(_data, strnlen(_data, N));
-  }
+  stringv View() const { return stringv(_data, strnlen(_data, N)); }
 
-  string String() const {
-    return string(View());
-  }
+  string String() const { return string(View()); }
 
 private:
   char _data[N]{};

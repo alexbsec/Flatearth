@@ -5,7 +5,7 @@
 #include "ECS/Registry.hpp"
 #include "ECS/SystemInterface.hpp"
 
-namespace flatearth::systems {
+namespace flatearth::scene::systems {
 
 class AudioSystem : public ecs::ISystem {
 public:
@@ -14,9 +14,8 @@ public:
 
 private:
   audio::AudioManager &_audio;
-
 };
 
-}
+} // namespace flatearth::scene::systems
 
 #endif // _FLATEARTH_ENGINE_SCENE_SYSTEMS_AUDIO_SYSTEM_HPP

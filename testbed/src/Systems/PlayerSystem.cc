@@ -5,6 +5,7 @@
 #include <Core/EngineContext.hpp>
 #include <Core/Input.hpp>
 #include <Core/Logger.hpp>
+#include <algorithm>
 #include <Scene/Components/ParticleEmitter.hpp>
 #include <Scene/Components/Sprite.hpp>
 #include <Scene/Components/SpriteAnimator.hpp>
@@ -59,7 +60,8 @@ void PlayerSystem::Initialize(ecs::Registry &) {
         .With(playerSprite)
         .With(animator)
         .With(PlayerTag{})
-        .With(PlayerMovementState{});
+        .With(PlayerMovementState{})
+        .With(Health{100.0f, 100.0f});
   });
 
   auto playerRes = _ctx.assets.Prefab()
@@ -111,6 +113,16 @@ void PlayerSystem::Update(ecs::Registry &, float32 deltaTime) {
   auto &input = _ctx.core.Input();
   auto &kvars = _ctx.core.KVarsRegistry();
   float32 speed = kvars.Get<float32>("player.speed").value_or(1.5f);
+
+  // F = take 10 damage, R = restore full health (for testing)
+  for (auto [id, ptag, health] : reg.ViewOf<PlayerTag, Health>()) {
+    if (input.IsKeyDown(input::KEY_F) && !input.WasKeyDown(input::KEY_F)) {
+      health.current = std::max(0.0f, health.current - 10.0f);
+    }
+    if (input.IsKeyDown(input::KEY_R) && !input.WasKeyDown(input::KEY_R)) {
+      health.current = health.max;
+    }
+  }
 
   for (auto [id, ptag, xform, sprite, anim, mv] : reg.ViewOf<PlayerTag,
                                                              scene::Transform2D,

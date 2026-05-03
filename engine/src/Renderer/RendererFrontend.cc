@@ -7,6 +7,7 @@
 #include "Math/Matrix4D.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererInterface.hpp"
+#include "Renderer/RendererTypes.hpp"
 #include "Renderer/Vulkan/VulkanBackend.hpp"
 #include "Resources/ResourceTypes.hpp"
 
@@ -23,6 +24,13 @@ FrontendRenderer::FrontendRenderer(EngineState *pEngState,
 
 FrontendRenderer::~FrontendRenderer() {
   FLOG_INFO("frontend renderer exited gracefully");
+}
+
+float32 FrontendRenderer::AspectRatio() const {
+  if (_pEngState == nullptr || _pEngState->height == 0) {
+    return 1.0f;
+  }
+  return static_cast<float32>(_pEngState->width) / static_cast<float32>(_pEngState->height);
 }
 
 void FrontendRenderer::Flush() {
@@ -140,7 +148,29 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
   for (uint32 i = 0; i < pRenderPacket->objects.Length(); i++) {
     const RenderObject &object = pRenderPacket->objects[i];
     const PushConstantData data{object.model, object.uvOffset, object.uvScale};
-    _rendererState.pActiveBackend->DrawGeometry(object.geometryId, data, object.pMaterial);
+    const string name = "Builtin.ObjectShader";
+    _rendererState.pActiveBackend->DrawGeometry(
+        object.geometryId, name, &data, sizeof(PushConstantData), object.pMaterial);
+  }
+
+  auto uiUpdateRes = _rendererState.pActiveBackend
+                         ->UpdateGlobalState(math::Mat4D::Identity(),
+                                             math::Mat4D::Identity(),
+                                             math::Vec3D::Zero(),
+                                             0,
+                                             "Builtin.UIShader")
+                         .or_error("failed to update UI global state");
+  if (uiUpdateRes.errored()) {
+    return FeErr{uiUpdateRes.error()};
+  }
+
+  for (uint32 i = 0; i < pRenderPacket->uiObjects.Length(); i++) {
+    const RenderObject &object = pRenderPacket->uiObjects[i];
+    const UIPushConstantData data{
+        object.model, object.uvOffset, object.uvScale, object.tint, object.useTexture};
+    const string name = "Builtin.UIShader";
+    _rendererState.pActiveBackend->DrawGeometry(
+        object.geometryId, name, &data, sizeof(UIPushConstantData), object.pMaterial);
   }
 
   _rendererState.pActiveBackend->DrawImGui();
@@ -225,6 +255,10 @@ resources::Mesh *FrontendRenderer::GetMesh(resources::MeshHandle handle) {
   return _meshCache.Get(handle);
 }
 
+const resources::Mesh *FrontendRenderer::GetMesh(resources::MeshHandle handle) const {
+  return const_cast<FrontendRenderer *>(this)->GetMesh(handle);
+}
+
 FeExpect<resources::MaterialHandle, Error>
 FrontendRenderer::AcquireMaterial(const string &name, resources::Texture *pTexture) {
   return _materialCache.AcquireMaterial(name, pTexture);
@@ -236,6 +270,10 @@ void FrontendRenderer::ReleaseMaterial(resources::MaterialHandle handle) {
 
 resources::Material *FrontendRenderer::GetMaterial(resources::MaterialHandle handle) {
   return _materialCache.Get(handle);
+}
+
+const resources::Material *FrontendRenderer::GetMaterial(resources::MaterialHandle handle) const {
+  return const_cast<FrontendRenderer *>(this)->GetMaterial(handle);
 }
 
 void FrontendRenderer::BeginImGuiFrame() {

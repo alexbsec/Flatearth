@@ -21,7 +21,6 @@ static inline uint64 NormalizeAlignment(uint64 alignment) {
   return alignment;
 }
 
-
 struct MemFmt {
   uint64 bytes;
   double kb;

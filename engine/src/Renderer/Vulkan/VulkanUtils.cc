@@ -27,6 +27,12 @@ FeExpect<bool, Error> CreateShaderModule(Context &ctx,
   } else if (name == "Builtin.ObjectShader" && typeStr == "frag") {
     pCode = shaders::kObjectShaderFrag;
     codeSize = shaders::kObjectShaderFragSize;
+  } else if (name == "Builtin.UIShader" && typeStr == "vert") {
+    pCode = shaders::kUIShaderVert;
+    codeSize = shaders::kUIShaderVertSize;
+  } else if (name == "Builtin.UIShader" && typeStr == "frag") {
+    pCode = shaders::kUIShaderFrag;
+    codeSize = shaders::kUIShaderFragSize;
   } else {
     FLOG_ERROR("no embedded shader for {}.{}", name, typeStr);
     return FeErr{Error("unknown built-in shader", ErrorType::FileReadError)};
@@ -94,6 +100,11 @@ VkSamplerCreateInfo SamplerInfoByFilter(resources::TextureFilter filter) {
   }
 
   return samplerInfo;
+}
+
+ObjectShader *CastToVulkanShader(Shader *pShader) {
+  auto sh = FeCast<ObjectShader>(pShader);
+  return sh;
 }
 
 } // namespace flatearth::renderer::vulkan

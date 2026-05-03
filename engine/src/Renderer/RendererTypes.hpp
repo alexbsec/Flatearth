@@ -15,6 +15,11 @@ enum class RenderLayer : uint32 {
   UI = 4,
 };
 
+struct Tint {
+  math::Vec3D rgb{};
+  float32 alpha{1.0f};
+};
+
 struct RenderObject {
   uint32 geometryId;
   math::Mat4D model;
@@ -22,15 +27,17 @@ struct RenderObject {
   math::Vec2D uvScale;
   RenderLayer layer{RenderLayer::Background};
   resources::Material *pMaterial{nullptr};
+  Tint tint{};
+  float32 useTexture{0.0f};
 };
 
 struct RenderPacket {
-  float32 deltaTime;
-  math::Mat4D view;
+  float32 deltaTime{0.0f};
+  math::Mat4D view{};
   containers::DArray<RenderObject> objects;
+  containers::DArray<RenderObject> uiObjects;
 
-  RenderPacket(memory::MemoryManager &memManager)
-    : objects(memManager) {}
+  RenderPacket(memory::MemoryManager &memManager) : objects(memManager), uiObjects(memManager) {}
 };
 
 struct GlobalUniformObject {
@@ -40,11 +47,32 @@ struct GlobalUniformObject {
   math::Mat4D reservedSpace1, reservedSpace2;
 };
 
+struct UIPushConstantData {
+  math::Mat4D model{};
+  math::Vec2D uvOffset{};
+  math::Vec2D uvScale{};
+  Tint tint{};
+  float32 useTexture{0.0f};
+};
+
 struct PushConstantData {
   math::Mat4D model;
   math::Vec2D uvOffset;
   math::Vec2D uvScale;
 };
+
+using ShaderHandle = uint32;
+
+enum class ShaderInterpreter {
+  Vulkan,
+  OpenGL,
+};
+
+struct Shader {
+  ShaderInterpreter interpreter{ShaderInterpreter::Vulkan};
+  virtual ~Shader() = default;
+};
+
 
 } // namespace flatearth::renderer
 

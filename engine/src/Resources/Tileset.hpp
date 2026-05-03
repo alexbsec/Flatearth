@@ -25,6 +25,6 @@ struct Tileset {
   std::vector<TilesetTile> tiles;
 };
 
-}
+} // namespace flatearth::resources
 
 #endif // _FLATEARTH_ENGINE_RESOURCES_TILESET_HPP

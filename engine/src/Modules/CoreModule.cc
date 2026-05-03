@@ -25,4 +25,4 @@ void Core::Shutdown() {
   _initialized = FeFalse;
 }
 
-}
+} // namespace flatearth::modules

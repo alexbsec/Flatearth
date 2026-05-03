@@ -46,6 +46,14 @@ public:
   }
 
   template <typename T>
+  T *TryGet(EntityId id) {
+    if (!Has<T>(id)) {
+      return nullptr;
+    }
+    return &Get<T>(id);
+  }
+
+  template <typename T>
   containers::SparseSet<T> *GetPool() {
     uint32 typeId = ComponentTypeId<T>::Value();
     FePtr<ISparseSetBase> *ppBase = _poolsMap.Retrieve(typeId);

@@ -20,7 +20,8 @@ Engine::Engine(memory::MemoryManager &mm)
     : _memoryManager(mm), _filesystem(mm), _eventManager(mm), _registry(mm), _scheduler(mm),
       _gameModule(mm, _registry), _assetsModule(mm, _filesystem, _registry),
       _coreModule(mm, _eventManager), _ctx(_coreModule, _assetsModule, _gameModule),
-      _renderer(&_state, mm, _registry, _filesystem), _devConsole(_coreModule.Input()) {
+      _renderer(&_state, mm, _registry, _filesystem, _assetsModule.Manager()),
+      _devConsole(_coreModule.Input()) {
   _engineListener = _memoryManager.Allocate<event::IEventListener, EngineListener>(
       memory::Tag::Application, _eventManager, _renderer, _state);
 }
@@ -199,13 +200,13 @@ FeExpect<void, Error> Engine::Start() {
 FeExpect<void, Error> Engine::RegisterSystems() {
   _scheduler.Prune();
 
-  auto transformRes = _scheduler.Register<systems::TransformSystem>(_memoryManager);
+  auto transformRes = _scheduler.Register<scene::systems::TransformSystem>(_memoryManager);
   if (transformRes.errored()) {
     FLOG_ERROR("could not register TransformSystem");
     return FeErr{transformRes.error()};
   }
 
-  auto spriteRes = _scheduler.Register<systems::SpriteSystem>(_assetsModule.Animations());
+  auto spriteRes = _scheduler.Register<scene::systems::SpriteSystem>(_assetsModule.Animations());
   if (spriteRes.errored()) {
     FLOG_ERROR("could not register SpriteSystem");
     return FeErr{spriteRes.error()};
@@ -216,15 +217,15 @@ FeExpect<void, Error> Engine::RegisterSystems() {
     FLOG_ERROR("could not register PhysicsSystem");
     return FeErr{physicsRes.error()};
   }
-  physicsRes.value().Before<systems::TransformSystem>();
+  physicsRes.value().Before<scene::systems::TransformSystem>();
 
-  auto particleRes = _scheduler.Register<systems::ParticleSystem>();
+  auto particleRes = _scheduler.Register<scene::systems::ParticleSystem>();
   if (particleRes.errored()) {
     FLOG_ERROR("could not register ParticleSystem");
     return FeErr{particleRes.error()};
   }
 
-  auto audioRes = _scheduler.Register<systems::AudioSystem>(_coreModule.Audio());
+  auto audioRes = _scheduler.Register<scene::systems::AudioSystem>(_coreModule.Audio());
   if (audioRes.errored()) {
     FLOG_ERROR("could not register AudioSystem");
     return FeErr{audioRes.error()};

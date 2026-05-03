@@ -1,11 +1,11 @@
 #ifndef _FLATEARHT_ENGINE_RENDERER_INTERFACE_HPP
 #define _FLATEARHT_ENGINE_RENDERER_INTERFACE_HPP
 
+#include "Core/CoreTypes.hpp"
 #include "Defines.hpp"
 #include "Math/MathTypes.hpp"
 #include "Renderer/RendererTypes.hpp"
 #include "Resources/ResourceTypes.hpp"
-#include "Core/CoreTypes.hpp"
 
 namespace flatearth::renderer {
 
@@ -27,7 +27,8 @@ public:
   virtual FeExpect<void, Error> UpdateGlobalState(math::Mat4D projection,
                                                   math::Mat4D view,
                                                   math::Vec3D viewPosition,
-                                                  int32 mode) = 0;
+                                                  int32 mode,
+                                                  stringv shaderName = "Builtin.ObjectShader") = 0;
   virtual FeExpect<void, Error> CreateTexture(const string &name,
                                               bool autoRelease,
                                               int32 width,
@@ -45,7 +46,11 @@ public:
                                                uint32 indexCount,
                                                const uint32 *pIndices) = 0;
   virtual FeExpect<void, Error> DestroyGeometry(uint32 id) = 0;
-  virtual void DrawGeometry(uint32 id, const PushConstantData &data, const resources::Material *pMaterial) = 0;
+  virtual void DrawGeometry(uint32 id,
+                            stringv shaderName,
+                            const void *pPushData,
+                            uint32 pushSize,
+                            const resources::Material *pMaterial) = 0;
 
   virtual FeExpect<void, Error> CreateMaterial(resources::Material *pMaterial,
                                                const resources::Texture *pTexture) = 0;

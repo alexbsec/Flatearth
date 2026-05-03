@@ -5,7 +5,7 @@
 
 #include <cstdlib>
 
-namespace flatearth::systems {
+namespace flatearth::scene::systems {
 
 using namespace ecs;
 using namespace scene;
@@ -110,4 +110,4 @@ float32 ParticleSystem::RandRange(float32 lo, float32 hi) {
   return lo + (hi - lo) * (static_cast<float32>(std::rand()) / static_cast<float32>(RAND_MAX));
 }
 
-} // namespace flatearth::systems
+} // namespace flatearth::scene::systems

@@ -1,5 +1,5 @@
-#include "Defines.hpp"
 #include "Core/Logger.hpp"
+#include "Defines.hpp"
 
 #include <cstdlib>
 
@@ -17,8 +17,7 @@ void ErrorLog(stringv userMsg, stringv errMsg, std::source_location loc) {
 
 void WarnLog(stringv userMsg, stringv errMsg, std::source_location loc) {
   if (errMsg.empty()) {
-    febundle::core::Logger::Self().Log(
-        febundle::core::LogLevel::Warn, loc, "{}", userMsg);
+    febundle::core::Logger::Self().Log(febundle::core::LogLevel::Warn, loc, "{}", userMsg);
   } else {
     febundle::core::Logger::Self().Log(
         febundle::core::LogLevel::Warn, loc, "{}: {}", userMsg, errMsg);

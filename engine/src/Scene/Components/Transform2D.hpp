@@ -6,7 +6,6 @@
 
 namespace flatearth::scene {
 
-
 struct Transform2D {
   float32 x{0.0f};
   float32 y{0.0f};

@@ -27,7 +27,6 @@ public:
   FeExpect<bool, Error> ParseAndSet(stringv name, stringv strValue);
   string GetAsString(stringv name) const;
 
-
 public:
   template <typename T>
   FeExpect<T, Error> Get(stringv name) const {
@@ -85,9 +84,8 @@ private:
   FeExpect<void, Error> ParseKVarValue(stringv strValue, KVar &outVar);
 
 private:
-  const std::unexpected<Error> _cRetrieveErr {
-    Error("KVar retrieval failed", ErrorType::NullptrException)
-  };
+  const std::unexpected<Error> _cRetrieveErr{
+      Error("KVar retrieval failed", ErrorType::NullptrException)};
 
 private:
   containers::HashMap<string, KVar> _localMap;

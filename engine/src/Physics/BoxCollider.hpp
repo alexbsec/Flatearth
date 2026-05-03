@@ -16,6 +16,6 @@ struct BoxCollider {
   FeShapeHandle shapeId{};
 };
 
-}
+} // namespace flatearth::physics
 
 #endif // _FLATEARTH_ENGINE_PHYSICS_BOX_COLLIDER_HPP

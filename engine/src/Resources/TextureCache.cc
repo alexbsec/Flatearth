@@ -36,7 +36,8 @@ TextureCache::Create(Texture *pTexture, uint32 /*handle*/, const string &path) {
     return FeErr{Error("texture file not found", ErrorType::FileOpenError)};
   }
 
-  auto handleRes = _fs.OpenFile(path, platform::FileMode::Read, FeTrue).or_error("failed to open texture file");
+  auto handleRes =
+      _fs.OpenFile(path, platform::FileMode::Read, FeTrue).or_error("failed to open texture file");
   if (handleRes.errored()) {
     return FeErr{handleRes.error()};
   }

@@ -1,8 +1,8 @@
 #include "Assets/TilemapManager.hpp"
 
 #include "Assets/AssetManager.hpp"
-#include "Core/FeMemory.hpp"
 #include "Assets/TilemapLoader.hpp"
+#include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
 #include "ECS/Registry.hpp"
 #include "Physics/BoxCollider.hpp"
@@ -17,7 +17,8 @@ namespace flatearth::assets {
 TilemapManager::TilemapManager(memory::MemoryManager &memManager,
                                AssetManager &assetManager,
                                ecs::Registry &registry)
-    : _assetManager(assetManager), _registry(registry), _baseSprites(memManager) {}
+    : _assetManager(assetManager), _registry(registry), _baseSprites(memManager) {
+}
 
 FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::SceneId sceneId) {
   TilemapLoader loader{_assetManager};
@@ -28,16 +29,15 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::Scen
   resources::Tilemap tm = std::move(tmRes.value());
 
   // base sprite shared by all tiles (same texture, quad mesh, UV overridden per tile)
-  auto baseSpriteRes = _assetManager.SpriteFromTexture(tm.tileset.texture,
-                                                       tm.tileset.name,
-                                                       resources::MeshShape::Quad);
+  auto baseSpriteRes = _assetManager.SpriteFromTexture(
+      tm.tileset.texture, tm.tileset.name, resources::MeshShape::Quad);
   if (baseSpriteRes.errored())
     return FeErr{baseSpriteRes.error()};
 
   scene::Sprite baseSprite = baseSpriteRes.value();
 
   // Coordinate convention: 1 tile = 1 world unit, Y-up, origin at map center.
-  float32 halfW = tm.mapWidth  * 0.5f;
+  float32 halfW = tm.mapWidth * 0.5f;
   float32 halfH = tm.mapHeight * 0.5f;
 
   // ── render layers → sprite entities ──────────────────────────────────────
@@ -45,10 +45,12 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::Scen
     for (uint32 row = 0; row < layer.height; ++row) {
       for (uint32 col = 0; col < layer.width; ++col) {
         uint32 globalId = layer.tiles[row * layer.width + col];
-        if (globalId == 0) continue;  // empty tile
+        if (globalId == 0)
+          continue; // empty tile
 
         uint32 localId = globalId - tm.firstGid;
-        if (localId >= tm.tileset.tileCount) continue;
+        if (localId >= tm.tileset.tileCount)
+          continue;
 
         const auto &tile = tm.tileset.tiles[localId];
 
@@ -57,10 +59,10 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::Scen
 
         auto e = _registry.Create();
 
-        scene::Sprite tileSprite   = baseSprite;
-        tileSprite.uvOffset        = tile.uvOffset;
-        tileSprite.uvScale         = tile.uvScale;
-        tileSprite.layer           = renderer::RenderLayer::Background;
+        scene::Sprite tileSprite = baseSprite;
+        tileSprite.uvOffset = tile.uvOffset;
+        tileSprite.uvScale = tile.uvScale;
+        tileSprite.layer = renderer::RenderLayer::Background;
 
         _registry.Insert(e, scene::Transform2D{wx, wy, 0.0f, 1.0f, 1.0f});
         _registry.Insert(e, tileSprite);
@@ -73,7 +75,8 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::Scen
   auto &coll = tm.collisionLayer;
   for (uint32 row = 0; row < coll.height; ++row) {
     for (uint32 col = 0; col < coll.width; ++col) {
-      if (coll.tiles[row * coll.width + col] == 0) continue;
+      if (coll.tiles[row * coll.width + col] == 0)
+        continue;
 
       float32 wx = col - halfW + 0.5f;
       float32 wy = row - halfH + 0.5f;
@@ -89,15 +92,18 @@ FeExpect<ecs::EntityId, Error> TilemapManager::Load(stringv tmxPath, scene::Scen
   auto _ = _baseSprites.Insert(string(tmxPath), baseSprite);
 
   uint32 renderLayerCount = static_cast<uint32>(tm.renderLayers.size());
-  uint32 collTileCount    = static_cast<uint32>(coll.tiles.size());
-  uint32 objectCount      = static_cast<uint32>(tm.objects.size());
+  uint32 collTileCount = static_cast<uint32>(coll.tiles.size());
+  uint32 objectCount = static_cast<uint32>(tm.objects.size());
 
   auto root = _registry.Create();
   _registry.Insert(root, scene::Transform2D{});
   _registry.Insert(root, scene::SceneOwnership{sceneId});
 
   FLOG_INFO("TilemapManager: loaded '{}' — {} render layers, {} collision tiles, {} objects",
-            tmxPath, renderLayerCount, collTileCount, objectCount);
+            tmxPath,
+            renderLayerCount,
+            collTileCount,
+            objectCount);
   return root;
 }
 

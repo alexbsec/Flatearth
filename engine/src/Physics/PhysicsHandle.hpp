@@ -15,20 +15,26 @@ struct FeWorldHandle {
 };
 
 struct FeBodyHandle {
-  int32  index1{0};
+  int32 index1{0};
   uint16 world0{0};
   uint16 revision{0};
 };
 
 struct FeShapeHandle {
-  int32  index1{0};
+  int32 index1{0};
   uint16 world0{0};
   uint16 revision{0};
 };
 
-inline bool IsNull(FeWorldHandle h) { return h.index1 == 0; }
-inline bool IsNull(FeBodyHandle h)  { return h.index1 == 0; }
-inline bool IsNull(FeShapeHandle h) { return h.index1 == 0; }
+inline bool IsNull(FeWorldHandle h) {
+  return h.index1 == 0;
+}
+inline bool IsNull(FeBodyHandle h) {
+  return h.index1 == 0;
+}
+inline bool IsNull(FeShapeHandle h) {
+  return h.index1 == 0;
+}
 
 } // namespace flatearth::physics
 

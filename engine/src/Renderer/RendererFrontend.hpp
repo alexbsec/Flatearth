@@ -57,15 +57,19 @@ public:
   FeExpect<resources::MeshHandle, Error> AcquireMesh(resources::MeshShape shape);
   void ReleaseMesh(resources::MeshHandle handle);
   resources::Mesh *GetMesh(resources::MeshHandle handle);
+  const resources::Mesh *GetMesh(resources::MeshHandle handle) const;
 
   // Material cache public API
   FeExpect<resources::MaterialHandle, Error> AcquireMaterial(const string &name,
                                                              resources::Texture *pTexture);
   void ReleaseMaterial(resources::MaterialHandle handle);
   resources::Material *GetMaterial(resources::MaterialHandle handle);
+  const resources::Material *GetMaterial(resources::MaterialHandle handle) const;
 
   void Flush();
   void BeginImGuiFrame();
+
+  float32 AspectRatio() const;
 
   void Shutdown();
 

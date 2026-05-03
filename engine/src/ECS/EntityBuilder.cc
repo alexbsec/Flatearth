@@ -1,11 +1,13 @@
 #include "EntityBuilder.hpp"
+
 #include "Core/FeMemory.hpp"
 #include "Core/Logger.hpp"
 
 namespace flatearth::ecs {
 
 EntityBuilder::EntityBuilder(memory::MemoryManager &mm, Registry &reg)
-  : _registry(reg), _memoryManager(mm), _inserts(mm) {}
+    : _registry(reg), _memoryManager(mm), _inserts(mm) {
+}
 
 EntityBuilder::~EntityBuilder() {
   if (_commited) {
@@ -34,4 +36,4 @@ void EntityBuilder::CarveEntity(EntityId id) {
   }
 }
 
-}
+} // namespace flatearth::ecs

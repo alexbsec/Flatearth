@@ -5,8 +5,8 @@
 #include "Core/FeMemory.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererInterface.hpp"
-#include "Renderer/RendererTypes.hpp"
-#include "Renderer/Vulkan/Shaders/ObjectShader.hpp"
+#include "Renderer/ShaderRegistry.hpp"
+#include "Renderer/Vulkan/Shaders/VulkanShader.hpp"
 #include "Renderer/Vulkan/VulkanBuffer.hpp"
 #include "Renderer/Vulkan/VulkanCommandBufferManager.hpp"
 #include "Renderer/Vulkan/VulkanDeviceManager.hpp"
@@ -30,7 +30,8 @@ public:
   FeExpect<void, Error> UpdateGlobalState(math::Mat4D projection,
                                           math::Mat4D view,
                                           math::Vec3D viewPosition,
-                                          int32 mode) override;
+                                          int32 mode,
+                                          stringv shaderName = "Builtin.ObjectShader") override;
 
   FeExpect<void, Error> CreateTexture(const string &name,
                                       bool autoRelease,
@@ -48,7 +49,11 @@ public:
                                        uint32 indexCount,
                                        const uint32 *pIndices) override;
   FeExpect<void, Error> DestroyGeometry(uint32 id) override;
-  void DrawGeometry(uint32 id, const PushConstantData &data, const resources::Material *pMaterial) override;
+  void DrawGeometry(uint32 id,
+                    stringv shadeName,
+                    const void *pPushData,
+                    uint32 pushSize,
+                    const resources::Material *pMaterial) override;
 
   FeExpect<void, Error> CreateMaterial(resources::Material *pMaterial,
                                        const resources::Texture *pTexture) override;
@@ -89,7 +94,7 @@ private:
   CommandBufferManager _cmdBufferManager;
   BufferManager _bufferManager;
   shaders::VulkanShader _vulkanShader;
-  // No-op (not an error)
+  ShaderRegistry _shaderRegistry;
   Context _ctx;
 
   containers::HashMap<uint32, GeometryData> _geometries;
@@ -97,8 +102,8 @@ private:
   VkDescriptorPool _imguiDescriptorPool{VK_NULL_HANDLE};
 
   const resources::Material *_cpLastBoundMaterial{nullptr};
+  const ObjectShader *_cpLastBoundShader{nullptr};
   uint32 _lastBoundGeometry{UINT32_MAX};
-  bool _frameStatebound{FeFalse};
   uint32 _cachedFrameBufferWidth{0}, _cachedFrameBufferHeight{0};
 };
 

@@ -5,7 +5,8 @@
 namespace flatearth::audio {
 
 AudioManager::AudioManager(memory::MemoryManager &memManager)
-    : _memoryManager(memManager), _soundCache(memManager, _miniaudio) {}
+    : _memoryManager(memManager), _soundCache(memManager, _miniaudio) {
+}
 
 FeExpect<void, Error> AudioManager::Initialize() {
   if (ma_engine_init(nullptr, &_miniaudio) != MA_SUCCESS) {
@@ -17,7 +18,8 @@ FeExpect<void, Error> AudioManager::Initialize() {
 }
 
 void AudioManager::Shutdown() {
-  if (!_initialized) return;
+  if (!_initialized)
+    return;
   _soundCache.Shutdown();
   ma_engine_uninit(&_miniaudio);
   _initialized = FeFalse;
@@ -33,27 +35,31 @@ void AudioManager::ReleaseSound(resources::SoundHandle handle) {
 
 void AudioManager::Play(resources::SoundHandle handle, bool loop) {
   resources::Audio *pAudio = _soundCache.Get(handle);
-  if (pAudio == nullptr || pAudio->pSound == nullptr) return;
+  if (pAudio == nullptr || pAudio->pSound == nullptr)
+    return;
   ma_sound_set_looping(pAudio->pSound, loop ? MA_TRUE : MA_FALSE);
   ma_sound_start(pAudio->pSound);
 }
 
 void AudioManager::Pause(resources::SoundHandle handle) {
   resources::Audio *pAudio = _soundCache.Get(handle);
-  if (pAudio == nullptr || pAudio->pSound == nullptr) return;
+  if (pAudio == nullptr || pAudio->pSound == nullptr)
+    return;
   ma_sound_stop(pAudio->pSound);
 }
 
 void AudioManager::Stop(resources::SoundHandle handle) {
   resources::Audio *pAudio = _soundCache.Get(handle);
-  if (pAudio == nullptr || pAudio->pSound == nullptr) return;
+  if (pAudio == nullptr || pAudio->pSound == nullptr)
+    return;
   ma_sound_stop(pAudio->pSound);
   ma_sound_seek_to_pcm_frame(pAudio->pSound, 0);
 }
 
 void AudioManager::SetVolume(resources::SoundHandle handle, float32 volume) {
   resources::Audio *pAudio = _soundCache.Get(handle);
-  if (pAudio == nullptr || pAudio->pSound == nullptr) return;
+  if (pAudio == nullptr || pAudio->pSound == nullptr)
+    return;
   ma_sound_set_volume(pAudio->pSound, volume);
 }
 

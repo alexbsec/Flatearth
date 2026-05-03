@@ -24,10 +24,10 @@ FeExpect<void, Error> SystemScheduler::Build() {
   // initialize inDegrees hash map
   HashMap<uint32, uint32> inDegree(_memoryManager);
   _nodesMap.ForEach([&](uint32 typeId, const auto &) {
-    inDegree.Insert(typeId, 0)
-        .or_log_warn("failed to insert typeId {} into inDegree array. This initialization error "
-                     "may lead to crashes and UB.",
-                     typeId);
+    inDegree.Insert(typeId, 0).or_log_warn(
+        "failed to insert typeId {} into inDegree array. This initialization error "
+        "may lead to crashes and UB.",
+        typeId);
   });
 
   // build the adjacency list

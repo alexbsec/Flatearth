@@ -3,11 +3,13 @@
 
 #include "Containers/DArray.hpp"
 #include "Core/FeMemory.hpp"
+#include "Core/FeString.hpp"
 #include "Core/Logger.hpp"
 #include "Defines.hpp"
 #include "Error.hpp"
 #include "Platform/Filesystem.hpp"
 #include "Renderer/RendererTypes.hpp"
+#include "Renderer/ShaderRegistry.hpp"
 
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
@@ -16,6 +18,8 @@ namespace flatearth::renderer::vulkan {
 
 constexpr uint32 cObjectShaderStageCount = 2;
 constexpr uint32 cDescriptorSetCount = 3;
+constexpr uint32 cMaxShaderNameLength = 64;
+
 
 inline FeExpect<void, Error> VkCheck(VkResult result) {
   if (result != VK_SUCCESS) {
@@ -196,17 +200,23 @@ struct Pipeline {
   VkPipelineLayout layout;
 };
 
-struct ObjectShader {
+enum class BuiltinShader {
+  Object,
+  UI,
+};
+
+struct ObjectShader : Shader {
   std::array<ShaderStage, cObjectShaderStageCount> shaderStages;
   Pipeline pipeline;
+  BuiltinShader shaderType;
+  VkShaderStageFlags pushConstantStages{VK_SHADER_STAGE_VERTEX_BIT};
 
-  VkDescriptorPool globalDescriptorPool;
-  VkDescriptorSetLayout globalDescriptorSetLayout;
+  VkDescriptorPool globalDescriptorPool{VK_NULL_HANDLE};
+  VkDescriptorSetLayout globalDescriptorSetLayout{VK_NULL_HANDLE};
 
-  VkDescriptorPool textureDescriptorPool;
-  VkDescriptorSetLayout textureDescriptorSetLayout;
-  VkDescriptorSet
-      textureDescriptorSet; // single set for single texture TODO: make it an array later
+  VkDescriptorPool textureDescriptorPool{VK_NULL_HANDLE};
+  VkDescriptorSetLayout textureDescriptorSetLayout{VK_NULL_HANDLE};
+  VkDescriptorSet textureDescriptorSet{VK_NULL_HANDLE};
 
   containers::DArray<VkDescriptorSet> globalDescriptorSets;
 
@@ -214,8 +224,12 @@ struct ObjectShader {
   GlobalUniformObject globalUBO;
   VulkanBuffer globalUniformBuffer;
 
+
+
   ObjectShader(memory::MemoryManager &memManager) : globalDescriptorSets(memManager) {}
 };
+
+using UIShader = ObjectShader;
 
 struct Context {
   uint32 framebufferWidth{0}, framebufferHeight{0};
@@ -232,15 +246,17 @@ struct Context {
   containers::DArray<CommandBuffer> graphicsCommandBuffer;
   containers::DArray<VkSemaphore> imageAvailableSemaphores;
   containers::DArray<VkSemaphore> queueCompleteSemaphores;
+  containers::DArray<FeString<cMaxShaderNameLength>> shaderNames;
 
   uint32 inFlightFenceCount;
   containers::DArray<Fence> inFlightFences;
   containers::DArray<Fence *> imagesInFlight;
 
+  // TODO: should context really have a reference to these? Rethink
   memory::MemoryManager &memoryManager;
   platform::FileSystem &filesystem;
+  ShaderRegistry &shaderRegistry;
 
-  ObjectShader objectShader;
 
   VulkanBuffer objectVertexBuffer{};
   VulkanBuffer objectIndexBuffer{};
@@ -249,11 +265,11 @@ struct Context {
 
   bool recreatingSwapchain{false};
 
-  explicit Context(memory::MemoryManager &memManager, platform::FileSystem &fs)
+  explicit Context(memory::MemoryManager &memManager, platform::FileSystem &fs, ShaderRegistry &sreg)
       : swapchain(memManager), graphicsCommandBuffer(memManager),
         imageAvailableSemaphores(memManager), queueCompleteSemaphores(memManager),
-        inFlightFences(memManager), imagesInFlight(memManager), memoryManager(memManager),
-        filesystem(fs), objectShader(memManager) {}
+        inFlightFences(memManager), imagesInFlight(memManager), shaderNames(memManager), memoryManager(memManager),
+        filesystem(fs), shaderRegistry(sreg) {}
 
   int32 FindMemoryIndex(uint32 typeFilter, uint32 propertyFlags) {
     VkPhysicalDeviceMemoryProperties memoryProps;

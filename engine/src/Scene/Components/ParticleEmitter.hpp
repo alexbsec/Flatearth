@@ -5,6 +5,7 @@
 #include "Math/Vector2D.hpp"
 #include "Renderer/RendererTypes.hpp"
 #include "Resources/ResourceTypes.hpp"
+
 #include <array>
 
 namespace flatearth::scene {
@@ -35,6 +36,6 @@ struct ParticleEmitter {
   resources::MeshHandle meshHandle{0};
 };
 
-}
+} // namespace flatearth::scene
 
 #endif // _FLATEARTH_ENGINE_SCENE_COMPONENTS_PARTICLE_EMITTER_HPP

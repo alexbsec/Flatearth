@@ -3,10 +3,11 @@
 #include "Scene/Components/Sprite.hpp"
 #include "Scene/Components/SpriteAnimator.hpp"
 
-namespace flatearth::systems {
+namespace flatearth::scene::systems {
 using namespace scene;
 
-SpriteSystem::SpriteSystem(assets::AnimationRegistry &registry) : _animRegistry(registry) {}
+SpriteSystem::SpriteSystem(assets::AnimationRegistry &registry) : _animRegistry(registry) {
+}
 
 void SpriteSystem::Update(ecs::Registry &registry, float32 deltaTime) {
   ecs::View<Sprite, SpriteAnimator> animView = registry.ViewOf<Sprite, SpriteAnimator>();
@@ -45,8 +46,8 @@ void SpriteSystem::UpdateAnimator(SpriteAnimator &animator, Sprite &sprite, floa
 
   const AnimationFrame &frame = clip->frames[animator.currentFrame];
   sprite.uvOffset = frame.uvOffset;
-  sprite.uvScale  = frame.uvScale;
-  sprite.dirty    = FeTrue;
+  sprite.uvScale = frame.uvScale;
+  sprite.dirty = FeTrue;
 }
 
 void SpriteSystem::UpdateSprite(Sprite &sprite) {
@@ -58,4 +59,4 @@ void SpriteSystem::UpdateSprite(Sprite &sprite) {
   }
 }
 
-} // namespace flatearth::systems
+} // namespace flatearth::scene::systems
