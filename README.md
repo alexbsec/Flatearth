@@ -246,3 +246,4 @@ Open the generated solution in Visual Studio and build. Binaries go to `./build/
 ## Contributing
 
 The engine is under active development. Contributions, bug reports, and feedback are welcome via GitHub issues and pull requests.
+See [Contributing Guide](docs/CONTRIBUTING.md)
