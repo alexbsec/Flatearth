@@ -12,7 +12,7 @@ bool CreateGame(flatearth::Game *pGame) {
   pGame->Unload = GameTest::GameUnload;
   pGame->RegisterSystems = GameTest::GameRegisterSystems;
   pGame->OnImGui = GameTest::GameImGui;
-  return true;
+  return FeTrue;
 }
 
 int main(void) {

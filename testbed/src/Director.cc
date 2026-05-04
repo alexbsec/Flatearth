@@ -9,6 +9,9 @@ Orchestrator::Orchestrator(EngineContext &ctx) : _ctx(ctx) {
   _sceneIds[static_cast<int>(GamePhase::Playing)] = ctx.project.RegisterScene("level1");
   _sceneIds[static_cast<int>(GamePhase::Paused)] = ctx.project.RegisterScene("game_paused");
   _sceneIds[static_cast<int>(GamePhase::GameOver)] = ctx.project.RegisterScene("game_over");
+
+  // Activate the initial scene immediately so MainMenuSystem owns its entities correctly
+  _currentSceneId = _sceneIds[static_cast<int>(GamePhase::MainMenu)];
 }
 
 scene::SceneId Orchestrator::PhaseToSceneId(GamePhase phase) const {

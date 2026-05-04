@@ -14,8 +14,8 @@
 
 namespace flatearth::testbed {
 
-PlayerSystem::PlayerSystem(EngineContext &ctx, scene::SceneId sceneId)
-    : _ctx(ctx), _sceneId(sceneId) {
+PlayerSystem::PlayerSystem(EngineContext &ctx, Orchestrator &orchestrator, scene::SceneId sceneId)
+    : _ctx(ctx), _orchestrator(orchestrator), _sceneId(sceneId) {
 }
 
 void PlayerSystem::Initialize(ecs::Registry &) {
@@ -34,20 +34,22 @@ void PlayerSystem::Initialize(ecs::Registry &) {
                      .colStart = 0,
                      .colEnd = 3,
                      .duration = 0.2f,
-                     .loop = true,
+                     .loop = FeTrue,
                  })
         .or_log_error("failed to register walk clip");
   }
 
   _ctx.assets.Prefab().Register<PlayerPrefab>([&](ecs::EntityBuilder &b) {
     auto walkTexRes = _ctx.assets.Manager().LoadTexture("assets/textures/Human_Walk.png");
-    if (walkTexRes.errored())
+    if (walkTexRes.errored()) {
       return;
+    }
 
     auto playerSpriteRes = _ctx.assets.Manager().SpriteFromTexture(
         walkTexRes.value(), "player_walk", resources::MeshShape::Quad);
-    if (playerSpriteRes.errored())
+    if (playerSpriteRes.errored()) {
       return;
+    }
 
     scene::SpriteAnimator animator{};
     animator.currentClip.Set("player_walk_1").or_log_error("failed to set initial clip");
@@ -63,9 +65,13 @@ void PlayerSystem::Initialize(ecs::Registry &) {
         .With(PlayerMovementState{})
         .With(Health{100.0f, 100.0f});
   });
+}
+
+void PlayerSystem::SpawnEntities() {
+  auto &reg = _ctx.project.Registry();
 
   auto playerRes = _ctx.assets.Prefab()
-                       .Spawn<PlayerPrefab>(_ctx.project.Registry(), _sceneId)
+                       .Spawn<PlayerPrefab>(reg, _sceneId)
                        .or_error("failed to spawn player prefab");
   if (playerRes.errored()) {
     return;
@@ -99,8 +105,7 @@ void PlayerSystem::Initialize(ecs::Registry &) {
   emitter.sizeEnd = 0.0f;
   emitter.spawnRate = 15.0f;
 
-  _ctx.project.Registry()
-      .Spawn()
+  reg.Spawn()
       .With(scene::Transform2D{})
       .With(emitter)
       .With(ParticleTag{})
@@ -109,6 +114,11 @@ void PlayerSystem::Initialize(ecs::Registry &) {
 }
 
 void PlayerSystem::Update(ecs::Registry &, float32 deltaTime) {
+  if (!_spawned && _orchestrator.CurrentPhase() == GamePhase::Playing) {
+    SpawnEntities();
+    _spawned = FeTrue;
+  }
+
   auto &reg = _ctx.project.Registry();
   auto &input = _ctx.core.Input();
   auto &kvars = _ctx.core.KVarsRegistry();

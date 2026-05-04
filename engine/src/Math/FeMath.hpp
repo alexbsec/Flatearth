@@ -50,6 +50,10 @@ inline float64 Abs(float64 value) {
   return std::abs(value);
 }
 
+inline float32 Abs32(float32 value) {
+  return std::fabs(value);
+}
+
 inline constexpr float32 DegToRad(float32 deg) noexcept {
   return deg * (FE_PI / 180.0f);
 }

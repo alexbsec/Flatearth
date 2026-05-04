@@ -3,6 +3,7 @@
 #include "Components/Tags.hpp"
 #include "Systems/CameraFollowSystem.hpp"
 #include "Systems/HPBarSystem.hpp"
+#include "Systems/MainMenuSystem.hpp"
 #include "Systems/PlayerSystem.hpp"
 #include "Systems/WorldSystem.hpp"
 
@@ -34,9 +35,15 @@ bool GameTest::GameLoad(flatearth::Game *gameInstance) {
 
 void GameTest::GameRegisterSystems(flatearth::Game *gameInstance, ecs::SystemScheduler &scheduler) {
   EngineContext &ctx = *gameInstance->pCtx;
-  scene::SceneId level1 = ctx.project.RegisterScene("level1");
+  Orchestrator &orch = *_pOrchestrator;
 
-  scheduler.Register<PlayerSystem>(ctx, level1)
+  scene::SceneId mainMenu = ctx.project.RegisterScene("main_menu");
+  scene::SceneId level1   = ctx.project.RegisterScene("level1");
+
+  scheduler.Register<MainMenuSystem>(ctx, orch, mainMenu)
+      .or_fatal("failed to register MainMenuSystem");
+
+  scheduler.Register<PlayerSystem>(ctx, orch, level1)
       .or_fatal("failed to register PlayerSystem")
       .Before<scene::systems::TransformSystem>();
 
@@ -45,11 +52,11 @@ void GameTest::GameRegisterSystems(flatearth::Game *gameInstance, ecs::SystemSch
       .After<PlayerSystem>()
       .Before<scene::systems::TransformSystem>();
 
-  scheduler.Register<WorldSystem>(ctx, level1)
+  scheduler.Register<WorldSystem>(ctx, orch, level1)
       .or_fatal("failed to register WorldSystem")
       .Before<scene::systems::AudioSystem>();
 
-  scheduler.Register<HPBarSystem>(ctx, level1)
+  scheduler.Register<HPBarSystem>(ctx, orch, level1)
       .or_fatal("failed to register HPBarSystem")
       .After<PlayerSystem>();
 }
@@ -177,6 +184,11 @@ void GameTest::Setup(flatearth::Game *gameInstance) {
   gameInstance->gameName = "TopDown";
   _pOrchestrator = gameInstance->pCtx->core.Memory().Allocate<Orchestrator>(memory::Tag::Game,
                                                                             *gameInstance->pCtx);
+
+  gameInstance->Update = [](flatearth::Game *, float64 dt) -> bool {
+    _pOrchestrator->Update(static_cast<float32>(dt));
+    return FeTrue;
+  };
 }
 
 } // namespace flatearth::testbed

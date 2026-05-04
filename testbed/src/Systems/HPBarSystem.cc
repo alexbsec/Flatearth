@@ -20,11 +20,11 @@ static constexpr float32 cBarNormY      = 0.93f;   // near top-left
 
 static constexpr float32 cBgNormX = (cBarLeftNdc + cBarMaxWidth * 0.5f + 1.0f) / 2.0f;
 
-HPBarSystem::HPBarSystem(EngineContext &ctx, scene::SceneId sceneId)
-    : _ctx(ctx), _sceneId(sceneId) {
+HPBarSystem::HPBarSystem(EngineContext &ctx, Orchestrator &orchestrator, scene::SceneId sceneId)
+    : _ctx(ctx), _orchestrator(orchestrator), _sceneId(sceneId) {
 }
 
-void HPBarSystem::Initialize(ecs::Registry &registry) {
+void HPBarSystem::Initialize(ecs::Registry &) {
   auto fontRes = _ctx.assets.Manager()
                      .LoadFont("hud_font", "assets/fonts/stocky.ttf", 36.0f, 512)
                      .or_error("HPBarSystem: failed to load hud font");
@@ -32,8 +32,6 @@ void HPBarSystem::Initialize(ecs::Registry &registry) {
     _fontHandle = fontRes.value();
   }
 
-  // Use any already-cached texture as backing for the solid-color quads
-  // (useTexture=0 so the actual texture content is irrelevant)
   auto texRes = _ctx.assets.Manager().LoadTexture("assets/textures/Human_Walk.png");
   if (texRes.errored()) {
     FLOG_WARN("HPBarSystem: cannot load backing texture, bars will not render");
@@ -41,18 +39,19 @@ void HPBarSystem::Initialize(ecs::Registry &registry) {
   }
 
   auto bgSprRes = _ctx.assets.Manager().SpriteFromTexture(texRes.value(), "hp_bar_bg");
-  if (bgSprRes.errored()) {
-    return;
+  if (!bgSprRes.errored()) {
+    _bgMeshHandle  = bgSprRes.value().meshHandle;
+    _bgMatHandle   = bgSprRes.value().matHandle;
   }
+
   auto fillSprRes = _ctx.assets.Manager().SpriteFromTexture(texRes.value(), "hp_bar_fill");
-  if (fillSprRes.errored()) {
-    return;
+  if (!fillSprRes.errored()) {
+    _fillMeshHandle = fillSprRes.value().meshHandle;
+    _fillMatHandle  = fillSprRes.value().matHandle;
   }
+}
 
-  const auto &bgSpr   = bgSprRes.value();
-  const auto &fillSpr = fillSprRes.value();
-
-  // Background bar — dark, full width, spawned first so it draws underneath
+void HPBarSystem::SpawnEntities(ecs::Registry &registry) {
   ui::UIAnchor bgAnchor{};
   bgAnchor.normalizedX = cBgNormX;
   bgAnchor.normalizedY = cBarNormY;
@@ -60,8 +59,8 @@ void HPBarSystem::Initialize(ecs::Registry &registry) {
   bgAnchor.scaleY      = cBarHeight;
 
   ui::UIStyle bgStyle{};
-  bgStyle.meshHandle  = bgSpr.meshHandle;
-  bgStyle.matHandle   = bgSpr.matHandle;
+  bgStyle.meshHandle  = _bgMeshHandle;
+  bgStyle.matHandle   = _bgMatHandle;
   bgStyle.tint        = {{0.1f, 0.1f, 0.1f}, 0.85f};
   bgStyle.useTexture  = 0.0f;
 
@@ -71,7 +70,6 @@ void HPBarSystem::Initialize(ecs::Registry &registry) {
                      .OwnedBy(_sceneId)
                      .Commit();
 
-  // Fill bar — red, starts full, spawned after bg so it draws on top
   ui::UIAnchor fillAnchor{};
   fillAnchor.normalizedX = cBgNormX;
   fillAnchor.normalizedY = cBarNormY;
@@ -79,8 +77,8 @@ void HPBarSystem::Initialize(ecs::Registry &registry) {
   fillAnchor.scaleY      = cBarHeight * 0.7f;
 
   ui::UIStyle fillStyle{};
-  fillStyle.meshHandle = fillSpr.meshHandle;
-  fillStyle.matHandle  = fillSpr.matHandle;
+  fillStyle.meshHandle = _fillMeshHandle;
+  fillStyle.matHandle  = _fillMatHandle;
   fillStyle.tint       = {{0.85f, 0.15f, 0.1f}, 1.0f};
   fillStyle.useTexture = 0.0f;
 
@@ -90,7 +88,6 @@ void HPBarSystem::Initialize(ecs::Registry &registry) {
                        .OwnedBy(_sceneId)
                        .Commit();
 
-  // HP label above the bar
   if (_fontHandle != resources::cInvalidFontHandle) {
     ui::UIAnchor textAnchor{};
     textAnchor.normalizedX = cBgNormX;
@@ -109,6 +106,11 @@ void HPBarSystem::Initialize(ecs::Registry &registry) {
 }
 
 void HPBarSystem::Update(ecs::Registry &registry, float32) {
+  if (!_spawned && _orchestrator.CurrentPhase() == GamePhase::Playing) {
+    SpawnEntities(registry);
+    _spawned = FeTrue;
+  }
+
   Health *pHealth = nullptr;
   for (auto [id, ptag, health] : registry.ViewOf<PlayerTag, Health>()) {
     pHealth = &health;

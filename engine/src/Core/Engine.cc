@@ -11,6 +11,7 @@
 #include "Scene/Systems/ParticleSystem.hpp"
 #include "Scene/Systems/SpriteSystem.hpp"
 #include "Scene/Systems/TransformSystem.hpp"
+#include "UI/Systems/UIButtonSystem.hpp"
 
 #include <imgui.h>
 
@@ -229,6 +230,12 @@ FeExpect<void, Error> Engine::RegisterSystems() {
   if (audioRes.errored()) {
     FLOG_ERROR("could not register AudioSystem");
     return FeErr{audioRes.error()};
+  }
+
+  auto uiButtonRes = _scheduler.Register<ui::systems::UIButtonSystem>(_coreModule.Input(), &_state);
+  if (uiButtonRes.errored()) {
+    FLOG_ERROR("could not register UIButtonSystem");
+    return FeErr{uiButtonRes.error()};
   }
 
   if (_state.pGameInstance->RegisterSystems != nullptr) {

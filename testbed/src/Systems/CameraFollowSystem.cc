@@ -28,11 +28,11 @@ void CameraFollowSystem::Update(ecs::Registry &registry, float32) {
   auto &kvars = _ctx.core.KVarsRegistry();
 
   float32 playerX = 0.0f, playerY = 0.0f;
-  bool hasPlayer = false;
+  bool hasPlayer = FeFalse;
   for (auto [id, ptag, xform] : registry.ViewOf<PlayerTag, scene::Transform2D>()) {
     playerX = xform.x;
     playerY = xform.y;
-    hasPlayer = true;
+    hasPlayer = FeTrue;
   }
   if (hasPlayer) {
     for (auto [id, xform, cam] : registry.ViewOf<scene::Transform2D, scene::Camera2D>()) {
