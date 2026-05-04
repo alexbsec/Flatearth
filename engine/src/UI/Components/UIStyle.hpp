@@ -14,6 +14,8 @@ struct UIStyle {
   math::Vec2D uvScale{1.0f, 1.0f};
   renderer::Tint tint{{1.0f, 1.0f, 1.0f}, 1.0f};
   float32 useTexture{1.0f};
+  // Corner radius in height-normalized units (0 = sharp, 0.5 = pill/circle on a square quad)
+  float32 cornerRadius{0.0f};
 };
 
 } // namespace flatearth::ui

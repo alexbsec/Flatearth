@@ -16,6 +16,8 @@ layout(push_constant) uniform pushConstants {
   vec3 rgb;
   float alpha;
   float useTexture;
+  float cornerRadius;
+  float quadAspect;
 } uPushConstants;
 
 layout(location = 0) out vec2 vTexCoord;

@@ -18,6 +18,7 @@ public:
   explicit Orchestrator(EngineContext &ctx);
   void RequestTransition(GamePhase);
   void Update(float32);
+  GamePhase CurrentPhase() const { return _currentPhase; }
 
 private:
   void ChangeScene();

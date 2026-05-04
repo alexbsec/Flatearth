@@ -121,6 +121,7 @@ void PackUIObjects(RenderPacket &packet, FrontendRenderer &fr, Registry &reg) {
 }
 
 void PackUISprites(RenderPacket &packet, FrontendRenderer &fr, Registry &reg) {
+  float32 aspect = fr.AspectRatio();
   View<UIAnchor, Sprite> uiSpriteView = reg.ViewOf<UIAnchor, Sprite>();
   for (auto [entity, uiAnchor, sprite] : uiSpriteView) {
     if (reg.TryGet<UIStyle>(entity)) {
@@ -134,9 +135,10 @@ void PackUISprites(RenderPacket &packet, FrontendRenderer &fr, Registry &reg) {
     }
 
     float32 ndcX = uiAnchor.normalizedX * 2 - 1, ndcY = uiAnchor.normalizedY * 2 - 1;
+    float32 drawScaleX = uiAnchor.aspectCorrectX ? uiAnchor.scaleX / aspect : uiAnchor.scaleX;
     math::Mat4D model = math::Mat4D::Translation(ndcX, ndcY, 0.0f) *
                         math::Mat4D::RotationZ(uiAnchor.rotation) *
-                        math::Mat4D::Scale(uiAnchor.scaleX, uiAnchor.scaleY, 1.0f);
+                        math::Mat4D::Scale(drawScaleX, uiAnchor.scaleY, 1.0f);
 
     RenderObject object{
         .geometryId = pMesh->id,
@@ -153,6 +155,7 @@ void PackUISprites(RenderPacket &packet, FrontendRenderer &fr, Registry &reg) {
 }
 
 void PackUIStyles(RenderPacket &packet, FrontendRenderer &fr, Registry &reg) {
+  float32 aspect = fr.AspectRatio();
   View<UIAnchor, UIStyle> uiStyleView = reg.ViewOf<UIAnchor, UIStyle>();
   for (auto [entity, anchor, style] : uiStyleView) {
     resources::Mesh *pMesh = fr.GetMesh(style.meshHandle);
@@ -162,9 +165,15 @@ void PackUIStyles(RenderPacket &packet, FrontendRenderer &fr, Registry &reg) {
     }
 
     float32 ndcX = anchor.normalizedX * 2 - 1, ndcY = anchor.normalizedY * 2 - 1;
+    float32 drawScaleX = anchor.aspectCorrectX ? anchor.scaleX / aspect : anchor.scaleX;
+    // quadAspect: physical width / physical height in screen pixels.
+    // aspectCorrectX divides scaleX by aspect, which cancels when multiplied by the pixel ratio.
+    float32 quadAspect = anchor.aspectCorrectX
+                             ? anchor.scaleX / anchor.scaleY
+                             : (anchor.scaleX / anchor.scaleY) * aspect;
     math::Mat4D model = math::Mat4D::Translation(ndcX, ndcY, 0.0f) *
                         math::Mat4D::RotationZ(anchor.rotation) *
-                        math::Mat4D::Scale(anchor.scaleX, anchor.scaleY, 1.0f);
+                        math::Mat4D::Scale(drawScaleX, anchor.scaleY, 1.0f);
 
     RenderObject object{
         .geometryId = pMesh->id,
@@ -175,6 +184,8 @@ void PackUIStyles(RenderPacket &packet, FrontendRenderer &fr, Registry &reg) {
         .pMaterial = pMat,
         .tint = style.tint,
         .useTexture = style.useTexture,
+        .cornerRadius = style.cornerRadius,
+        .quadAspect = quadAspect,
     };
     packet.uiObjects.Push(object);
   }
@@ -202,9 +213,27 @@ void PackUIText(RenderPacket &packet, AssetManager &am, FrontendRenderer &fr, Re
     float32 ndcY = anchor.normalizedY * 2.0f - 1.0f;
     float32 lineH = pAtlas->lineHeight;
     float32 aspect = fr.AspectRatio();
-    float32 cursorX = 0.0f;
 
     stringv text = uiText.text.View();
+
+    // Pre-pass: measure advance and vertical extent for centering
+    float32 totalAdvance = 0.0f;
+    float32 maxAbove = 0.0f; // px above baseline  (-bearingY, bearingY is negative for above)
+    float32 maxBelow = 0.0f; // px below baseline  (bearingY + height, positive = below)
+    for (char c : text) {
+      if (c < 32 || c > 126) {
+        continue;
+      }
+      const resources::GlyphInfo &g = pAtlas->glyphs[c - 32];
+      totalAdvance += g.advance;
+      if (-g.bearingY > maxAbove) { maxAbove = -g.bearingY; }
+      if (g.bearingY + g.height > maxBelow) { maxBelow = g.bearingY + g.height; }
+    }
+    float32 cursorX = -totalAdvance * 0.5f;
+    // Shift baseline so the visual text block is centered on ndcY.
+    // (maxAbove - maxBelow)/2 is the distance from midpoint to baseline.
+    float32 ndcYAdj = ndcY - (maxAbove - maxBelow) * 0.5f / lineH * anchor.scaleY;
+
     for (char c : text) {
       if (c < 32 || c > 126) {
         continue;
@@ -218,8 +247,7 @@ void PackUIText(RenderPacket &packet, AssetManager &am, FrontendRenderer &fr, Re
 
       // cursorX is in pixels — normalize with lineH alongside bearing/size
       float32 centerX = ndcX + ((cursorX + glyph.bearingX + glyph.width * 0.5f) / lineH) * anchor.scaleY / aspect;
-      // viewport has Y+ up; bearingY is negative (glyph top above baseline) → negate to lift center above ndcY
-      float32 centerY = ndcY - (glyph.bearingY + glyph.height * 0.5f) / lineH * anchor.scaleY;
+      float32 centerY = ndcYAdj - (glyph.bearingY + glyph.height * 0.5f) / lineH * anchor.scaleY;
 
       math::Mat4D model = math::Mat4D::Translation(centerX, centerY, 0.0f) *
                           math::Mat4D::Scale(glyphW, glyphH, 1.0f);

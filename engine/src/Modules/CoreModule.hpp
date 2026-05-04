@@ -2,6 +2,7 @@
 #define _FLATEARTH_ENGINE_MODULES_CORE_MODULE_HPP
 
 #include "Audio/AudioManager.hpp"
+#include "Core/Event.hpp"
 #include "Core/FeMemory.hpp"
 #include "Core/Input.hpp"
 #include "Core/KVarRegistry.hpp"
@@ -12,7 +13,7 @@ namespace flatearth::modules {
 class Core {
 public:
   explicit Core(memory::MemoryManager &mm, event::EventManager &em)
-      : _memoryManager(mm), _input(em), _audio(mm), _kvars(mm) {}
+      : _memoryManager(mm), _eventManager(em), _input(em), _audio(mm), _kvars(mm) {}
 
   FeExpect<void, Error> Initialize();
   void Shutdown();
@@ -33,8 +34,14 @@ public:
   FEAPI KVarRegistry &KVarsRegistry() { return _kvars; }
   FEAPI const KVarRegistry &KVarsRegistry() const { return _kvars; }
 
+  FEAPI void RequestQuit() {
+    event::EventContext ctx{};
+    _eventManager.FireEvent(event::SystemEventCode::ApplicationQuit, nullptr, ctx);
+  }
+
 private:
   memory::MemoryManager &_memoryManager;
+  event::EventManager &_eventManager;
   input::InputManager _input;
 
   audio::AudioManager _audio;

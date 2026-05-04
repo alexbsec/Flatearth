@@ -75,32 +75,27 @@ VulkanBackend::~VulkanBackend() {
     auto destroyRes = DestroyFence(&_ctx.inFlightFences[i]);
     if (destroyRes.errored()) {
       FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}", destroyRes.error().message);
-      return;
     }
   }
 
   auto destroyRes = _cmdBufferManager.DestroyBuffers(_ctx);
   if (destroyRes.errored()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}", destroyRes.error().message);
-    return;
   }
 
   destroyRes = _renderpassManager.DestroyRenderpass(_ctx, &_ctx.mainRenderpass);
   if (destroyRes.errored()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}", destroyRes.error().message);
-    return;
   }
 
   destroyRes = _swapchainManager.DestroySwapchain(_ctx, &_ctx.swapchain);
   if (destroyRes.errored()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}", destroyRes.error().message);
-    return;
   }
 
   destroyRes = _deviceManager.DestroyDevice(_ctx);
   if (destroyRes.errored()) {
     FLOG_ERROR("Vulkan backend did not shutdown gracefully: {}", destroyRes.error().message);
-    return;
   }
 
   FLOG_INFO("Vulkan backend exited gracefully");
@@ -792,7 +787,15 @@ void VulkanBackend::DrawGeometry(uint32 id,
   ObjectShader *pVkShader = CastToVulkanShader(pShader);
 
   // Copy push data and fix GPU matrix layout (model is always first field)
-  uint8 pushCopy[128]{};
+  // TODO: might need another way to represent this instead of hardcoding 128
+  // here
+  constexpr uint32 cPushSize = 128;
+  uint8 pushCopy[cPushSize]{};
+  if (pushSize > sizeof(pushCopy)) {
+    FLOG_ERROR("DrawGeometry: push constant data too large");
+    return;
+  }
+
   memcpy(pushCopy, pPushData, pushSize);
   *reinterpret_cast<math::Mat4D *>(pushCopy) =
       reinterpret_cast<const math::Mat4D *>(pPushData)->ToGPUMatrix();

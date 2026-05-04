@@ -167,7 +167,8 @@ FeExpect<bool, Error> FrontendRenderer::DrawFrame(RenderPacket *pRenderPacket) {
   for (uint32 i = 0; i < pRenderPacket->uiObjects.Length(); i++) {
     const RenderObject &object = pRenderPacket->uiObjects[i];
     const UIPushConstantData data{
-        object.model, object.uvOffset, object.uvScale, object.tint, object.useTexture};
+        object.model, object.uvOffset, object.uvScale, object.tint,
+        object.useTexture, object.cornerRadius, object.quadAspect};
     const string name = "Builtin.UIShader";
     _rendererState.pActiveBackend->DrawGeometry(
         object.geometryId, name, &data, sizeof(UIPushConstantData), object.pMaterial);

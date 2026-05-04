@@ -29,6 +29,8 @@ struct RenderObject {
   resources::Material *pMaterial{nullptr};
   Tint tint{};
   float32 useTexture{0.0f};
+  float32 cornerRadius{0.0f};
+  float32 quadAspect{1.0f};
 };
 
 struct RenderPacket {
@@ -53,6 +55,8 @@ struct UIPushConstantData {
   math::Vec2D uvScale{};
   Tint tint{};
   float32 useTexture{0.0f};
+  float32 cornerRadius{0.0f};
+  float32 quadAspect{1.0f};
 };
 
 struct PushConstantData {
