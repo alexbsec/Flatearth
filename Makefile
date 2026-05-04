@@ -21,6 +21,7 @@ test:
 #   include/ — all public engine headers (engine/src/**/*.hpp)
 package:
 	@echo "==> Building engine (release only)..."
+	mkdir -p release/bin
 	cd engine && ./run.sh release
 	$(eval FE_VERSION := $(shell grep -oP 'LIBRARY_VERSION_STRING \K[0-9.]+' engine/CMakeLists.txt | head -1))
 	$(eval SDK_DIR    := flatearth-sdk-v$(FE_VERSION))
