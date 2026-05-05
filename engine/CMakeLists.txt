@@ -179,12 +179,12 @@ if(WIN32)
 endif()
 
 configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/FlatearthConfig.cmake.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FlatearthConfig.cmake.in
     ${CMAKE_BINARY_DIR}/cmake/FlatearthConfig.cmake
     @ONLY
 )
 configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/FlatearthConfigVersion.cmake.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FlatearthConfigVersion.cmake.in
     ${CMAKE_BINARY_DIR}/cmake/FlatearthConfigVersion.cmake
     @ONLY
 )
