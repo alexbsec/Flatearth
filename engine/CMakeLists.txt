@@ -14,7 +14,7 @@ set(BINARY_NAME "flatearth")
 project("${PROJECT_NAME}" LANGUAGES CXX)
 
 set(LIBRARY_VERSION_MAJOR 0)
-set(LIBRARY_VERSION_STRING 0.1.3)
+set(LIBRARY_VERSION_STRING 0.1.4)
 
 # Use GNUInstallDirs to get platform-appropriate installation directories
 include(GNUInstallDirs)
