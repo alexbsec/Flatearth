@@ -125,6 +125,7 @@ if(MSVC)
             /permissive-
             /std:c++latest
             /Zc:__cplusplus
+            /Zc:preprocessor
     )
     target_compile_definitions(${BINARY_NAME} PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
 else()
@@ -155,6 +156,18 @@ add_custom_command(TARGET ${BINARY_NAME} POST_BUILD
         $<TARGET_FILE:flatearth>
         $<TARGET_FILE_DIR:${BINARY_NAME}>
 )
+
+############################################################################
+#   COPY GAME ASSETS NEXT TO TESTBED (post-build)
+set(_assets_src "${CMAKE_CURRENT_LIST_DIR}/../assets")
+foreach(_subdir textures fonts bgm tiles)
+    add_custom_command(TARGET ${BINARY_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${_assets_src}/${_subdir}"
+            "$<TARGET_FILE_DIR:${BINARY_NAME}>/assets/${_subdir}"
+        COMMENT "Copying assets/${_subdir}"
+    )
+endforeach()
 
 ############################################################################
 #   RUNTIME ASSETS

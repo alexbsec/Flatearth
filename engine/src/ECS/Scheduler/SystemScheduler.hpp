@@ -43,7 +43,7 @@ private:
 class SystemScheduler {
 public:
   template <typename T, typename... Args>
-  FEAPI FeExpect<SystemBuilder, Error> Register(Args &&...args) {
+  FeExpect<SystemBuilder, Error> Register(Args &&...args) {
     if (_built) {
       return FeErr{Error("cannot register any new systems on built SystemScheduler",
                          ErrorType::SystemError)};

@@ -3,16 +3,17 @@
 
 #include "Defines.hpp"
 
+#include <typeindex>
+
 namespace flatearth::ecs {
 
-struct SystemTypeIdCounter {
-  inline static uint32 sCounter{0};
-};
-
+// Counter-based IDs have separate static state per DLL/EXE module on Windows,
+// causing ID collisions when engine and game systems are registered together.
+// Use type_index::hash_code() instead — stable and cross-module on MSVC/GCC/Clang.
 template <typename T>
 struct SystemTypeId {
   static uint32 Value() {
-    static uint32 id = SystemTypeIdCounter::sCounter++;
+    static const uint32 id = static_cast<uint32>(std::type_index(typeid(T)).hash_code());
     return id;
   }
 };

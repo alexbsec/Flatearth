@@ -1,5 +1,6 @@
 #include "SpriteSystem.hpp"
 
+#include "Math/FeMath.hpp"
 #include "Scene/Components/Sprite.hpp"
 #include "Scene/Components/SpriteAnimator.hpp"
 
@@ -52,11 +53,16 @@ void SpriteSystem::UpdateAnimator(SpriteAnimator &animator, Sprite &sprite, floa
 
 void SpriteSystem::UpdateSprite(Sprite &sprite) {
   if (sprite.flipX) {
-    sprite.uvScale = sprite.uvScale * math::Vec2D{-1, 1};
+    sprite.uvScale = math::Vec2D{-math::Abs32(sprite.uvScale.x()), sprite.uvScale.y()};
+  } else {
+    sprite.uvScale = math::Vec2D{math::Abs32(sprite.uvScale.x()), sprite.uvScale.y()};
   }
   if (sprite.flipY) {
-    sprite.uvScale = sprite.uvScale * math::Vec2D{1, -1};
+    sprite.uvScale = math::Vec2D{sprite.uvScale.x(), -math::Abs32(sprite.uvScale.y())};
+  } else {
+    sprite.uvScale = math::Vec2D{sprite.uvScale.x(), math::Abs32(sprite.uvScale.y())};
   }
+  sprite.dirty = FeFalse;
 }
 
 } // namespace flatearth::scene::systems

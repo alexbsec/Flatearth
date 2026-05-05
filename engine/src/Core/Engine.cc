@@ -32,8 +32,8 @@ Engine::~Engine() {
   if (_state.pGameInstance != nullptr && _state.pGameInstance->Unload) {
     _state.pGameInstance->Unload(_state.pGameInstance);
   }
-  _renderer.Shutdown();
   _assetsModule.Shutdown();
+  _renderer.Shutdown();
   _coreModule.Shutdown();
   _gameModule.Shutdown();
   FLOG_INFO("engine shutdown gracefully");
@@ -55,6 +55,8 @@ FeExpect<void, Error> Engine::Initialize(Game &game, ApplicationConfig &config) 
   config.windowStartPosY = _state.pGameInstance->windowStartPosY;
   config.windowStartWidth = _state.pGameInstance->windowStartWidth;
   config.windowStartHeight = _state.pGameInstance->windowStartHeight;
+  _state.width = static_cast<int32>(config.windowStartWidth);
+  _state.height = static_cast<int32>(config.windowStartHeight);
 
   _pPlatform = _memoryManager.AllocateShared<platform::Platform>(memory::Tag::Platform,
                                                                  config.name,

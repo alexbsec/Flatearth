@@ -11,7 +11,7 @@ namespace flatearth::resources {
 
 #define DEFINE_HANDLE(Name) \
   using Name = uint32;      \
-  constexpr Name cInvalid##Name = std::numeric_limits<uint32>::max();
+  constexpr Name cInvalid##Name = (std::numeric_limits<uint32>::max)();
 
 // DEFINED HANDLES:
 DEFINE_HANDLE(TextureHandle);

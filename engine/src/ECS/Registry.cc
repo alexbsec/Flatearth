@@ -20,7 +20,8 @@ void Registry::Destroy(EntityId id) {
     return;
   }
 
-  _poolsMap.ForEach([id](uint32, FePtr<ISparseSetBase> &pPool) { pPool->Remove(id); });
+  uint32 index = IdIndex(id);
+  _poolsMap.ForEach([index](uint32, FePtr<ISparseSetBase> &pPool) { pPool->Remove(index); });
   _entityManager.Destroy(id);
   FLOG_DEBUG("entity '{}' destroyed", id);
 }

@@ -73,7 +73,7 @@ private:
 
   ISparseSetBase *FindSmallest() {
     ISparseSetBase *pSmallest = nullptr;
-    uint64 minLen = std::numeric_limits<uint64>::max();
+    uint64 minLen = (std::numeric_limits<uint64>::max)();
     std::apply(
         [&](auto *...sets) {
           ((sets->Length() < minLen ? (minLen = sets->Length(), pSmallest = sets) : nullptr), ...);

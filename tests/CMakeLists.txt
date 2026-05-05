@@ -86,6 +86,7 @@ if(MSVC)
             /permissive-
             /std:c++latest
             /Zc:__cplusplus
+            /Zc:preprocessor
     )
     target_compile_definitions(${BINARY_NAME} PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
 else()

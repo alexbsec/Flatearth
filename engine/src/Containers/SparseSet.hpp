@@ -20,7 +20,7 @@ class SparseSet : public ISparseSetBase {
   static_assert(std::is_trivially_copyable_v<T>,
                 "SparseSet<T> is byte-wise; T must be trivially copyable");
 
-  static constexpr uint32 scNull = std::numeric_limits<uint32>::max();
+  static constexpr uint32 scNull = (std::numeric_limits<uint32>::max)();
 
 public:
   explicit SparseSet(memory::MemoryManager &memManager, uint32 maxEntities = 1024)

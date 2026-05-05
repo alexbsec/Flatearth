@@ -97,6 +97,9 @@ void PackGameObjects(RenderPacket &packet, FrontendRenderer &fr, Registry &reg) 
     math::Mat4D model = math::Mat4D::Translation(transform.worldX, transform.worldY, 0.0f) *
                         math::Mat4D::RotationZ(transform.worldRotation) *
                         math::Mat4D::Scale(transform.worldScaleX, transform.worldScaleY, 1.0f);
+#if FEPLATFORM_WINDOWS
+    model *= math::Mat4D::Scale(1.0f, -1.0f, 1.0f);
+#endif
     RenderObject object{
         .geometryId = pMesh->id,
         .model = model,

@@ -11,8 +11,8 @@ struct EngineState {
   Game *pGameInstance;
   bool isRunning;
   bool isSuspended;
-  int32 width;
-  int32 height;
+  int32 width{0};
+  int32 height{0};
   float64 lastTime;
   platform::PlatformState *platformState;
   ApplicationConfig *pAppConfig;
