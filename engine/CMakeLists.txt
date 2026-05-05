@@ -14,7 +14,7 @@ set(BINARY_NAME "flatearth")
 project("${PROJECT_NAME}" LANGUAGES CXX)
 
 set(LIBRARY_VERSION_MAJOR 0)
-set(LIBRARY_VERSION_STRING 0.1.2)
+set(LIBRARY_VERSION_STRING 0.1.3)
 
 # Use GNUInstallDirs to get platform-appropriate installation directories
 include(GNUInstallDirs)
@@ -167,6 +167,33 @@ install(
 install(
     FILES ${HEADER_FILES}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+# Generate and install CMake config files for SDK consumers
+include(CMakePackageConfigHelpers)
+
+set(FE_VERSION ${LIBRARY_VERSION_STRING})
+set(FE_LIB_FILENAME "libflatearth.so.${FE_VERSION}")
+if(WIN32)
+    set(FE_LIB_FILENAME "flatearth.dll")
+endif()
+
+configure_file(
+    ${CMAKE_SOURCE_DIR}/cmake/FlatearthConfig.cmake.in
+    ${CMAKE_BINARY_DIR}/cmake/FlatearthConfig.cmake
+    @ONLY
+)
+configure_file(
+    ${CMAKE_SOURCE_DIR}/cmake/FlatearthConfigVersion.cmake.in
+    ${CMAKE_BINARY_DIR}/cmake/FlatearthConfigVersion.cmake
+    @ONLY
+)
+
+install(
+    FILES
+        ${CMAKE_BINARY_DIR}/cmake/FlatearthConfig.cmake
+        ${CMAKE_BINARY_DIR}/cmake/FlatearthConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Flatearth
 )
 
 ############################################################################
