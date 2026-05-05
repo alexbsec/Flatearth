@@ -19,12 +19,12 @@ public:
 
 public:
   template <typename Tag>
-  FEAPI void Register(SetupFn fn) {
+  void Register(SetupFn fn) {
     _prefabsMap.Insert(ecs::PrefabTypeId<Tag>::Value(), std::move(fn));
   }
 
   template <typename Tag>
-  FEAPI FeExpect<ecs::EntityId, Error> Spawn(ecs::Registry &reg, scene::SceneId sceneId) const {
+  FeExpect<ecs::EntityId, Error> Spawn(ecs::Registry &reg, scene::SceneId sceneId) const {
     const auto *pFn = _prefabsMap.Retrieve(ecs::PrefabTypeId<Tag>::Value());
     if (pFn == nullptr) {
       return FeErr{Error("cannot spawn unknown entity prefab", ErrorType::NullptrException)};

@@ -188,6 +188,8 @@ PlatformState *Platform::State() {
   return &_platState;
 }
 
+static ImGuiKey TranslateVKToImGuiKey(WPARAM vk);
+
 LRESULT CALLBACK Platform::Win32ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   Platform *platform = nullptr;
 

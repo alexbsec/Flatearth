@@ -36,13 +36,13 @@ public:
     }
 
     containers::SparseSet<T> *pSet = GetPool<T>();
-    pSet->Remove(id);
+    pSet->Remove(IdIndex(id));
   }
 
   template <typename T>
   T &Get(EntityId id) {
     containers::SparseSet<T> *pSet = GetPool<T>();
-    return pSet->Get(id);
+    return pSet->Get(IdIndex(id));
   }
 
   template <typename T>
@@ -75,7 +75,7 @@ public:
     const FePtr<ISparseSetBase> *ppBase = _poolsMap.Retrieve(typeId);
     if (ppBase == nullptr)
       return false;
-    return static_cast<const SparseSetHolder<T> *>(ppBase->get())->sparseSet.Has(id);
+    return static_cast<const SparseSetHolder<T> *>(ppBase->get())->sparseSet.Has(IdIndex(id));
   }
 
   template <typename... Ts>
