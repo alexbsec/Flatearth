@@ -169,6 +169,33 @@ install(
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
+# Generate and install CMake config files for SDK consumers
+include(CMakePackageConfigHelpers)
+
+set(FE_VERSION ${LIBRARY_VERSION_STRING})
+set(FE_LIB_FILENAME "libflatearth.so.${FE_VERSION}")
+if(WIN32)
+    set(FE_LIB_FILENAME "flatearth.dll")
+endif()
+
+configure_file(
+    ${CMAKE_SOURCE_DIR}/cmake/FlatearthConfig.cmake.in
+    ${CMAKE_BINARY_DIR}/cmake/FlatearthConfig.cmake
+    @ONLY
+)
+configure_file(
+    ${CMAKE_SOURCE_DIR}/cmake/FlatearthConfigVersion.cmake.in
+    ${CMAKE_BINARY_DIR}/cmake/FlatearthConfigVersion.cmake
+    @ONLY
+)
+
+install(
+    FILES
+        ${CMAKE_BINARY_DIR}/cmake/FlatearthConfig.cmake
+        ${CMAKE_BINARY_DIR}/cmake/FlatearthConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Flatearth
+)
+
 ############################################################################
 #   BUILT-IN SHADER EMBEDDING
 
