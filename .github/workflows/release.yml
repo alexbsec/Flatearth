@@ -1,0 +1,164 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cpp_compiler: g++-14
+            build_type: Release
+            artifact_suffix: linux
+            archive_ext: tar.gz
+          - os: windows-latest
+            cpp_compiler: cl
+            build_type: Release
+            artifact_suffix: windows
+            archive_ext: zip
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---------- Linux ----------
+      - name: Install GCC 14 (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt-get update
+          sudo apt-get install -y gcc-14 g++-14
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y \
+            cmake ninja-build \
+            libvulkan-dev vulkan-validationlayers glslc \
+            libx11-dev libxcb1-dev libx11-xcb-dev \
+            libxcb-keysyms1-dev libxcb-icccm4-dev \
+            libxcb-image0-dev libxcb-shm0-dev \
+            libxcb-xfixes0-dev libxcb-randr0-dev \
+            libxcb-render-util0-dev
+
+      - name: Configure (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cmake -B build \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -G Ninja \
+            -S .
+
+      # ---------- Windows ----------
+      - name: Setup MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Vulkan SDK (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = "1.3.290.0"
+          $installer = "VulkanSDK-$version-Installer.exe"
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/$version/windows/$installer" -OutFile $installer
+          Start-Process -FilePath $installer -ArgumentList "--accept-licenses --default-answer --confirm-command install" -Wait
+          echo "VULKAN_SDK=C:\VulkanSDK\$version" >> $env:GITHUB_ENV
+          echo "C:\VulkanSDK\$version\Bin" >> $env:GITHUB_PATH
+
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ninja -y
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cmake -B build `
+            -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -G Ninja `
+            -S .
+
+      # ---------- Shared ----------
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+      # ---------- Package SDK ----------
+      - name: Package SDK (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          FE_VERSION=$(grep -oP 'LIBRARY_VERSION_STRING \K[0-9.]+' engine/CMakeLists.txt | head -1)
+          SDK_DIR="flatearth-sdk-v${FE_VERSION}-${{ matrix.artifact_suffix }}"
+          mkdir -p "$SDK_DIR/lib" "$SDK_DIR/include"
+
+          cp "build/engine/libflatearth.so.${FE_VERSION}" "$SDK_DIR/lib/"
+          cd "$SDK_DIR/lib"
+          ln -sf "libflatearth.so.${FE_VERSION}" "libflatearth.so.0"
+          ln -sf "libflatearth.so.0" "libflatearth.so"
+          cd ../..
+
+          find engine/src -name "*.hpp" | while read f; do
+            rel=$(echo "$f" | sed 's|engine/src/||')
+            mkdir -p "$SDK_DIR/include/$(dirname $rel)"
+            cp "$f" "$SDK_DIR/include/$rel"
+          done
+
+          tar -czf "${SDK_DIR}.tar.gz" "$SDK_DIR/"
+          rm -rf "$SDK_DIR"
+
+      - name: Package SDK (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $FE_VERSION = Select-String -Path "engine/CMakeLists.txt" -Pattern "LIBRARY_VERSION_STRING (\d+\.\d+)" | ForEach-Object { $_.Matches[0].Groups[1].Value }
+          $SDK_DIR = "flatearth-sdk-v${FE_VERSION}-${{ matrix.artifact_suffix }}"
+
+          New-Item -ItemType Directory -Force -Path "$SDK_DIR/bin", "$SDK_DIR/lib", "$SDK_DIR/include"
+
+          Copy-Item "build/engine/flatearth.lib" "$SDK_DIR/lib/"
+          Copy-Item "build/engine/flatearth.dll" "$SDK_DIR/bin/"
+
+          Get-ChildItem -Path "engine/src" -Recurse -Filter "*.hpp" | ForEach-Object {
+            $rel = $_.FullName.Replace("$((Get-Item engine/src).FullName)\", "").Replace("\", "/")
+            $destDir = Join-Path "$SDK_DIR/include" (Split-Path $rel -Parent).Replace("/", "\")
+            New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+            Copy-Item $_.FullName -Destination (Join-Path $destDir $_.Name)
+          }
+
+          Compress-Archive -Path "$SDK_DIR" -DestinationPath "${SDK_DIR}.zip"
+          Remove-Item -Recurse -Force $SDK_DIR
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flatearth-sdk-${{ matrix.artifact_suffix }}
+          path: flatearth-sdk-v*-${{ matrix.artifact_suffix }}.*
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            flatearth-sdk-linux/*.tar.gz
+            flatearth-sdk-windows/*.zip
+          generate_release_notes: true
