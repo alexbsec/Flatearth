@@ -114,7 +114,7 @@ jobs:
           done
 
           mkdir -p "$SDK_DIR/lib/cmake/Flatearth"
-          echo 'set(_prefix "${CMAKE_CURRENT_LIST_DIR}/../..")' > "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
+          echo 'set(_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../")' > "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
           echo '' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
           echo 'if(NOT TARGET flatearth::flatearth)' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
           echo '  add_library(flatearth::flatearth SHARED IMPORTED)' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
@@ -158,7 +158,7 @@ jobs:
           }
 
           New-Item -ItemType Directory -Force -Path "$SDK_DIR/lib/cmake/Flatearth" | Out-Null
-          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value 'set(_prefix "${CMAKE_CURRENT_LIST_DIR}/../..")'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value 'set(_prefix "${CMAKE_CURRENT_LIST_DIR}/../../../")'
           Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value ''
           Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value 'if(NOT TARGET flatearth::flatearth)'
           Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value '  add_library(flatearth::flatearth SHARED IMPORTED)'

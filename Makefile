@@ -46,7 +46,7 @@ package:
 	  cp "$$f" "$(SDK_DIR)/include/$$rel"; \
 	done
 	mkdir -p $(SDK_DIR)/lib/cmake/Flatearth
-	printf 'set(_prefix "$${CMAKE_CURRENT_LIST_DIR}/../..")\nif(NOT TARGET flatearth::flatearth)\n  add_library(flatearth::flatearth SHARED IMPORTED)\n  find_library(_fe_lib NAMES flatearth libflatearth.so PATHS "$${_prefix}/lib" NO_DEFAULT_PATH)\n  set_target_properties(flatearth::flatearth PROPERTIES IMPORTED_LOCATION "$${_fe_lib}" INTERFACE_INCLUDE_DIRECTORIES "$${_prefix}/include")\nendif()\nif(NOT TARGET flatearth)\n  add_library(flatearth ALIAS flatearth::flatearth)\nendif()\n' > $(SDK_DIR)/lib/cmake/Flatearth/FlatearthConfig.cmake
+	printf 'set(_prefix "$${CMAKE_CURRENT_LIST_DIR}/../../../")\nif(NOT TARGET flatearth::flatearth)\n  add_library(flatearth::flatearth SHARED IMPORTED)\n  find_library(_fe_lib NAMES flatearth libflatearth.so PATHS "$${_prefix}/lib" NO_DEFAULT_PATH)\n  set_target_properties(flatearth::flatearth PROPERTIES IMPORTED_LOCATION "$${_fe_lib}" INTERFACE_INCLUDE_DIRECTORIES "$${_prefix}/include")\nendif()\nif(NOT TARGET flatearth)\n  add_library(flatearth ALIAS flatearth::flatearth)\nendif()\n' > $(SDK_DIR)/lib/cmake/Flatearth/FlatearthConfig.cmake
 	printf 'set(PACKAGE_VERSION "$(FE_VERSION)")\nif(PACKAGE_VERSION VERSION_LESS PACKAGE_FIND_VERSION)\n  set(PACKAGE_VERSION_COMPATIBLE FALSE)\nelse()\n  set(PACKAGE_VERSION_COMPATIBLE TRUE)\n  if(PACKAGE_FIND_VERSION STREQUAL PACKAGE_VERSION)\n    set(PACKAGE_VERSION_EXACT TRUE)\n  endif()\nendif()\n' > $(SDK_DIR)/lib/cmake/Flatearth/FlatearthConfigVersion.cmake
 	tar -czf $(TARBALL) $(SDK_DIR)/
 	rm -rf $(SDK_DIR)
