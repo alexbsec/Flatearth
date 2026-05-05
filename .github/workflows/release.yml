@@ -114,28 +114,26 @@ jobs:
           done
 
           mkdir -p "$SDK_DIR/lib/cmake/Flatearth"
-          cat > "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" << 'EOF'
-set(_prefix "${CMAKE_CURRENT_LIST_DIR}/../..")
-if(NOT TARGET flatearth::flatearth)
-  add_library(flatearth::flatearth SHARED IMPORTED)
-  find_library(_fe_lib NAMES flatearth libflatearth.so PATHS "${_prefix}/lib" NO_DEFAULT_PATH)
-  set_target_properties(flatearth::flatearth PROPERTIES IMPORTED_LOCATION "${_fe_lib}" INTERFACE_INCLUDE_DIRECTORIES "${_prefix}/include")
-endif()
-if(NOT TARGET flatearth)
-  add_library(flatearth ALIAS flatearth::flatearth)
-endif()
-EOF
-          cat > "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake" << EOF
-set(PACKAGE_VERSION "${FE_VERSION}")
-if(PACKAGE_VERSION VERSION_LESS PACKAGE_FIND_VERSION)
-  set(PACKAGE_VERSION_COMPATIBLE FALSE)
-else()
-  set(PACKAGE_VERSION_COMPATIBLE TRUE)
-  if(PACKAGE_FIND_VERSION STREQUAL PACKAGE_VERSION)
-    set(PACKAGE_VERSION_EXACT TRUE)
-  endif()
-endif()
-EOF
+          echo 'set(_prefix "${CMAKE_CURRENT_LIST_DIR}/../..")' > "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
+          echo '' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
+          echo 'if(NOT TARGET flatearth::flatearth)' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
+          echo '  add_library(flatearth::flatearth SHARED IMPORTED)' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
+          echo '  find_library(_fe_lib NAMES flatearth libflatearth.so PATHS "${_prefix}/lib" NO_DEFAULT_PATH)' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
+          echo '  set_target_properties(flatearth::flatearth PROPERTIES IMPORTED_LOCATION "${_fe_lib}" INTERFACE_INCLUDE_DIRECTORIES "${_prefix}/include")' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
+          echo 'endif()' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
+          echo '' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
+          echo 'if(NOT TARGET flatearth)' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
+          echo '  add_library(flatearth ALIAS flatearth::flatearth)' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
+          echo 'endif()' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake"
+          echo "set(PACKAGE_VERSION \"${FE_VERSION}\")" > "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake"
+          echo 'if(PACKAGE_VERSION VERSION_LESS PACKAGE_FIND_VERSION)' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake"
+          echo '  set(PACKAGE_VERSION_COMPATIBLE FALSE)' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake"
+          echo 'else()' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake"
+          echo '  set(PACKAGE_VERSION_COMPATIBLE TRUE)' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake"
+          echo '  if(PACKAGE_FIND_VERSION STREQUAL PACKAGE_VERSION)' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake"
+          echo '    set(PACKAGE_VERSION_EXACT TRUE)' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake"
+          echo '  endif()' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake"
+          echo 'endif()' >> "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake"
 
           tar -czf "${SDK_DIR}.tar.gz" "$SDK_DIR/"
           rm -rf "$SDK_DIR"
@@ -160,30 +158,27 @@ EOF
           }
 
           New-Item -ItemType Directory -Force -Path "$SDK_DIR/lib/cmake/Flatearth" | Out-Null
-          @"
-set(_prefix "`${CMAKE_CURRENT_LIST_DIR}/../..")
-if(NOT TARGET flatearth::flatearth)
-  add_library(flatearth::flatearth SHARED IMPORTED)
-  set(_fe_lib "`${_prefix}/bin/flatearth.dll")
-  set(_fe_implib "`${_prefix}/lib/flatearth.lib")
-  set_target_properties(flatearth::flatearth PROPERTIES IMPORTED_LOCATION "`${_fe_lib}" IMPORTED_IMPLIB "`${_fe_implib}" INTERFACE_INCLUDE_DIRECTORIES "`${_prefix}/include")
-endif()
-if(NOT TARGET flatearth)
-  add_library(flatearth ALIAS flatearth::flatearth)
-endif()
-"@ | Out-File -FilePath "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Encoding UTF8
-
-          @"
-set(PACKAGE_VERSION "$FE_VERSION")
-if(PACKAGE_VERSION VERSION_LESS PACKAGE_FIND_VERSION)
-  set(PACKAGE_VERSION_COMPATIBLE FALSE)
-else()
-  set(PACKAGE_VERSION_COMPATIBLE TRUE)
-  if(PACKAGE_FIND_VERSION STREQUAL PACKAGE_VERSION)
-    set(PACKAGE_VERSION_EXACT TRUE)
-  endif()
-endif()
-"@ | Out-File -FilePath "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake" -Encoding UTF8
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value 'set(_prefix "${CMAKE_CURRENT_LIST_DIR}/../..")'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value ''
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value 'if(NOT TARGET flatearth::flatearth)'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value '  add_library(flatearth::flatearth SHARED IMPORTED)'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value '  set(_fe_lib "${_prefix}/bin/flatearth.dll")'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value '  set(_fe_implib "${_prefix}/lib/flatearth.lib")'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value '  set_target_properties(flatearth::flatearth PROPERTIES IMPORTED_LOCATION "${_fe_lib}" IMPORTED_IMPLIB "${_fe_implib}" INTERFACE_INCLUDE_DIRECTORIES "${_prefix}/include")'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value 'endif()'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value ''
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value 'if(NOT TARGET flatearth)'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value '  add_library(flatearth ALIAS flatearth::flatearth)'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfig.cmake" -Value 'endif()'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake" -Value "set(PACKAGE_VERSION `"$FE_VERSION`")"
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake" -Value 'if(PACKAGE_VERSION VERSION_LESS PACKAGE_FIND_VERSION)'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake" -Value '  set(PACKAGE_VERSION_COMPATIBLE FALSE)'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake" -Value 'else()'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake" -Value '  set(PACKAGE_VERSION_COMPATIBLE TRUE)'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake" -Value '  if(PACKAGE_FIND_VERSION STREQUAL PACKAGE_VERSION)'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake" -Value '    set(PACKAGE_VERSION_EXACT TRUE)'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake" -Value '  endif()'
+          Add-Content -Path "$SDK_DIR/lib/cmake/Flatearth/FlatearthConfigVersion.cmake" -Value 'endif()'
 
           Compress-Archive -Path "$SDK_DIR" -DestinationPath "${SDK_DIR}.zip"
           Remove-Item -Recurse -Force $SDK_DIR
